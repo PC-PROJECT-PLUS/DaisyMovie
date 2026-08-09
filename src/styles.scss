@@ -1,1 +1,118 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-primary: #0b0c10;
+  --bg-secondary: #121319;
+  --text-main: #ffffff;
+  --text-muted: #94a3b8;
+  --text-subtle: #64748b;
+  --accent-blue: #0075ff;
+  --accent-blue-hover: #268aff;
+
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  
+  /* Prevent accidental text selection while scrolling */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Re-enable text selection for actual readable blocks or inputs */
+p, .hero-synopsis, .description, input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Prevent accidental image dragging which interrupts scrolling */
+img, svg, a {
+  -webkit-user-drag: none;
+}
+
+/* ==========================================================================
+   UNIFIED APPLE LIQUID GLASS CODE (MATCHING NAVBAR EXPLICITLY)
+   ========================================================================== */
+.glass-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.35), 0 20px 40px rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  transition: all 0.2s ease-in-out;
+  overflow: hidden;
+
+  -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.2);
+  backdrop-filter: blur(28px) saturate(200%) brightness(1.2);
+
+  isolation: isolate;
+  -webkit-isolation: isolate;
+  will-change: transform, backdrop-filter;
+  -webkit-will-change: transform, -webkit-backdrop-filter;
+
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000px;
+  perspective: 1000px;
+  -webkit-overflow-scrolling: touch;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.glass-card-before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.glass-card>* {
+  position: relative;
+  z-index: 2;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+}

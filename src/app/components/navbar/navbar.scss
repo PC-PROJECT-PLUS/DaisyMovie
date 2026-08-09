@@ -1,0 +1,363 @@
+.navbar-container {
+  position: fixed;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%) translate3d(0, 0, 0);
+  height: 56px;
+  padding: 0 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 28px;
+  border-radius: var(--radius-full);
+  z-index: 1000;
+  white-space: nowrap;
+  /* Prevent any strange text wrapping or line breaks */
+  overflow: visible !important;
+  /* Allow the dropdown panel to spill out */
+  border: none !important;
+  transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+
+    /* Pure Liquid Glass without visible borders */
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+
+    -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.15);
+    backdrop-filter: blur(28px) saturate(200%) brightness(1.15);
+
+    will-change: transform, backdrop-filter;
+    -webkit-will-change: transform, -webkit-backdrop-filter;
+  }
+
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex-shrink: 0;
+
+    .navbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+      flex-shrink: 0;
+
+      .logo-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-full);
+        background: rgba(255, 255, 255, 0.14);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease;
+        flex-shrink: 0;
+
+        &:hover {
+          transform: scale(1.08);
+        }
+      }
+
+      .logo-name {
+        font-family: var(--font-heading);
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #fff;
+        white-space: nowrap;
+
+        span {
+          color: #000000;
+        }
+      }
+    }
+
+    .nav-links {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      list-style: none;
+      flex-shrink: 0;
+
+      .nav-item {
+        position: relative;
+        flex-shrink: 0;
+
+        a {
+          text-decoration: none;
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 0.9rem;
+          font-weight: 500;
+          white-space: nowrap;
+          /* Single line for Tv show, Animation, etc. */
+          display: inline-block;
+          transition: color 0.2s ease;
+
+          &:hover {
+            color: #fff;
+          }
+        }
+
+        &.active a {
+          color: #fff;
+          font-weight: 600;
+        }
+
+      }
+
+      .active-indicator {
+        position: absolute;
+        bottom: -4px;
+        height: 2px;
+        background: #000000;
+        border-radius: var(--radius-full);
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+        transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+        z-index: 10;
+        pointer-events: none;
+      }
+    }
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+
+    .search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+      height: 36px;
+      width: 220px;
+      border-radius: var(--radius-full);
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      transition: width 0.35s cubic-bezier(0.25, 1, 0.5, 1), background 0.2s ease;
+      overflow: hidden;
+      flex-shrink: 0;
+
+      &.expanded {
+        width: 300px;
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      .search-btn {
+        min-width: 36px;
+        height: 36px;
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.75);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+          color: #fff;
+        }
+      }
+
+      .search-input {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #fff;
+        font-size: 0.825rem;
+        padding-right: 12px;
+
+        &::placeholder {
+          color: rgba(255, 255, 255, 0.45);
+        }
+      }
+    }
+
+    .notification-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: rgba(255, 255, 255, 0.85);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.18);
+        color: #fff;
+        transform: translateY(-1px);
+      }
+    }
+
+    .user-wrapper {
+      position: relative;
+      flex-shrink: 0;
+      z-index: 20;
+
+      .user-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 12px 4px 4px;
+        border-radius: var(--radius-full);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        white-space: nowrap;
+        flex-shrink: 0;
+        height: 36px;
+        position: relative;
+        z-index: 2;
+
+        .user-avatar {
+          width: 28px;
+          height: 28px;
+          border-radius: var(--radius-full);
+          object-fit: cover;
+          flex-shrink: 0;
+        }
+
+        .user-name {
+          font-size: 0.85rem;
+          font-weight: 500;
+          color: #fff;
+          white-space: nowrap;
+          /* Single line for Alex Terrible */
+        }
+
+        .chevron-icon {
+          color: rgba(255, 255, 255, 0.65);
+          transition: transform 0.2s ease;
+          flex-shrink: 0;
+
+          &.open {
+            transform: rotate(180deg);
+          }
+        }
+      }
+
+      .user-expandable-panel {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        overflow: hidden;
+        max-height: 36px;
+        transition: max-height 0.35s cubic-bezier(0.25, 1, 0.5, 1), background 0.2s ease, box-shadow 0.3s ease;
+        box-shadow: none;
+
+        -webkit-backdrop-filter: blur(24px) saturate(200%);
+        backdrop-filter: blur(24px) saturate(200%);
+
+        &.open {
+          max-height: 220px;
+          background: rgba(255, 255, 255, 0.16);
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .dropdown-list {
+          list-style: none;
+          padding: 42px 6px 6px 6px;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          opacity: 0;
+          transform: translateY(-10px);
+          transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        &.open .dropdown-list {
+          opacity: 1;
+          transform: translateY(0);
+          transition-delay: 0.05s;
+        }
+
+        .dropdown-option {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 12px;
+          border-radius: var(--radius-md);
+          color: rgba(255, 255, 255, 0.85);
+          font-size: 0.85rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background 0.2s ease, color 0.2s ease;
+
+          svg {
+            color: rgba(255, 255, 255, 0.6);
+            transition: color 0.2s ease;
+          }
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+
+            svg {
+              color: #fff;
+            }
+          }
+
+          &.logout {
+            color: #ff4757;
+
+            svg {
+              color: #ff4757;
+            }
+
+            &:hover {
+              background: rgba(255, 71, 87, 0.15);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .navbar-container {
+    top: 16px;
+
+    .nav-left .nav-links {
+      display: none;
+    }
+
+    .user-name {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .navbar-container {
+    top: 16px;
+
+    .nav-left .nav-links {
+      display: none;
+    }
+
+    .user-name {
+      display: none;
+    }
+  }
+}

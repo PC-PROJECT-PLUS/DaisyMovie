@@ -1,0 +1,104 @@
+.site-footer {
+  margin-top: -40px;
+  background: transparent;
+  position: relative;
+
+  &::before {
+    content: '';
+    display: block;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 0 48px;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px;
+    padding: 100px 48px;
+    max-width: 1200px;
+    margin: 0 auto;
+
+    .footer-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+
+      .column-title {
+        font-family: var(--font-heading);
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        color: #ffffff;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .footer-links {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 0;
+        margin: 0;
+
+        li a {
+          text-decoration: none;
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 0.85rem;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          transition: color 0.2s ease;
+
+          &:hover {
+            color: #fff;
+          }
+
+          svg {
+            width: 16px;
+            height: 16px;
+            opacity: 0.8;
+          }
+        }
+      }
+    }
+  }
+
+  .footer-bottom {
+    background: #333336;
+    padding: 32px 48px;
+    display: flex;
+    justify-content: center;
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+
+    .footer-bottom-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.7);
+
+      a {
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        transition: color 0.2s ease;
+
+        &:hover {
+          color: #fff;
+        }
+      }
+
+      .copyright {
+        margin-right: 12px;
+      }
+    }
+  }
+}
+
+/* Responsive Media Queries */
+@media (max-width: 768px) {
+  .site-footer .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
