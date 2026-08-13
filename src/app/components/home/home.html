@@ -2,6 +2,7 @@
   <!-- Fixed Liquid Glass Navbar -->
   <app-navbar (themeChange)="onThemeChange($event)"></app-navbar>
 
+  <div class="desktop-only">
   <!-- Ambient Glow Background -->
   <div class="ambient-glow-bg"
     [style.background]="'radial-gradient(circle at 50% 25%, ' + dynamicBgColor() + ' 0%, transparent 60%)'">
@@ -611,8 +612,6 @@
     </section>
   </main>
 
-  <app-footer></app-footer>
-
   <!-- ═══════════════════════════════════════════════════════════════════════
        GLOBAL HOVER PANEL — position:fixed so it escapes every overflow
        clipping context (slider-wrapper overflow:hidden, trending-slider
@@ -673,4 +672,25 @@
     [style.--glow-color]="episodeGlow().color">
   </div>
 
+  </div> <!-- chiusura div hidden per desktop -->
+
+  <div class="mobile-only">
+    <app-home-mobile
+      [heroMovies]="heroMovies"
+      [continueWatchingList]="continueWatchingList"
+      [trendingMovies]="trendingMovies"
+      [latestEpisodes]="latestEpisodes"
+      [newReleasesMovies]="newReleasesMovies"
+      [topWatchedMovies]="topWatchedMovies"
+      [spotlightMovies]="spotlightMovies"
+      [comingSoonMovies]="comingSoonMovies"
+      [hiddenGemsMovies]="hiddenGemsMovies"
+      [topPicksMovies]="topPicksMovies"
+      [actionMovies]="actionMovies"
+      (themeChange)="onThemeChange($event)"
+      [isHidden]="!responsiveService.isMobile()"
+    ></app-home-mobile>
+  </div>
+
+  <app-footer></app-footer>
 </div>

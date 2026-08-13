@@ -1,44 +1,49 @@
 import { Component, signal, OnDestroy, OnInit, AfterViewInit, inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Navbar } from '../navbar/navbar';
 import { FooterComponent } from '../footer/footer';
+import { ResponsiveService } from '../../services/responsive';
+import { HomeMobile } from './home-mobile/home-mobile';
 
-interface HeroMovie {
+export const globalColorCache = new Map<string, string>();
+
+export interface HeroMovie {
   id: number;
   title: string;
   synopsis: string;
   backdropUrl: string;
   primaryColor: string;
+  isBookmarked?: boolean;
 }
 
-interface ContinueWatchingItem {
+export interface ContinueWatchingItem {
   id: number;
   showTitle: string;
   episodeTitle: string;
-  airDate: string;
   currentTime: string;
   totalTime: string;
   progressPercent: number;
   thumbnailUrl: string;
   accentColor: string;
+  airDate: string;
   isPlaying?: boolean;
 }
 
-interface MovieItem {
+export interface MovieItem {
   id: number;
   title: string;
   year: number;
+  duration: string;
   matchScore: string;
   genres: string[];
   synopsis: string;
   posterUrl: string;
   accentColor: string;
-  duration?: string;
   isBookmarked?: boolean;
 }
 
-interface LatestEpisodeItem {
+export interface LatestEpisodeItem {
   id: number;
   title: string;
   seasonEpisode: string;
@@ -47,18 +52,18 @@ interface LatestEpisodeItem {
   isBookmarked?: boolean;
 }
 
-interface TopWatchedItem {
+export interface TopWatchedItem {
   id: number;
   title: string;
-  posterUrl: string;
-  accentColor: string;
   genres: string[];
   year: number;
   watchPercent: number;
   watchCount: string;
+  accentColor: string;
+  posterUrl: string;
 }
 
-interface DetailedMovieItem {
+export interface DetailedMovieItem {
   id: number;
   title: string;
   synopsis: string;
@@ -75,11 +80,12 @@ interface DetailedMovieItem {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, Navbar, FooterComponent],
+  imports: [CommonModule, Navbar, FooterComponent, HomeMobile],
   templateUrl: './home.html',
   styleUrl: './home.scss'
 })
 export class Home implements OnInit, AfterViewInit, OnDestroy {
+  public responsiveService = inject(ResponsiveService);
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
   private isBrowser = isPlatformBrowser(this.platformId);
@@ -683,6 +689,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       this.checkScrollState('hidden-gems-slider');
       this.checkScrollState('top-picks-slider');
       this.checkScrollState('action-movies-slider');
+      this.checkScrollState('top-charts-slider');
 
       // Extract real dominant colors from spotlight poster images
       this.spotlightMovies.forEach(movie => {
@@ -692,7 +699,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       });
 
       // Extract hero button color for first slide
-      this.extractDominantColor(this.heroMovies[0].backdropUrl).then(c => this.heroButtonColor.set(c));
+      this.extractDominantColor(this.heroMovies[0].backdropUrl).then(c => {
+        this.heroButtonColor.set(c);
+      });
 
       // Global capture-phase scroll listener:
       // This catches ANY scroll event on the page (horizontal or vertical,
@@ -755,6 +764,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
    * Falls back to a neutral accent if extraction fails.
    */
   extractDominantColor(imageUrl: string): Promise<string> {
+    if (globalColorCache.has(imageUrl)) {
+      return Promise.resolve(globalColorCache.get(imageUrl)!);
+    }
     return new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -792,9 +804,11 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
             const br = Math.min(255, Math.round(avg + (r - avg) * factor));
             const bg = Math.min(255, Math.round(avg + (g - avg) * factor));
             const bb = Math.min(255, Math.round(avg + (b - avg) * factor));
-            resolve(`rgb(${br}, ${bg}, ${bb})`);
+            const hslStr = `rgb(${br}, ${bg}, ${bb})`;
+            globalColorCache.set(imageUrl, hslStr);
+            resolve(hslStr);
           } else {
-            resolve('#6366f1'); // fallback
+            resolve('#8a2be2'); // Fallback
           }
         } catch {
           resolve('#6366f1');
@@ -839,6 +853,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   startHeroAutoplay() {
     this.stopHeroAutoplay();
     this.heroInterval = setInterval(() => {
+      if (this.responsiveService.isMobile()) return; // Pause timer when hidden
       this.nextHeroSlide();
     }, 7000);
   }
@@ -872,7 +887,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     item.isPlaying = !item.isPlaying;
   }
 
-  toggleBookmark(item: LatestEpisodeItem | MovieItem | DetailedMovieItem) {
+  toggleBookmark(item: LatestEpisodeItem | MovieItem | DetailedMovieItem | HeroMovie) {
     if ('isBookmarked' in item) {
       item.isBookmarked = !item.isBookmarked;
     } else if ('isLiked' in item) {

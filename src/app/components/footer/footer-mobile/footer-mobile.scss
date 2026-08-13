@@ -1,0 +1,43 @@
+.footer-mobile-container {
+  background: #0a0a0f;
+  padding: 32px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+
+  .footer-links {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+
+    a {
+      color: #888;
+      text-decoration: none;
+      font-size: 0.85rem;
+      &:hover { color: #fff; }
+    }
+  }
+
+  .footer-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+
+    .lang-selector {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      color: #bbb;
+      font-size: 0.9rem;
+    }
+
+    .copyright {
+      color: #666;
+      font-size: 0.8rem;
+      margin: 0;
+    }
+  }
+}

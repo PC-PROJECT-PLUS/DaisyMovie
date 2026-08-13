@@ -1,4 +1,5 @@
-<nav class="navbar-container">
+<div class="desktop-only">
+<nav class="navbar-container" [class.is-searching]="isSearchExpanded()">
   <!-- Left Side: Logo & Links -->
   <div class="nav-left">
     <div class="navbar-logo" routerLink="/">
@@ -88,3 +89,7 @@
     </div>
   </div>
 </nav>
+</div>
+<div class="mobile-only">
+  <app-navbar-mobile></app-navbar-mobile>
+</div>

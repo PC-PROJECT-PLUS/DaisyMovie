@@ -1,0 +1,226 @@
+<div class="home-mobile-container" [class.loaded]="pageLoaded()">
+  <!-- HERO SLIDER -->
+  <div class="mobile-hero-slider" id="mobile-hero" (touchstart)="onTouchStart($event)" (touchmove)="onTouchMove($event)" (touchend)="onTouchEnd($event)">
+    <div class="hero-track" [style.transform]="'translateX(-' + (currentHeroIndex() * 100) + '%)'">
+      @for (movie of heroMovies; track movie.id; let i = $index) {
+        <div class="mobile-hero-slide" [class.active]="i === currentHeroIndex()">
+          <img [src]="movie.backdropUrl" [alt]="movie.title" class="hero-bg" [attr.loading]="i === 0 ? null : 'lazy'" (click)="goToMovie(movie)" />
+          <div class="hero-overlay"></div>
+          <div class="hero-content">
+            <h2 class="hero-title">{{ movie.title }}</h2>
+          <p class="hero-synopsis">{{ movie.synopsis }}</p>
+          <div class="hero-actions">
+            <button class="btn-play" [style.background]="heroButtonColor()" (click)="goToMovie(movie)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Riproduci
+            </button>
+            <button class="btn-bookmark" [class.active]="movie.isBookmarked" (click)="toggleBookmark(movie, $event)">
+              <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+    <!-- Pagination dots -->
+    <div class="hero-dots">
+      @for (movie of heroMovies; track movie.id; let i = $index) {
+        <span class="dot" [class.active]="i === currentHeroIndex()"></span>
+      }
+    </div>
+  </div>
+
+  <!-- CONTINUE WATCHING -->
+  <section class="mobile-section">
+    <div class="section-header">
+      <h2>Continua a guardare</h2>
+      <a href="javascript:void(0)">Vedi tutti</a>
+    </div>
+    <div class="mobile-slider">
+      @for (ep of continueWatchingList; track ep.id) {
+        <div class="continue-card">
+          <div class="thumb-wrap">
+            <img [src]="ep.thumbnailUrl" [alt]="ep.showTitle" loading="lazy" />
+            <div class="progress-bar"><div class="fill" [style.width.%]="ep.progressPercent"></div></div>
+            <button class="play-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </button>
+          </div>
+          <div class="card-info">
+            <p class="title">{{ ep.showTitle }}</p>
+            <p class="subtitle">{{ ep.episodeTitle }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- TRENDING NOW -->
+  <section class="mobile-section">
+    <div class="section-header">
+      <h2>In tendenza</h2>
+    </div>
+    <div class="mobile-slider posters-only">
+      @for (movie of trendingMovies; track movie.id) {
+        <div class="poster-card" (click)="goToMovie(movie)">
+          <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
+          <button class="btn-bookmark-mini" [class.active]="movie.isBookmarked" (click)="toggleBookmark(movie, $event)" aria-label="Aggiungi ai preferiti">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </button>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- LATEST EPISODES -->
+  <section class="mobile-section">
+    <div class="section-header">
+      <h2>Ultimi Episodi Aggiunti</h2>
+    </div>
+    <div class="mobile-slider">
+      @for (ep of latestEpisodes; track ep.id) {
+        <div class="episode-card">
+          <img [src]="ep.bannerUrl" [alt]="ep.title" loading="lazy" class="banner-img" />
+          <div class="ep-info">
+            <h3 class="ep-show-title">{{ ep.title }}</h3>
+            <span class="ep-number">{{ ep.seasonEpisode }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- NEW RELEASES -->
+  <section class="mobile-section">
+    <div class="section-header">
+      <h2>Nuove Uscite</h2>
+    </div>
+    <div class="mobile-slider posters-only">
+      @for (movie of newReleasesMovies; track movie.id) {
+        <div class="poster-card" (click)="goToMovie(movie)">
+          <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
+          <button class="btn-bookmark-mini" [class.active]="movie.isBookmarked" (click)="toggleBookmark(movie, $event)" aria-label="Aggiungi ai preferiti">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </button>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- TOP WATCHED CHARTS -->
+  <section class="mobile-section">
+    <div class="top-charts">
+      <div class="chart-heading">
+        <h2>Top 10 in Italia</h2>
+        <span class="badge">Oggi</span>
+      </div>
+      <div class="chart-list">
+        @for (item of topWatchedMovies.slice(0, showAllCharts() ? 10 : 3); track item.id; let i = $index) {
+        <div class="chart-item" [class.podium]="i < 3">
+          <span class="rank">{{ i + 1 }}</span>
+          <img [src]="item.posterUrl" [alt]="item.title" loading="lazy" />
+          <div class="item-info">
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.genres[0] }} · {{ item.year }}</p>
+            <div class="bar-wrap"><div class="bar" [style.width.%]="item.watchPercent"></div></div>
+            <span class="views">{{ item.watchCount }} visualizzazioni</span>
+          </div>
+        </div>
+        }
+      </div>
+      <button class="btn-show-more" (click)="showAllCharts.set(!showAllCharts())">
+        {{ showAllCharts() ? 'Mostra meno' : 'Mostra tutta la classifica' }}
+      </button>
+    </div>
+  </section>
+
+  <!-- SPOTLIGHT -->
+  <section class="mobile-section">
+    <div class="section-header">
+      <h2>In Evidenza</h2>
+    </div>
+    <div class="mobile-slider">
+      @for (movie of spotlightMovies; track movie.id) {
+        <div class="spotlight-card">
+          <img [src]="movie.posterUrl" [alt]="movie.title" class="spotlight-poster" loading="lazy" />
+          <div class="spotlight-info">
+            <h3>{{ movie.title }}</h3>
+            <p class="synopsis">{{ movie.synopsis }}</p>
+            <div class="actions">
+              <button class="btn-play" [style.background]="movie.accentColor" (click)="goToMovie(movie)">Guarda</button>
+              <button class="btn-bookmark" [class.active]="movie.isBookmarked" (click)="toggleBookmark(movie, $event)">
+                <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- COMING SOON -->
+  <section class="mobile-section">
+    <div class="section-header">
+      <h2>In Arrivo</h2>
+    </div>
+    <div class="mobile-slider posters-only">
+      @for (movie of comingSoonMovies; track movie.id) {
+        <div class="poster-card" (click)="goToMovie(movie)">
+          <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
+          <button class="btn-bookmark-mini" [class.active]="movie.isBookmarked" (click)="toggleBookmark(movie, $event)" aria-label="Aggiungi ai preferiti">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </button>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- HIDDEN GEMS -->
+  <section class="mobile-section">
+    <div class="section-header">
+      <h2>Perle Nascoste</h2>
+    </div>
+    <div class="mobile-slider posters-only">
+      @for (movie of hiddenGemsMovies; track movie.id) {
+        <div class="poster-card" (click)="goToMovie(movie)"><img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" /></div>
+      }
+    </div>
+  </section>
+
+  <!-- TOP PICKS FOR YOU -->
+  <section class="mobile-section">
+    <div class="section-header">
+      <h2>Scelti per Te</h2>
+    </div>
+    <div class="mobile-slider posters-only">
+      @for (movie of topPicksMovies; track movie.id) {
+        <div class="poster-card" (click)="goToMovie(movie)"><img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" /></div>
+      }
+    </div>
+  </section>
+
+  <!-- ACTION & ADVENTURE -->
+  <section class="mobile-section">
+    <div class="section-header">
+      <h2>Azione e Avventura</h2>
+    </div>
+    <div class="mobile-slider posters-only">
+      @for (movie of actionMovies; track movie.id) {
+        <div class="poster-card" (click)="goToMovie(movie)"><img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" /></div>
+      }
+    </div>
+  </section>
+
+</div>

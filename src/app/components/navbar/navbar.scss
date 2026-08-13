@@ -7,7 +7,8 @@
   padding: 0 24px;
   display: inline-flex;
   align-items: center;
-  gap: 28px;
+  gap: clamp(10px, 2vw, 28px);
+  max-width: 95vw;
   border-radius: var(--radius-full);
   z-index: 1000;
   white-space: nowrap;
@@ -20,7 +21,10 @@
   &::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: -1;
     border-radius: inherit;
     pointer-events: none;
@@ -254,14 +258,14 @@
       .user-expandable-panel {
         position: absolute;
         top: 0;
-        left: 0;
         right: 0;
+        width: 100%;
         z-index: 1;
         background: rgba(255, 255, 255, 0.08);
         border-radius: 18px;
         overflow: hidden;
         max-height: 36px;
-        transition: max-height 0.35s cubic-bezier(0.25, 1, 0.5, 1), background 0.2s ease, box-shadow 0.3s ease;
+        transition: max-height 0.35s cubic-bezier(0.25, 1, 0.5, 1), width 0.35s cubic-bezier(0.25, 1, 0.5, 1), background 0.2s ease, box-shadow 0.3s ease;
         box-shadow: none;
 
         -webkit-backdrop-filter: blur(24px) saturate(200%);
@@ -332,32 +336,45 @@
       }
     }
   }
-}
-
-@media (max-width: 900px) {
-  .navbar-container {
-    top: 16px;
-
-    .nav-left .nav-links {
-      display: none;
+  @media (max-width: 1024px) {
+    top: 20px;
+    padding: 0 16px;
+    gap: 12px;
+    
+    .nav-left {
+      gap: 12px;
+      .navbar-logo .logo-name {
+        font-size: 1.1rem;
+      }
+      .nav-links {
+        gap: 12px;
+        .nav-item a {
+          font-size: 0.8rem;
+        }
+      }
     }
 
-    .user-name {
-      display: none;
+    .nav-right {
+      gap: 10px;
+      
+      .search-box {
+        width: 160px;
+        &.expanded {
+          width: 200px;
+        }
+        .search-input {
+          font-size: 0.75rem;
+        }
+      }
     }
-  }
-}
 
-@media (max-width: 900px) {
-  .navbar-container {
-    top: 16px;
-
-    .nav-left .nav-links {
-      display: none;
-    }
-
-    .user-name {
-      display: none;
+    .user-wrapper {
+      .user-name {
+        display: none;
+      }
+      .user-expandable-panel.open {
+        width: 160px !important;
+      }
     }
   }
 }

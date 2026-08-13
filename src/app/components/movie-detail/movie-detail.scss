@@ -65,7 +65,7 @@
   z-index: 10;
   width: 100%;
   margin: 0;
-  padding: 65vh 64px 100px;
+  padding: 58vh 64px 100px;
 }
 
 /* ── TOP SECTION (Animated in) ────────────────────────────────────────────── */
@@ -209,7 +209,7 @@
 
 .movie-title {
   font-family: var(--font-heading, inherit);
-  font-size: 4.8rem;
+  font-size: clamp(2.5rem, 5vw, 4.8rem);
   font-weight: 300;
   letter-spacing: -2px;
   line-height: 1;
@@ -604,12 +604,8 @@
 
 /* ── RESPONSIVE ────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .movie-title {
-    font-size: 3.2rem;
-  }
-
   .main-info-container {
-    padding: 40vh 40px 80px;
+    padding: 58vh 40px 80px;
   }
 
   .screenshot-grid {
@@ -619,7 +615,7 @@
 
 @media (max-width: 768px) {
   .main-info-container {
-    padding: 35vh 24px 60px;
+    padding: 58vh 24px 60px;
   }
 
   .screenshot-grid {
@@ -636,10 +632,6 @@
   .title-row {
     flex-direction: column;
     gap: 10px;
-  }
-
-  .movie-title {
-    font-size: 2.5rem;
   }
 }
 
@@ -773,13 +765,16 @@
       &::-webkit-scrollbar {
         width: 4px;
       }
+
       &::-webkit-scrollbar-track {
         background: transparent;
       }
+
       &::-webkit-scrollbar-thumb {
         background: rgba(255, 255, 255, 0.2);
         border-radius: 4px;
       }
+
       &::-webkit-scrollbar-thumb:hover {
         background: rgba(255, 255, 255, 0.4);
       }
@@ -858,6 +853,7 @@
     }
   }
 }
+
 /* ==========================================================================
    REVIEWS SECTION
    ========================================================================== */
@@ -875,7 +871,7 @@
   color: #a0a0a0;
   font-size: 0.9rem;
   margin-top: -10px;
-  
+
   .reviews-count {
     color: #a0a0a0;
   }
@@ -886,11 +882,11 @@
     gap: 8px;
     cursor: pointer;
     user-select: none;
-    
+
     input {
       display: none;
     }
-    
+
     .checkmark {
       width: 16px;
       height: 16px;
@@ -902,10 +898,11 @@
       justify-content: center;
       transition: all 0.2s ease;
     }
-    
-    input:checked ~ .checkmark {
+
+    input:checked~.checkmark {
       background: #0075ff;
       border-color: #0075ff;
+
       &::after {
         content: '';
         width: 4px;
@@ -923,18 +920,18 @@
     align-items: center;
     gap: 8px;
     margin-left: auto;
-    
+
     .sort-value {
       color: #fff;
       display: flex;
       align-items: center;
       gap: 4px;
       cursor: pointer;
-      
+
       svg {
         opacity: 0.7;
       }
-      
+
       &:hover svg {
         opacity: 1;
       }
@@ -984,12 +981,12 @@
     justify-content: center;
     cursor: pointer;
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s ease;
-    
+
     &:hover {
       background: #0066e0;
       transform: scale(1.08);
     }
-    
+
     &:active {
       transform: scale(0.95);
     }
@@ -1025,12 +1022,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    
+
     .review-author {
       font-weight: 500;
       color: #e0e0e0;
     }
-    
+
     .review-menu-btn {
       background: none;
       border: none;
@@ -1042,7 +1039,7 @@
       padding: 4px;
       border-radius: 50%;
       transition: background-color 0.2s ease, color 0.2s ease;
-      
+
       &:hover {
         background-color: rgba(255, 255, 255, 0.1);
         color: #fff;
@@ -1070,11 +1067,11 @@
     justify-content: space-between;
     align-items: center;
     margin-top: 8px;
-    
+
     .review-actions {
       display: flex;
       gap: 16px;
-      
+
       .review-action-btn {
         background: none;
         border: 1px solid #333;
@@ -1087,20 +1084,20 @@
         font-size: 0.9rem;
         cursor: pointer;
         transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-        
+
         &:hover {
           background: rgba(255, 255, 255, 0.05);
           color: #fff;
           border-color: #555;
           transform: translateY(-1px);
         }
-        
+
         &:active {
           transform: translateY(1px);
         }
       }
     }
-    
+
     .review-date {
       color: #666;
       font-size: 0.9rem;
@@ -1119,12 +1116,12 @@
   z-index: 10;
   pointer-events: none;
   transition: margin-top 0.3s ease, background 0.3s ease;
-  
+
   &.is-expanded {
     background: transparent;
     margin-top: 10px;
   }
-  
+
   .reviews-see-all-btn {
     pointer-events: auto;
     background: transparent;
@@ -1139,7 +1136,7 @@
     padding: 8px 16px;
     border-radius: 8px;
     transition: color 0.2s ease, transform 0.25s ease-out;
-    
+
     &:hover {
       color: #fff;
       transform: scale(1.03);
@@ -1147,7 +1144,7 @@
 
     svg {
       transition: transform 0.3s ease;
-      
+
       &.rotate-180 {
         transform: rotate(180deg);
       }

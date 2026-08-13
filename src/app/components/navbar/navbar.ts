@@ -1,16 +1,20 @@
-import { Component, signal, output } from '@angular/core';
+import { Component, signal, output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { ResponsiveService } from '../../services/responsive';
+import { NavbarMobile } from './navbar-mobile/navbar-mobile';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, NavbarMobile],
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss'
 })
 export class Navbar {
+  public responsiveService = inject(ResponsiveService);
+  
   activeTab = signal<string>('Film');
   isSearchExpanded = signal<boolean>(false);
   searchQuery = signal<string>('');

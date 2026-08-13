@@ -4,14 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Navbar } from '../navbar/navbar';
 import { FooterComponent } from '../footer/footer';
+import { ResponsiveService } from '../../services/responsive';
+import { MovieDetailMobile } from './movie-detail-mobile/movie-detail-mobile';
 
-interface CastMember {
+export interface CastMember {
   name: string;
   character: string;
   imageUrl: string;
 }
 
-interface Review {
+export interface Review {
   id: string;
   author: string;
   title: string;
@@ -21,7 +23,7 @@ interface Review {
   date: string;
 }
 
-interface MovieDetail {
+export interface MovieDetail {
   id: number;
   title: string;
   year: number;
@@ -54,11 +56,12 @@ interface MovieDetail {
 @Component({
   selector: 'app-movie-detail',
   standalone: true,
-  imports: [CommonModule, Navbar, FormsModule, FooterComponent],
+  imports: [CommonModule, Navbar, FormsModule, FooterComponent, MovieDetailMobile],
   templateUrl: './movie-detail.html',
   styleUrl: './movie-detail.scss'
 })
 export class MovieDetailComponent implements OnInit {
+  public responsiveService = inject(ResponsiveService);
   movieId = signal<number | null>(null);
   movie = signal<MovieDetail | null>(null);
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
@@ -122,6 +125,9 @@ export class MovieDetailComponent implements OnInit {
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
+      if (isPlatformBrowser(this.platformId)) {
+        setTimeout(() => window.scrollTo(0, 0), 10);
+      }
       const id = params.get('id');
       if (id) {
         this.movieId.set(Number(id));
