@@ -1,9 +1,11 @@
-import { Component, signal, OnDestroy, OnInit, AfterViewInit, inject, PLATFORM_ID } from '@angular/core';
+import { Component, signal, OnDestroy, OnInit, AfterViewInit, inject, PLATFORM_ID, effect } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { Navbar } from '../navbar/navbar';
 import { FooterComponent } from '../footer/footer';
 import { ResponsiveService } from '../../services/responsive';
+import { ThemeService } from '../../services/theme.service';
+import { CategoryService } from '../../services/category.service';
 import { HomeMobile } from './home-mobile/home-mobile';
 
 export const globalColorCache = new Map<string, string>();
@@ -15,6 +17,7 @@ export interface HeroMovie {
   backdropUrl: string;
   primaryColor: string;
   isBookmarked?: boolean;
+  isSeries?: boolean;
 }
 
 export interface ContinueWatchingItem {
@@ -41,6 +44,7 @@ export interface MovieItem {
   posterUrl: string;
   accentColor: string;
   isBookmarked?: boolean;
+  isSeries?: boolean;
 }
 
 export interface LatestEpisodeItem {
@@ -61,6 +65,8 @@ export interface TopWatchedItem {
   watchCount: string;
   accentColor: string;
   posterUrl: string;
+  isBookmarked?: boolean;
+  isSeries?: boolean;
 }
 
 export interface DetailedMovieItem {
@@ -80,12 +86,14 @@ export interface DetailedMovieItem {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, Navbar, FooterComponent, HomeMobile],
+  imports: [CommonModule, FooterComponent, HomeMobile],
   templateUrl: './home.html',
   styleUrl: './home.scss'
 })
 export class Home implements OnInit, AfterViewInit, OnDestroy {
   public responsiveService = inject(ResponsiveService);
+  public themeService = inject(ThemeService);
+  public categoryService = inject(CategoryService);
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
   private isBrowser = isPlatformBrowser(this.platformId);
@@ -97,6 +105,114 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   heroButtonColor = signal<string>('#c026d3');
   pageLoaded = signal<boolean>(false);
   private heroInterval: any;
+
+  // Backup of original movies
+  private originalHeroMovies: HeroMovie[] = [];
+  private originalTrending: MovieItem[] = [];
+  private originalTopWatched: TopWatchedItem[] = [];
+
+  constructor() {
+    effect(() => {
+      const cat = this.categoryService.activeCategory();
+      this.pageLoaded.set(false);
+      setTimeout(() => {
+        this.loadMockData(cat);
+        if (this.isBrowser && this.heroMovies.length > 0) {
+          this.extractDominantColor(this.heroMovies[0].backdropUrl).then(c => this.heroButtonColor.set(c));
+          this.startHeroAutoplay();
+        }
+        // Piccolo ritardo per permettere il rendering prima del fade-in
+        setTimeout(() => this.pageLoaded.set(true), 50);
+      }, 300);
+    });
+  }
+
+  loadMockData(category: string) {
+    this.currentHeroIndex.set(0);
+    if (this.originalHeroMovies.length === 0 && this.heroMovies && this.heroMovies.length > 0) {
+      this.originalHeroMovies = [...this.heroMovies];
+      this.originalTrending = [...this.trendingMovies];
+      this.originalTopWatched = [...this.topWatchedMovies];
+    }
+
+    if (category === 'Animazione' || category === 'Anime') {
+      this.heroMovies = [
+        {
+          id: 301,
+          title: 'Spider-Man: Across the Spider-Verse',
+          synopsis: 'Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence.',
+          backdropUrl: 'https://images.unsplash.com/photo-1608889476518-738c9b1dcb40?w=1600&auto=format&fit=crop&q=80',
+          primaryColor: '#ef4444'
+        },
+        {
+          id: 302,
+          title: 'Arcane',
+          synopsis: 'Set in utopian Piltover and the oppressed underground of Zaun, the story follows the origins of two iconic League champions-and the power that will tear them apart.',
+          backdropUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=1600&auto=format&fit=crop&q=80',
+          primaryColor: '#3b82f6'
+        },
+        {
+          id: 303,
+          title: 'Cyberpunk: Edgerunners',
+          synopsis: 'A street kid trying to survive in a technology and body modification-obsessed city of the future. Having everything to lose, he chooses to stay alive by becoming an edgerunner.',
+          backdropUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1600&auto=format&fit=crop&q=80',
+          primaryColor: '#00f0ff'
+        }
+      ];
+      this.trendingMovies = [
+        { id: 401, title: 'Your Name', year: 2016, matchScore: '99% Match', genres: ['Anime', 'Romance'], synopsis: 'Two strangers find themselves linked in a bizarre way.', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80', accentColor: '#3b82f6', duration: '1h 52m', isSeries: true },
+        { id: 402, title: 'Spirited Away', year: 2001, matchScore: '98% Match', genres: ['Anime', 'Fantasy'], synopsis: 'During her family\'s move to the suburbs...', posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80', accentColor: '#ef4444', duration: '2h 5m', isSeries: true },
+        { id: 404, title: 'Akira', year: 1988, matchScore: '95% Match', genres: ['Anime', 'Sci-Fi'], synopsis: 'A secret military project endangers Neo-Tokyo.', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80', accentColor: '#ef4444', duration: '2h 4m', isSeries: true },
+        { id: 405, title: 'Princess Mononoke', year: 1997, matchScore: '97% Match', genres: ['Anime', 'Adventure'], synopsis: 'On a journey to find the cure for a Tatarigami\'s curse...', posterUrl: 'https://images.unsplash.com/photo-1608889476518-738c9b1dcb40?w=500&auto=format&fit=crop&q=80', accentColor: '#10b981', duration: '2h 14m', isSeries: true },
+        { id: 406, title: 'Ghost in the Shell', year: 1995, matchScore: '94% Match', genres: ['Anime', 'Cyberpunk'], synopsis: 'A cyborg policewoman and her partner hunt a mysterious and powerful hacker.', posterUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=500&auto=format&fit=crop&q=80', accentColor: '#00f0ff', duration: '1h 23m', isSeries: true }
+      ];
+      this.topWatchedMovies = [
+        { id: 403, title: 'Demon Slayer: Mugen Train', genres: ['Anime', 'Action'], year: 2020, watchPercent: 100, watchCount: '5M+', accentColor: '#ef4444', posterUrl: 'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=500&auto=format&fit=crop&q=80', isSeries: true },
+        { id: 407, title: 'Jujutsu Kaisen 0', genres: ['Anime', 'Action'], year: 2021, watchPercent: 95, watchCount: '4M+', accentColor: '#3b82f6', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80', isSeries: true },
+        { id: 408, title: 'A Silent Voice', genres: ['Anime', 'Drama'], year: 2016, watchPercent: 90, watchCount: '3.5M+', accentColor: '#f43f5e', posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80', isSeries: true },
+        { id: 409, title: 'Howl\'s Moving Castle', genres: ['Anime', 'Fantasy'], year: 2004, watchPercent: 88, watchCount: '3M+', accentColor: '#10b981', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80', isSeries: true },
+        { id: 410, title: 'Neon Genesis Evangelion', genres: ['Anime', 'Mecha'], year: 1995, watchPercent: 85, watchCount: '2.5M+', accentColor: '#8b5cf6', posterUrl: 'https://images.unsplash.com/photo-1608889476518-738c9b1dcb40?w=500&auto=format&fit=crop&q=80', isSeries: true }
+      ];
+    } else if (category === 'Serie TV') {
+      this.heroMovies = [
+        {
+          id: 501,
+          title: 'Stranger Things',
+          synopsis: 'When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces and one strange little girl.',
+          backdropUrl: 'https://images.unsplash.com/photo-1614749219355-6b43d6c14175?w=1600&auto=format&fit=crop&q=80',
+          primaryColor: '#ef4444',
+          isSeries: true
+        },
+        {
+          id: 502,
+          title: 'The Crown',
+          synopsis: 'Follows the political rivalries and romance of Queen Elizabeth II\'s reign and the events that shaped the second half of the twentieth century.',
+          backdropUrl: 'https://images.unsplash.com/photo-1574676451642-171b3e8a4a58?w=1600&auto=format&fit=crop&q=80',
+          primaryColor: '#d4af37',
+          isSeries: true
+        }
+      ];
+      this.trendingMovies = [
+        { id: 601, title: 'Breaking Bad', year: 2008, matchScore: '99% Match', genres: ['Crime', 'Drama'], synopsis: 'A high school chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine.', posterUrl: 'https://images.unsplash.com/photo-1506744626753-1fa30fd20055?w=500&auto=format&fit=crop&q=80', accentColor: '#10b981', duration: '5 Seasons', isSeries: true },
+        { id: 604, title: 'Game of Thrones', year: 2011, matchScore: '98% Match', genres: ['Fantasy', 'Drama'], synopsis: 'Nine noble families fight for control over the lands of Westeros...', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80', accentColor: '#3b82f6', duration: '8 Seasons', isSeries: true },
+        { id: 605, title: 'The Office', year: 2005, matchScore: '97% Match', genres: ['Comedy'], synopsis: 'A mockumentary on a group of typical office workers...', posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80', accentColor: '#ef4444', duration: '9 Seasons', isSeries: true },
+        { id: 606, title: 'Dark', year: 2017, matchScore: '96% Match', genres: ['Sci-Fi', 'Thriller'], synopsis: 'A family saga with a supernatural twist...', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80', accentColor: '#f59e0b', duration: '3 Seasons', isSeries: true },
+        { id: 607, title: 'Peaky Blinders', year: 2013, matchScore: '95% Match', genres: ['Crime', 'History'], synopsis: 'A gangster family epic set in 1900s England...', posterUrl: 'https://images.unsplash.com/photo-1608889476518-738c9b1dcb40?w=500&auto=format&fit=crop&q=80', accentColor: '#6b7280', duration: '6 Seasons', isSeries: true },
+        { id: 608, title: 'Succession', year: 2018, matchScore: '94% Match', genres: ['Drama'], synopsis: 'The Roy family is known for controlling the biggest media and entertainment company in the world...', posterUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=500&auto=format&fit=crop&q=80', accentColor: '#d4af37', duration: '4 Seasons', isSeries: true }
+      ];
+      this.topWatchedMovies = [
+        { id: 603, title: 'The Witcher', genres: ['Fantasy', 'Action'], year: 2019, watchPercent: 80, watchCount: '3M+', accentColor: '#3b82f6', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80', isSeries: true },
+        { id: 609, title: 'The Mandalorian', genres: ['Sci-Fi', 'Action'], year: 2019, watchPercent: 85, watchCount: '4M+', accentColor: '#10b981', posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80', isSeries: true },
+        { id: 610, title: 'Better Call Saul', genres: ['Crime', 'Drama'], year: 2015, watchPercent: 78, watchCount: '2.5M+', accentColor: '#ef4444', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80', isSeries: true },
+        { id: 611, title: 'Fargo', genres: ['Crime', 'Thriller'], year: 2014, watchPercent: 75, watchCount: '2M+', accentColor: '#f97316', posterUrl: 'https://images.unsplash.com/photo-1608889476518-738c9b1dcb40?w=500&auto=format&fit=crop&q=80', isSeries: true },
+        { id: 612, title: 'Severance', genres: ['Sci-Fi', 'Thriller'], year: 2022, watchPercent: 82, watchCount: '3.2M+', accentColor: '#3b82f6', posterUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=500&auto=format&fit=crop&q=80', isSeries: true }
+      ];
+    } else {
+      this.heroMovies = [...this.originalHeroMovies];
+      this.trendingMovies = [...this.originalTrending];
+      this.topWatchedMovies = [...this.originalTopWatched];
+    }
+  }
 
   // Dynamic Edge Fade Signals for Slider Scroll State
   canScrollRightContinue = signal<boolean>(true);
@@ -1057,7 +1173,11 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       isBookmarked: item.isBookmarked || false
     };
     console.log('goToMovie clicked! Navigating with state:', movieDetail);
-    this.router.navigate(['/movie', item.id], { state: { data: movieDetail } }).then(success => {
+
+    // Check if it's a TV series or episode
+    const route = (item.isSeries || item.seasonEpisode) ? '/series' : '/movie';
+
+    this.router.navigate([route, item.id], { state: { data: movieDetail } }).then(success => {
       console.log('Navigation success:', success);
     }).catch(err => {
       console.error('Navigation error:', err);

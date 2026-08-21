@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FooterComponent } from '../footer/footer';
 import { ResponsiveService } from '../../services/responsive';
-import { MovieDetailMobile } from './movie-detail-mobile/movie-detail-mobile';
+import { SeriesDetailMobile } from './series-detail-mobile/series-detail-mobile';
 
 export interface CastMember {
   name: string;
@@ -22,11 +22,21 @@ export interface Review {
   date: string;
 }
 
-export interface MovieDetail {
+export interface Episode {
+  id: number;
+  episodeNumber: number;
+  title: string;
+  duration: string;
+  thumbnailUrl: string;
+  synopsis: string;
+}
+
+export interface SeriesDetail {
   id: number;
   title: string;
   year: number;
-  duration: string;
+  episodeDuration: string;
+  totalDuration: string;
   matchScore: string;
   genres: string[];
   synopsis: string;
@@ -48,21 +58,22 @@ export interface MovieDetail {
   cast: CastMember[];
   screenshots: string[];
   reviews: Review[];
+  episodes: Episode[];
   isBookmarked: boolean;
   secondaryColor?: string;
 }
 
 @Component({
-  selector: 'app-movie-detail',
+  selector: 'app-series-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, FooterComponent, MovieDetailMobile],
-  templateUrl: './movie-detail.html',
-  styleUrl: './movie-detail.scss'
+  imports: [CommonModule, FormsModule, FooterComponent, SeriesDetailMobile],
+  templateUrl: './series-detail.html',
+  styleUrl: './series-detail.scss'
 })
-export class MovieDetailComponent implements OnInit {
+export class SeriesDetailComponent implements OnInit {
   public responsiveService = inject(ResponsiveService);
-  movieId = signal<number | null>(null);
-  movie = signal<MovieDetail | null>(null);
+  seriesId = signal<number | null>(null);
+  series = signal<SeriesDetail | null>(null);
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
   pageLoaded = signal<boolean>(false);
 
@@ -88,8 +99,14 @@ export class MovieDetailComponent implements OnInit {
     { id: '17', title: 'Need for Speed', posterUrl: 'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=400&q=80', year: 2014, duration: '2h 10m', genres: ['Action', 'Crime'], synopsis: 'Fresh from prison, a street racer who was framed by a wealthy business associate joins a cross country race with revenge in mind.' }
   ];
 
+  // EPISODE SLIDER AND DROPDOWN STATE
+  isDropdownOpen = signal<boolean>(false);
+  activeSeason = signal<number>(1);
+  showLeftArrowEpisodes = signal<boolean>(false);
+  showRightArrowEpisodes = signal<boolean>(true);
+
   // HOVER PANEL STATE
-  panelMovie = signal<any | null>(null);
+  panelSeries = signal<any | null>(null);
   panelAccentColor = signal<string>('#0075ff');
   isPanelVisible = signal<boolean>(false);
   isPanelSwitching = signal<boolean>(false);
@@ -129,19 +146,41 @@ export class MovieDetailComponent implements OnInit {
       }
       const id = params.get('id');
       if (id) {
-        this.movieId.set(Number(id));
+        this.seriesId.set(Number(id));
         if (isPlatformBrowser(this.platformId)) {
           const stateData = window.history.state?.data;
           if (stateData && stateData.id === Number(id)) {
             if (!stateData.reviews) {
               stateData.reviews = this.getMockReviews();
             }
-            this.movie.set(stateData);
+            if (!stateData.episodes) {
+              // Ensure we have episodes and duration fields
+              stateData.episodeDuration = '45m / ep';
+              stateData.totalDuration = '10h 30m';
+              stateData.episodes = [
+                { id: 101, episodeNumber: 1, title: 'Episode 1', duration: '45m', thumbnailUrl: 'https://images.unsplash.com/photo-1614749219355-6b43d6c14175?w=400&auto=format&fit=crop&q=80', synopsis: 'Pilot episode.' },
+                { id: 102, episodeNumber: 2, title: 'Episode 2', duration: '43m', thumbnailUrl: 'https://images.unsplash.com/photo-1574676451642-171b3e8a4a58?w=400&auto=format&fit=crop&q=80', synopsis: 'Second episode.' },
+                { id: 103, episodeNumber: 3, title: 'Episode 3', duration: '46m', thumbnailUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&auto=format&fit=crop&q=80', synopsis: 'The plot thickens.' },
+                { id: 104, episodeNumber: 4, title: 'Episode 4', duration: '44m', thumbnailUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400&auto=format&fit=crop&q=80', synopsis: 'A surprising turn of events.' },
+                { id: 105, episodeNumber: 5, title: 'Episode 5', duration: '42m', thumbnailUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=400&auto=format&fit=crop&q=80', synopsis: 'Characters face their fears.' },
+                { id: 106, episodeNumber: 6, title: 'Episode 6', duration: '48m', thumbnailUrl: 'https://images.unsplash.com/photo-1585951237318-9ea5e175b891?w=400&auto=format&fit=crop&q=80', synopsis: 'The climax approaches.' },
+                { id: 107, episodeNumber: 7, title: 'Episode 7', duration: '41m', thumbnailUrl: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&auto=format&fit=crop&q=80', synopsis: 'Final preparations.' },
+                { id: 108, episodeNumber: 8, title: 'Episode 8', duration: '50m', thumbnailUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&auto=format&fit=crop&q=80', synopsis: 'Season finale.' },
+                { id: 109, episodeNumber: 9, title: 'Episode 9', duration: '45m', thumbnailUrl: 'https://images.unsplash.com/photo-1608889476518-738c9b1dcb40?w=400&auto=format&fit=crop&q=80', synopsis: 'New beginnings.' },
+                { id: 110, episodeNumber: 10, title: 'Episode 10', duration: '47m', thumbnailUrl: 'https://images.unsplash.com/photo-1574676451642-171b3e8a4a58?w=400&auto=format&fit=crop&q=80', synopsis: 'Unexpected allies.' },
+                { id: 111, episodeNumber: 11, title: 'Episode 11', duration: '49m', thumbnailUrl: 'https://images.unsplash.com/photo-1614749219355-6b43d6c14175?w=400&auto=format&fit=crop&q=80', synopsis: 'A hidden truth.' },
+                { id: 112, episodeNumber: 12, title: 'Episode 12', duration: '44m', thumbnailUrl: 'https://images.unsplash.com/photo-1506744626753-1fa30fd20055?w=400&auto=format&fit=crop&q=80', synopsis: 'The final confrontation.' },
+                { id: 113, episodeNumber: 13, title: 'Episode 13', duration: '45m', thumbnailUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400&auto=format&fit=crop&q=80', synopsis: 'Unveiling the past.' },
+                { id: 114, episodeNumber: 14, title: 'Episode 14', duration: '43m', thumbnailUrl: 'https://images.unsplash.com/photo-1585951237318-9ea5e175b891?w=400&auto=format&fit=crop&q=80', synopsis: 'A risky plan.' },
+                { id: 115, episodeNumber: 15, title: 'Episode 15', duration: '46m', thumbnailUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=400&auto=format&fit=crop&q=80', synopsis: 'The ultimate truth revealed.' }
+              ];
+            }
+            this.series.set(stateData);
             this.updateMovieAccentColor(stateData.backdropUrl);
             return;
           }
         }
-        this.loadMovieDetails(Number(id));
+        this.loadSeriesDetails(Number(id));
       }
     });
 
@@ -221,6 +260,25 @@ export class MovieDetailComponent implements OnInit {
       this.canScrollRightSuggested.set(canRight);
       this.canScrollLeftSuggested.set(canLeft);
     }
+
+    // Check Episodes slider
+    const elEp = document.getElementById('episodes-slider');
+    if (elEp) {
+      const canRight = elEp.scrollLeft + elEp.clientWidth < elEp.scrollWidth - 10;
+      const canLeft = elEp.scrollLeft > 10;
+      this.showRightArrowEpisodes.set(canRight);
+      this.showLeftArrowEpisodes.set(canLeft);
+    }
+  }
+
+  scrollEpisodes(direction: 'left' | 'right') {
+    if (!this.isBrowser || typeof document === 'undefined') return;
+    const el = document.getElementById('episodes-slider');
+    if (el) {
+      const scrollAmount = direction === 'left' ? -600 : 600;
+      el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      setTimeout(() => this.checkScrollState(), 400);
+    }
   }
 
   scrollCast(direction: 'left' | 'right') {
@@ -271,7 +329,7 @@ export class MovieDetailComponent implements OnInit {
       this.isPanelSwitching.set(true);
       this.isPanelVisible.set(false);
       this.switchTimer = setTimeout(() => {
-        this.panelMovie.set(movie);
+        this.panelSeries.set(movie);
         this.panelPos.set(calcPos());
         this.isPanelSwitching.set(false);
         this.extractDominantColors(movie.posterUrl).then(c => this.panelAccentColor.set(c.primary));
@@ -279,7 +337,7 @@ export class MovieDetailComponent implements OnInit {
       }, 120);
     } else {
       this.showTimer = setTimeout(() => {
-        this.panelMovie.set(movie);
+        this.panelSeries.set(movie);
         this.panelPos.set(calcPos());
         this.extractDominantColors(movie.posterUrl).then(c => this.panelAccentColor.set(c.primary));
         requestAnimationFrame(() => this.isPanelVisible.set(true));
@@ -320,7 +378,7 @@ export class MovieDetailComponent implements OnInit {
   private updateMovieAccentColor(imageUrl: string) {
     if (!isPlatformBrowser(this.platformId)) return;
     this.extractDominantColors(imageUrl).then(colors => {
-      this.movie.update(m => {
+      this.series.update(m => {
         if (m) return { ...m, accentColor: colors.primary, secondaryColor: colors.secondary };
         return m;
       });
@@ -424,14 +482,15 @@ export class MovieDetailComponent implements OnInit {
     return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
   }
 
-  loadMovieDetails(id: number) {
+  loadSeriesDetails(id: number) {
     // Generate dummy data based on ID to simulate a real fetch
-    this.movie.set({
+    this.series.set({
       id: id,
-      title: 'THE GORGE (Demo)',
-      year: 2026,
-      duration: '2h 01min',
-      matchScore: '95% Match',
+      title: 'ARCANE (Demo)',
+      year: 2021,
+      episodeDuration: '40m / ep',
+      totalDuration: '6h 40m',
+      matchScore: '99% Match',
       genres: ['Action', 'Mystery', 'Thriller'],
       synopsis: 'Two highly trained elite snipers are assigned to guard opposite sides of a mysterious, lethal canyon, protecting the world from an unspeakable danger lurking within. As days turn into weeks, they must survive not only the harsh conditions but also the psychological toll of isolation and paranoia.',
       backdropUrl: 'https://images.unsplash.com/photo-1509281373149-e957c6296406?w=1600&auto=format&fit=crop&q=80',
@@ -445,10 +504,24 @@ export class MovieDetailComponent implements OnInit {
       editedBy: 'Stephen Mirrione',
       writers: 'Ehren Kruger, Eric Warren Singer, Christopher McQuarrie',
       cinematography: 'Claudio Miranda',
-      budget: '$130,000,000',
-      boxOffice: '$1.496 Billion',
-      languages: 'English, Spanish',
-      releaseDate: 'June 26, 2025 (Germany)',
+      budget: '$90,000,000',
+      boxOffice: 'N/A',
+      languages: 'English',
+      releaseDate: 'November 6, 2021',
+      episodes: [
+        { id: 101, episodeNumber: 1, title: 'Welcome to the Playground', duration: '43m', thumbnailUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=500&auto=format&fit=crop&q=80', synopsis: 'Orphaned sisters Vi and Powder bring trouble to Zaun\'s underground streets in the wake of a heist in posh Piltover.' },
+        { id: 102, episodeNumber: 2, title: 'Some Mysteries Are Better Left Unsolved', duration: '40m', thumbnailUrl: 'https://images.unsplash.com/photo-1550100136-e092101726f4?w=500&auto=format&fit=crop&q=80', synopsis: 'Idealistic inventor Jayce attempts to harness magic through science—despite his mentor\'s warnings.' },
+        { id: 103, episodeNumber: 3, title: 'The Base Violence Necessary for Change', duration: '44m', thumbnailUrl: 'https://images.unsplash.com/photo-1608889476518-738c9b1dcb40?w=500&auto=format&fit=crop&q=80', synopsis: 'An epic showdown between old rivals results in a fateful moment for Zaun. Jayce and Viktor risk it all for their research.' },
+        { id: 104, episodeNumber: 4, title: 'Happy Progress Day!', duration: '40m', thumbnailUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80', synopsis: 'With Piltover prospering from their technology, Jayce and Viktor weigh their next move. A familiar face re-emerges from Zaun.' },
+        { id: 105, episodeNumber: 5, title: 'Everybody Wants to Be My Enemy', duration: '42m', thumbnailUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=400&auto=format&fit=crop&q=80', synopsis: 'Characters face their fears.' },
+        { id: 106, episodeNumber: 6, title: 'When These Walls Come Tumbling Down', duration: '48m', thumbnailUrl: 'https://images.unsplash.com/photo-1585951237318-9ea5e175b891?w=400&auto=format&fit=crop&q=80', synopsis: 'The climax approaches.' },
+        { id: 107, episodeNumber: 7, title: 'The Boy Savior', duration: '41m', thumbnailUrl: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&auto=format&fit=crop&q=80', synopsis: 'Final preparations.' },
+        { id: 108, episodeNumber: 8, title: 'Oil and Water', duration: '50m', thumbnailUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&auto=format&fit=crop&q=80', synopsis: 'Season finale part 1.' },
+        { id: 109, episodeNumber: 9, title: 'The Monster You Created', duration: '45m', thumbnailUrl: 'https://images.unsplash.com/photo-1608889476518-738c9b1dcb40?w=400&auto=format&fit=crop&q=80', synopsis: 'Season finale part 2.' },
+        { id: 110, episodeNumber: 10, title: 'New Alliances', duration: '47m', thumbnailUrl: 'https://images.unsplash.com/photo-1574676451642-171b3e8a4a58?w=400&auto=format&fit=crop&q=80', synopsis: 'Unexpected allies.' },
+        { id: 111, episodeNumber: 11, title: 'The Cost of Progress', duration: '49m', thumbnailUrl: 'https://images.unsplash.com/photo-1614749219355-6b43d6c14175?w=400&auto=format&fit=crop&q=80', synopsis: 'A hidden truth.' },
+        { id: 112, episodeNumber: 12, title: 'Reckoning', duration: '44m', thumbnailUrl: 'https://images.unsplash.com/photo-1506744626753-1fa30fd20055?w=400&auto=format&fit=crop&q=80', synopsis: 'The final confrontation.' }
+      ],
       cast: [
         { name: 'Brad Pitt', character: 'Sonny Hayes', imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80' },
         { name: 'Damson Idris', character: 'Joshua Pearce', imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80' },
@@ -539,7 +612,7 @@ export class MovieDetailComponent implements OnInit {
     const text = this.newReviewText().trim();
     if (!text) return;
     
-    this.movie.update(m => {
+    this.series.update(m => {
       if (!m) return m;
       const newReview: Review = {
         id: Date.now().toString(),
@@ -563,9 +636,9 @@ export class MovieDetailComponent implements OnInit {
   }
 
   toggleBookmark() {
-    const current = this.movie();
+    const current = this.series();
     if (current) {
-      this.movie.update(m => ({ ...m!, isBookmarked: !m!.isBookmarked }));
+      this.series.update(m => ({ ...m!, isBookmarked: !m!.isBookmarked }));
     }
   }
 

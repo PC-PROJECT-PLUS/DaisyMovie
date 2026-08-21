@@ -1,0 +1,374 @@
+<div class="settings-mobile-container page-fade-in" [attr.data-theme]="themeService.currentTheme()" (click)="closeDropdowns()">
+  
+  <div class="mobile-header glass-header">
+    <h1>Impostazioni</h1>
+  </div>
+
+  <div class="mobile-tabs-container">
+    <div class="mobile-tabs">
+      <div class="tab-item" [class.active]="activeTab === 'account'" (click)="setTab('account')">Account</div>
+      <div class="tab-item" [class.active]="activeTab === 'profile'" (click)="setTab('profile')">Profili</div>
+      <div class="tab-item" [class.active]="activeTab === 'playback'" (click)="setTab('playback')">Riproduzione</div>
+      <div class="tab-item" [class.active]="activeTab === 'language'" (click)="setTab('language')">Lingua</div>
+      <div class="tab-item" [class.active]="activeTab === 'appearance'" (click)="setTab('appearance')">Aspetto</div>
+      <div class="tab-item" [class.active]="activeTab === 'family'" (click)="setTab('family')">Famiglia</div>
+    </div>
+  </div>
+
+  <div class="mobile-content slide-up">
+    <!-- ACCOUNT -->
+    @if (activeTab === 'account') {
+      <div class="content-pane page-fade-in">
+        
+        <div class="bento-grid-mobile">
+          
+          <!-- Dettagli Personali -->
+          <div class="bento-item slide-up-fade" style="animation-delay: 0.1s;">
+            <div class="bento-header">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <h3>Dettagli Personali</h3>
+            </div>
+            <div class="bento-row">
+              <div class="bento-label">Nome</div>
+              <div class="bento-value">Luca Rossi</div>
+            </div>
+            <div class="bento-row">
+              <div class="bento-label">Data Nascita</div>
+              <div class="bento-value">15/04/1995</div>
+            </div>
+            <div class="mt-4">
+              <button class="btn-text-link">Modifica Dati</button>
+            </div>
+          </div>
+
+          <!-- Accesso e Sicurezza -->
+          <div class="bento-item slide-up-fade" style="animation-delay: 0.2s;">
+            <div class="bento-header">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <h3>Accesso</h3>
+            </div>
+            <div class="bento-row">
+              <div class="bento-label">Email</div>
+              <div class="bento-value">{{ profiles[0].email }}</div>
+            </div>
+            <div class="bento-row">
+              <div class="bento-label">Password</div>
+              <div class="bento-value">********</div>
+            </div>
+            <div class="mt-4 flex-row" style="justify-content: space-between;">
+              <button class="btn-text-link">Cambia Password</button>
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Dispositivi Connessi -->
+          <div class="bento-item slide-up-fade" style="animation-delay: 0.3s;">
+            <div class="bento-header">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+              <h3>Dispositivi Recenti</h3>
+            </div>
+            <div class="device-item">
+              <div class="device-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
+              </div>
+              <div class="device-info">
+                <div class="device-name">Smart TV</div>
+                <div class="device-meta">Attivo ora</div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <button class="btn-text-link">Disconnetti tutti</button>
+            </div>
+          </div>
+
+          <div class="bento-item danger-zone slide-up-fade" style="animation-delay: 0.4s;">
+            <div class="bento-header">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              <h3>Danger Zone</h3>
+            </div>
+            <button class="btn-danger-outline full-width" style="justify-content: center;">Elimina Account</button>
+          </div>
+
+        </div>
+      </div>
+    }
+
+    <!-- PROFILE -->
+    @if (activeTab === 'profile') {
+      <div class="content-pane fade-in">
+        
+        <div class="profile-selector-mobile mb-4">
+          @for (p of profiles; track p.id) {
+            <div class="profile-item" [class.active]="p.id === selectedProfileId" (click)="selectProfile(p.id)">
+              <img [src]="p.avatar" alt="Avatar">
+              <span>{{ p.name }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="setting-group-card fade-in">
+          <div class="avatar-section">
+            <img [src]="selectedProfile.avatar" alt="Avatar" class="avatar-img">
+            
+            <h4 class="text-center mt-3 mb-2 font-medium">Scegli un nuovo Avatar</h4>
+            <div class="avatar-grid-mobile">
+              @for (av of avatars; track av) {
+                <img [src]="av" class="mini-avatar" [class.selected]="av === selectedProfile.avatar" (click)="selectedProfile.avatar = av">
+              }
+            </div>
+          </div>
+          
+          <div class="form-group mt-4">
+            <label>Nome Utente</label>
+            <input type="text" [(ngModel)]="selectedProfile.name" class="glass-input">
+          </div>
+          
+          <div class="form-group">
+            <label>Biografia</label>
+            <textarea [(ngModel)]="selectedProfile.bio" class="glass-input textarea" rows="3"></textarea>
+          </div>
+          
+          <button class="btn-primary full-width mt-4">Salva Profilo</button>
+        </div>
+      </div>
+    }
+
+    <!-- PLAYBACK -->
+    @if (activeTab === 'playback') {
+      <div class="content-pane fade-in">
+        <div class="form-group">
+          <label>Qualità Video</label>
+          <div class="custom-select" (click)="toggleDropdown('quality'); $event.stopPropagation()">
+                    <div class="select-header">
+                      <span>{{ getOptionLabel(qualityOptions, playbackPrefs.quality) }}</span>
+                      <svg class="chevron" [class.rotated]="openDropdown() === 'quality'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    @if (openDropdown() === 'quality') {
+                      <div class="select-options fade-in-down">
+                        @for (opt of qualityOptions; track opt.value) {
+                          <div class="option" [class.selected]="playbackPrefs.quality === opt.value" (click)="playbackPrefs.quality = opt.value; closeDropdowns(); $event.stopPropagation()">
+                            {{ opt.label }}
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+        </div>
+
+        <div class="preference-list mt-4">
+          <div class="preference-item">
+            <div class="pref-info">
+              <h3>Autoplay Episodi</h3>
+              <p>Avvia episodio successivo</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="playbackPrefs.autoplayNext">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="preference-item">
+            <div class="pref-info">
+              <h3>Autoplay Trailer</h3>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="playbackPrefs.autoplayTrailers">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="preference-item">
+            <div class="pref-info">
+              <h3>Salta Intro</h3>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="playbackPrefs.skipIntro">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- LANGUAGE -->
+    @if (activeTab === 'language') {
+      <div class="content-pane fade-in">
+        <div class="form-group">
+          <label>Audio Predefinito</label>
+          <div class="custom-select" (click)="toggleDropdown('audio'); $event.stopPropagation()">
+                    <div class="select-header">
+                      <span>{{ getOptionLabel(audioOptions, languagePrefs.audio) }}</span>
+                      <svg class="chevron" [class.rotated]="openDropdown() === 'audio'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    @if (openDropdown() === 'audio') {
+                      <div class="select-options fade-in-down">
+                        @for (opt of audioOptions; track opt.value) {
+                          <div class="option" [class.selected]="languagePrefs.audio === opt.value" (click)="languagePrefs.audio = opt.value; closeDropdowns(); $event.stopPropagation()">
+                            {{ opt.label }}
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+        </div>
+        <div class="form-group mt-3">
+          <label>Sottotitoli Predefiniti</label>
+          <div class="custom-select" (click)="toggleDropdown('subtitle'); $event.stopPropagation()">
+                    <div class="select-header">
+                      <span>{{ getOptionLabel(subtitleOptions, languagePrefs.subtitle) }}</span>
+                      <svg class="chevron" [class.rotated]="openDropdown() === 'subtitle'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    @if (openDropdown() === 'subtitle') {
+                      <div class="select-options fade-in-down">
+                        @for (opt of subtitleOptions; track opt.value) {
+                          <div class="option" [class.selected]="languagePrefs.subtitle === opt.value" (click)="languagePrefs.subtitle = opt.value; closeDropdowns(); $event.stopPropagation()">
+                            {{ opt.label }}
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+        </div>
+        
+        <div class="preference-item border-top mt-3">
+          <div class="pref-info">
+            <h3>Sempre Attivi</h3>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" [(ngModel)]="languagePrefs.alwaysShowSubs">
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="setting-group-card mt-5">
+          <h3 class="group-title">Stile Sottotitoli</h3>
+          <div class="subtitle-preview mt-3" [attr.data-size]="languagePrefs.subSize" [attr.data-style]="languagePrefs.subStyle">
+            <div class="preview-bg"></div>
+            <span class="sub-text">Anteprima</span>
+          </div>
+          <div class="form-group mt-4 mb-0">
+            <label>Dimensione</label>
+            <div class="custom-select" (click)="toggleDropdown('subSize'); $event.stopPropagation()">
+                    <div class="select-header">
+                      <span>{{ getOptionLabel(sizeOptions, languagePrefs.subSize) }}</span>
+                      <svg class="chevron" [class.rotated]="openDropdown() === 'subSize'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    @if (openDropdown() === 'subSize') {
+                      <div class="select-options fade-in-down">
+                        @for (opt of sizeOptions; track opt.value) {
+                          <div class="option" [class.selected]="languagePrefs.subSize === opt.value" (click)="languagePrefs.subSize = opt.value; closeDropdowns(); $event.stopPropagation()">
+                            {{ opt.label }}
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+          </div>
+          <div class="form-group mt-3 mb-0">
+            <label>Stile</label>
+            <div class="custom-select" (click)="toggleDropdown('subStyle'); $event.stopPropagation()">
+                    <div class="select-header">
+                      <span>{{ getOptionLabel(styleOptions, languagePrefs.subStyle) }}</span>
+                      <svg class="chevron" [class.rotated]="openDropdown() === 'subStyle'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    @if (openDropdown() === 'subStyle') {
+                      <div class="select-options fade-in-down">
+                        @for (opt of styleOptions; track opt.value) {
+                          <div class="option" [class.selected]="languagePrefs.subStyle === opt.value" (click)="languagePrefs.subStyle = opt.value; closeDropdowns(); $event.stopPropagation()">
+                            {{ opt.label }}
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- APPEARANCE -->
+    @if (activeTab === 'appearance') {
+      <div class="content-pane fade-in">
+        <p class="subtitle text-center">Personalizza il tema dell'applicazione.</p>
+        
+        <div class="theme-list mt-4">
+          <div class="theme-option" [class.active]="themeService.currentTheme() === 'dark'" (click)="setTheme('dark')">
+            <div class="preview dark-preview"></div>
+            <div class="theme-info">
+              <h3>Scuro</h3>
+              <p>Migliore per ambienti bui</p>
+            </div>
+            <div class="check-circle"></div>
+          </div>
+          <div class="theme-option" [class.active]="themeService.currentTheme() === 'light'" (click)="setTheme('light')">
+            <div class="preview light-preview"></div>
+            <div class="theme-info">
+              <h3>Chiaro</h3>
+              <p>Massima leggibilità diurna</p>
+            </div>
+            <div class="check-circle"></div>
+          </div>
+          <div class="theme-option" [class.active]="themeService.currentTheme() === 'dynamic'" (click)="setTheme('dynamic')">
+            <div class="preview dynamic-preview"></div>
+            <div class="theme-info">
+              <h3>Dinamico</h3>
+              <p>Si adatta al film in evidenza</p>
+            </div>
+            <div class="check-circle"></div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- FAMILY CONTROLS -->
+    @if (activeTab === 'family') {
+      <div class="content-pane fade-in">
+        
+        <div class="profile-selector-mobile mb-4">
+          @for (p of profiles; track p.id) {
+            <div class="profile-item" [class.active]="p.id === selectedProfileId" (click)="selectProfile(p.id)">
+              <img [src]="p.avatar" alt="Avatar">
+              <span>{{ p.name }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="setting-group-card fade-in">
+          <h3 class="group-title text-center">Limiti per {{ selectedProfile.name }}</h3>
+          
+          <div class="rating-selector mt-4">
+            <div class="rating-btn" [class.active]="selectedProfile.familyControls.maturityRating === 'Tutti'" (click)="selectedProfile.familyControls.maturityRating = 'Tutti'">Tutti</div>
+            <div class="rating-btn" [class.active]="selectedProfile.familyControls.maturityRating === '7+'" (click)="selectedProfile.familyControls.maturityRating = '7+'">7+</div>
+            <div class="rating-btn" [class.active]="selectedProfile.familyControls.maturityRating === '13+'" (click)="selectedProfile.familyControls.maturityRating = '13+'">13+</div>
+            <div class="rating-btn" [class.active]="selectedProfile.familyControls.maturityRating === '16+'" (click)="selectedProfile.familyControls.maturityRating = '16+'">16+</div>
+            <div class="rating-btn adult" [class.active]="selectedProfile.familyControls.maturityRating === '18+'" (click)="selectedProfile.familyControls.maturityRating = '18+'">18+</div>
+          </div>
+
+          <div class="preference-item mt-5 pt-4 border-top">
+            <div class="pref-info">
+              <h3>Blocco con PIN</h3>
+              <p>Richiedi PIN per accedere</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="selectedProfile.familyControls.pinRequired">
+              <span class="slider"></span>
+            </label>
+          </div>
+          
+          @if (selectedProfile.familyControls.pinRequired) {
+            <div class="form-group mt-3 fade-in">
+              <label>Inserisci PIN (4 cifre)</label>
+              <div class="pin-input-container" style="justify-content: space-between;">
+                <input type="password" maxlength="1" class="pin-box" id="pin-mob-0" [value]="pin()[0]" (input)="onPinInput($event, 0)" (keydown)="onPinKeydown($event, 0)">
+                <input type="password" maxlength="1" class="pin-box" id="pin-mob-1" [value]="pin()[1]" (input)="onPinInput($event, 1)" (keydown)="onPinKeydown($event, 1)">
+                <input type="password" maxlength="1" class="pin-box" id="pin-mob-2" [value]="pin()[2]" (input)="onPinInput($event, 2)" (keydown)="onPinKeydown($event, 2)">
+                <input type="password" maxlength="1" class="pin-box" id="pin-mob-3" [value]="pin()[3]" (input)="onPinInput($event, 3)" (keydown)="onPinKeydown($event, 3)">
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,124 @@
+@if (isMobile()) {
+  <app-history-mobile [historyItems]="historyItems()" (onRemove)="removeHistory($event)"></app-history-mobile>
+} @else {
+  <div class="history-page" [attr.data-theme]="themeService.currentTheme()">
+
+    <div class="ambient-glow" [class.loaded]="pageLoaded()"></div>
+
+    <!-- HERO SECTION -->
+    <section class="hero-section" [class.loaded]="pageLoaded()">
+      <div class="hero-backdrop-wrapper">
+        <img [src]="heroImage" alt="history Hero" class="hero-backdrop-img" loading="lazy" />
+        <div class="hero-gradient-overlay"></div>
+      </div>
+    </section>
+
+    <!-- CONTENT SECTION -->
+    <div class="history-desktop-container" [class.loaded]="pageLoaded()">
+      
+      <!-- HEADER WITH SEARCH AND SORT -->
+      <div class="header-section">
+        <h1 class="page-title">{{ heroTitle }}</h1>
+        
+        <div class="controls-wrapper">
+          <!-- Custom Search Bar -->
+          <div class="custom-search-container" [class.focused]="isSearchFocused()">
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+              type="text" 
+              class="search-input" 
+              placeholder="Cerca nei preferiti..." 
+              [ngModel]="searchQuery()" 
+              (ngModelChange)="searchQuery.set($event)"
+              (focus)="isSearchFocused.set(true)"
+              (blur)="isSearchFocused.set(false)"
+            />
+            @if (searchQuery()) {
+              <button class="clear-search" (click)="searchQuery.set('')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            }
+          </div>
+
+          <!-- Custom Sort Combobox -->
+          <div class="custom-dropdown">
+            <button class="dropdown-trigger" (click)="toggleSortDropdown()">
+              <span class="label">Ordina per:</span>
+              <span class="value">{{ currentSortLabel }}</span>
+              <svg class="chevron" [class.open]="isSortDropdownOpen()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+
+            <div class="dropdown-menu" [class.show]="isSortDropdownOpen()">
+              <button class="dropdown-item" [class.active]="sortOption() === 'recent'" (click)="selectSortOption('recent')">Più recenti</button>
+              <button class="dropdown-item" [class.active]="sortOption() === 'az'" (click)="selectSortOption('az')">Titolo (A-Z)</button>
+              <button class="dropdown-item" [class.active]="sortOption() === 'match'" (click)="selectSortOption('match')">Miglior Match</button>
+            </div>
+            
+            <!-- Backdrop for closing dropdown when clicking outside -->
+            @if (isSortDropdownOpen()) {
+              <div class="dropdown-backdrop" (click)="isSortDropdownOpen.set(false)"></div>
+            }
+          </div>
+        </div>
+      </div>
+
+      @if (filteredItems().length > 0) {
+        <div class="history-grid">
+          @for (movie of filteredItems(); track movie.id; let idx = $index) {
+            <div class="movie-card clean-card" 
+                 (click)="goToDetail(movie)"
+                 (mouseenter)="hoveredItemId.set(movie.id)" 
+                 (mouseleave)="hoveredItemId.set(null)"
+                 [class.hovered]="hoveredItemId() === movie.id"
+                 [style.animation-delay]="(idx * 0.05) + 's'"
+                 [class.fade-in]="pageLoaded()">
+              
+              <img class="movie-poster" [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
+              
+              <button class="remove-favorite-btn" (click)="removeHistory(movie, $event)" title="Rimuovi dai preferiti">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </button>
+
+              <div class="hover-content">
+                <div class="play-icon">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                </div>
+                <h3 class="hover-title">{{ movie.title }}</h3>
+                <div class="hover-meta">
+                  <span>{{ movie.year }}</span>
+                  @if (movie.duration) {
+                    <span>•</span>
+                    <span>{{ movie.duration }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          <div class="empty-icon-wrapper">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <h2>Nessun preferito trovato</h2>
+          <p>La tua ricerca non ha prodotto risultati, oppure non hai ancora aggiunto preferiti.</p>
+          <button class="btn-primary" (click)="searchQuery.set('')" *ngIf="searchQuery()">Rimuovi filtri</button>
+        </div>
+      }
+    </div>
+  </div>
+}

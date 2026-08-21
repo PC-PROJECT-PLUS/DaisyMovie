@@ -1,7 +1,8 @@
 import { Component, signal, HostListener, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
+import { CategoryService } from '../../../services/category.service';
 
 @Component({
   selector: 'app-navbar-mobile',
@@ -17,6 +18,8 @@ export class NavbarMobile {
   searchQuery = signal<string>('');
   
   private elementRef = inject(ElementRef);
+  private router = inject(Router);
+  public categoryService = inject(CategoryService);
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
@@ -51,5 +54,29 @@ export class NavbarMobile {
 
   toggleGenres() {
     this.isGenresOpen.set(!this.isGenresOpen());
+  }
+
+  setCategory(tab: string) {
+    this.categoryService.setCategory(tab);
+    if (this.router.url !== '/') {
+      this.router.navigate(['/']);
+    }
+    this.toggleMenu();
+  }
+
+  getLogoText(): string {
+    const category = this.categoryService.activeCategory();
+    if (category === 'Serie TV') return 'SerieTV';
+    if (category === 'Animazione') return 'Animation';
+    if (category === 'Anime') return 'Anime';
+    return 'Movie';
+  }
+
+  getLogoWidth(): string {
+    const category = this.categoryService.activeCategory();
+    if (category === 'Serie TV') return '135px';
+    if (category === 'Animazione') return '155px';
+    if (category === 'Anime') return '125px';
+    return '125px'; // Movie
   }
 }

@@ -1,18 +1,22 @@
 import { Component, signal, OnDestroy, OnInit, AfterViewInit, inject, PLATFORM_ID, ViewChild, ElementRef, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Router } from '@angular/router';
+import { DomSanitizer } from '@angular/platform-browser';
+import { Router, RouterModule } from '@angular/router';
+import { CategoryService } from '../../../services/category.service';
 import { HeroMovie, ContinueWatchingItem, MovieItem, LatestEpisodeItem, TopWatchedItem, DetailedMovieItem, globalColorCache } from '../home';
 
 @Component({
   selector: 'app-home-mobile',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './home-mobile.html',
   styleUrl: './home-mobile.scss'
 })
 export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
+  private categoryService = inject(CategoryService);
+  private sanitizer = inject(DomSanitizer);
   private isBrowser = isPlatformBrowser(this.platformId);
 
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
@@ -20,7 +24,6 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
 
   currentHeroIndex = signal<number>(0);
   heroButtonColor = signal<string>('#c026d3');
-  pageLoaded = signal<boolean>(false);
   private heroInterval: any;
 
   // Dynamic Edge Fade Signals for Slider Scroll State
@@ -65,6 +68,7 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
   @Input() hiddenGemsMovies: MovieItem[] = [];
   @Input() topPicksMovies: MovieItem[] = [];
   @Input() actionMovies: MovieItem[] = [];
+  @Input() isPageLoaded: boolean = false;
   @Input() isHidden: boolean = false;
 
   @Output() themeChange = new EventEmitter<'dark' | 'light' | 'dynamic'>();
@@ -260,11 +264,6 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Trigger entrance animations
-    setTimeout(() => {
-      this.pageLoaded.set(true);
-    }, 100);
-
     this.startHeroAutoplay();
   }
 
@@ -695,7 +694,9 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
       isBookmarked: item.isBookmarked || false
     };
     console.log('goToMovie clicked! Navigating with state:', movieDetail);
-    this.router.navigate(['/movie', item.id], { state: { data: movieDetail } }).then(success => {
+    const category = this.categoryService.activeCategory();
+    const route = category === 'Serie TV' ? '/series' : '/movie';
+    this.router.navigate([route, item.id], { state: { data: movieDetail } }).then(success => {
       console.log('Navigation success:', success);
     }).catch(err => {
       console.error('Navigation error:', err);

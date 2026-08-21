@@ -1,0 +1,503 @@
+@if (responsiveService.isMobile()) {
+    <app-settings-mobile 
+      [activeTab]="activeTab()" 
+      [profiles]="profiles()"
+      [selectedProfileId]="selectedProfileId()"
+      [selectedProfile]="selectedProfile"
+      [avatars]="avatars"
+      [accountPlan]="accountPlan"
+      [playbackPrefs]="playbackPrefs"
+      [languagePrefs]="languagePrefs"
+      [themeService]="themeService" 
+      (onTabChange)="setTab($event)"
+      (onProfileChange)="selectProfile($event)"
+      (onDeleteProfile)="deleteProfile()">
+    </app-settings-mobile>
+  } @else {
+  <div class="settings-page" [attr.data-theme]="themeService.currentTheme()" (click)="closeDropdowns()">
+    <!-- <div class="ambient-glow"></div> -->
+    <div class="settings-desktop-container ">
+      <div class="settings-sidebar glass-panel">
+        <h1 class="sidebar-title">Impostazioni</h1>
+        
+        <ul class="sidebar-nav">
+          <li [class.active]="activeTab() === 'account'" (click)="setTab('account')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Account
+          </li>
+          <li [class.active]="activeTab() === 'profile'" (click)="setTab('profile')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Profili
+          </li>
+          <li [class.active]="activeTab() === 'playback'" (click)="setTab('playback')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Riproduzione
+          </li>
+          <li [class.active]="activeTab() === 'language'" (click)="setTab('language')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            Lingua e Sottotitoli
+          </li>
+          <li [class.active]="activeTab() === 'appearance'" (click)="setTab('appearance')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            Aspetto
+          </li>
+          <li [class.active]="activeTab() === 'family'" (click)="setTab('family')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Filtro Famiglia
+          </li>
+        </ul>
+      </div>
+
+      <div class="settings-content-wrapper glass-panel">
+        <div class="settings-content">
+        
+        <!-- ACCOUNT E PIANO -->
+        @if (activeTab() === 'account') {
+          <div class="tab-pane fade-in">
+            <h2 style="margin-bottom: 24px;">Account</h2>
+            
+            <div class="bento-grid">
+              
+              <!-- Dettagli Personali -->
+              <div class="bento-item " style="animation-delay: 0.1s;">
+                <div class="bento-header">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  <h3>Dettagli Personali</h3>
+                </div>
+                <div class="bento-row">
+                  <div class="bento-label">Nome</div>
+                  <div class="bento-value">Luca Rossi</div>
+                </div>
+                <div class="bento-row">
+                  <div class="bento-label">Data di Nascita</div>
+                  <div class="bento-value">15/04/1995</div>
+                </div>
+                <div class="bento-row">
+                  <div class="bento-label">Genere</div>
+                  <div class="bento-value">Uomo</div>
+                </div>
+                <div class="mt-4">
+                  <button class="btn-text-link">Modifica Dati</button>
+                </div>
+              </div>
+
+              <!-- Accesso e Sicurezza -->
+              <div class="bento-item " style="animation-delay: 0.2s;">
+                <div class="bento-header">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <h3>Accesso e Sicurezza</h3>
+                </div>
+                <div class="bento-row">
+                  <div class="bento-label">Email</div>
+                  <div class="bento-value">{{ profiles()[0].email }}</div>
+                </div>
+                <div class="bento-row">
+                  <div class="bento-label">Telefono</div>
+                  <div class="bento-value">+39 340 123 4567</div>
+                </div>
+                <div class="bento-row">
+                  <div class="bento-label">Password</div>
+                  <div class="bento-value">********</div>
+                </div>
+                <div class="mt-4 flex-row" style="justify-content: space-between;">
+                  <button class="btn-text-link">Aggiorna Password</button>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                  </label>
+                  <span class="bento-label" style="font-size: 12px; margin-left: -16px;">2FA</span>
+                </div>
+              </div>
+
+              <!-- Dispositivi Connessi -->
+              <div class="bento-item " style="animation-delay: 0.3s;">
+                <div class="bento-header">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                  <h3>Dispositivi Recenti</h3>
+                </div>
+                <div class="device-item">
+                  <div class="device-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
+                  </div>
+                  <div class="device-info">
+                    <div class="device-name">Smart TV Salotto</div>
+                    <div class="device-meta">Attivo ora • Milano, IT</div>
+                  </div>
+                </div>
+                <div class="device-item">
+                  <div class="device-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                  </div>
+                  <div class="device-info">
+                    <div class="device-name">iPhone 14 Pro</div>
+                    <div class="device-meta">Ieri alle 14:30 • Roma, IT</div>
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <button class="btn-text-link">Disconnetti tutti i dispositivi</button>
+                </div>
+              </div>
+
+              <!-- Comunicazioni e Danger Zone -->
+              <div class="bento-item " style="animation-delay: 0.4s;">
+                  <div class="bento-header">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    <h3>Preferenze Email</h3>
+                  </div>
+                  <div class="bento-row">
+                    <div class="bento-label">Novità e Offerte</div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                  <div class="bento-row">
+                    <div class="bento-label">Consigli su misura</div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="bento-item danger-zone " style="animation-delay: 0.5s;">
+                  <div class="bento-header">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <h3>Zona Pericolosa</h3>
+                  </div>
+                  <p class="bento-label mb-4">Questa azione è irreversibile. Tutti i tuoi dati, i profili e le tue preferenze verranno cancellati in modo permanente.</p>
+                  <button class="btn-danger-outline w-full" style="justify-content: center;">Elimina Definitivamente Account</button>
+                </div>
+
+            </div>
+          </div>
+        }
+        
+        <!-- PROFILO -->
+        @if (activeTab() === 'profile') {
+          <div class="tab-pane fade-in">
+            <div class="centered-content-box">
+              <h2 class="text-center">Gestione Profili</h2>
+              
+              <div class="profile-selector-container mt-4">
+                <div class="profile-selector">
+                  @for (p of profiles(); track p.id) {
+                    <div class="profile-item" [class.active]="p.id === selectedProfileId()" (click)="selectProfile(p.id)">
+                      <img [src]="p.avatar" alt="Avatar">
+                      <span>{{ p.name }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="setting-group-card mt-5 fade-in p-0">
+                <div class="profile-editor-layout p-5">
+                  <div class="profile-left-col">
+                    <img [src]="selectedProfile.avatar" alt="Avatar" class="mb-4" style="width: 160px; height: 160px; border-radius: 50%; object-fit: cover; border: 4px solid rgba(255,255,255,0.1); box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+                    <h4 class="mb-3 font-medium">Scegli Avatar</h4>
+                    <div class="avatar-grid justify-center">
+                      @for (av of avatars; track av) {
+                        <img [src]="av" class="mini-avatar" [class.selected]="av === selectedProfile.avatar" (click)="selectedProfile.avatar = av">
+                      }
+                    </div>
+                  </div>
+                  
+                  <div class="profile-right-col">
+                    <div class="form-group">
+                      <label>Nome Utente</label>
+                      <input type="text" [(ngModel)]="selectedProfile.name" class="glass-input">
+                    </div>
+                    <div class="form-group">
+                      <label>Biografia / Descrizione</label>
+                      <textarea [(ngModel)]="selectedProfile.bio" class="glass-input textarea" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group mt-2">
+                      <label>Lingua App</label>
+                      <div class="custom-select" (click)="toggleDropdown('appLanguage'); $event.stopPropagation()">
+                        <div class="select-header">
+                          <span>{{ getOptionLabel(audioOptions, 'it') }}</span>
+                          <svg class="chevron" [class.rotated]="openDropdown() === 'appLanguage'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                        @if (openDropdown() === 'appLanguage') {
+                          <div class="select-options fade-in-down">
+                            <div class="option selected" (click)="closeDropdowns(); $event.stopPropagation()">Italiano</div>
+                            <div class="option" (click)="closeDropdowns(); $event.stopPropagation()">Inglese</div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                    
+                    <div class="flex-row gap-4 mt-4">
+                      <button class="btn-primary flex-1">Salva Profilo</button>
+                      <button class="btn-danger-outline" (click)="deleteProfile()">Elimina Profilo</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- RIPRODUZIONE -->
+        @if (activeTab() === 'playback') {
+          <div class="tab-pane fade-in">
+            <div class="centered-content-box">
+              <h2 style="margin-bottom: 24px;">Impostazioni di Riproduzione</h2>
+              
+              <div class="setting-group-card mt-4">
+                <div class="form-group">
+                  <label>Qualità Video Predefinita</label>
+                  <div class="custom-select" (click)="toggleDropdown('quality'); $event.stopPropagation()">
+                    <div class="select-header">
+                      <span>{{ getOptionLabel(qualityOptions, playbackPrefs.quality) }}</span>
+                      <svg class="chevron" [class.rotated]="openDropdown() === 'quality'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    @if (openDropdown() === 'quality') {
+                      <div class="select-options fade-in-down">
+                        @for (opt of qualityOptions; track opt.value) {
+                          <div class="option" [class.selected]="playbackPrefs.quality === opt.value" (click)="playbackPrefs.quality = opt.value; closeDropdowns(); $event.stopPropagation()">
+                            {{ opt.label }}
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <p class="helper-text mt-2">Uso dati stimato in 4K: circa 7GB per ora.</p>
+                </div>
+
+                <div class="preference-item mt-4 pt-4 border-top">
+                  <div class="pref-info">
+                    <h3>Riproduzione Automatica Episodi</h3>
+                    <p>Avvia l'episodio successivo senza pause.</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" [(ngModel)]="playbackPrefs.autoplayNext">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <div class="preference-item">
+                  <div class="pref-info">
+                    <h3>Anteprime e Trailer</h3>
+                    <p>Riproduci trailer automaticamente durante la navigazione.</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" [(ngModel)]="playbackPrefs.autoplayTrailers">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <div class="preference-item">
+                  <div class="pref-info">
+                    <h3>Salta Intro Automaticamente</h3>
+                    <p>Nasconde le sigle iniziali delle serie TV.</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" [(ngModel)]="playbackPrefs.skipIntro">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- LINGUA E SOTTOTITOLI -->
+        @if (activeTab() === 'language') {
+          <div class="tab-pane fade-in">
+            <div class="centered-content-box">
+              <h2 style="margin-bottom: 24px;">Lingua e Sottotitoli</h2>
+              
+              <div class="setting-group-card">
+                <div class="flex-row gap-4">
+                  <div class="form-group flex-1">
+                    <label>Audio Predefinito</label>
+                    <div class="custom-select" (click)="toggleDropdown('audio'); $event.stopPropagation()">
+                    <div class="select-header">
+                      <span>{{ getOptionLabel(audioOptions, languagePrefs.audio) }}</span>
+                      <svg class="chevron" [class.rotated]="openDropdown() === 'audio'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    @if (openDropdown() === 'audio') {
+                      <div class="select-options fade-in-down">
+                        @for (opt of audioOptions; track opt.value) {
+                          <div class="option" [class.selected]="languagePrefs.audio === opt.value" (click)="languagePrefs.audio = opt.value; closeDropdowns(); $event.stopPropagation()">
+                            {{ opt.label }}
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                  </div>
+                  
+                  <div class="form-group flex-1">
+                    <label>Sottotitoli Predefiniti</label>
+                    <div class="custom-select" (click)="toggleDropdown('subtitle'); $event.stopPropagation()">
+                    <div class="select-header">
+                      <span>{{ getOptionLabel(subtitleOptions, languagePrefs.subtitle) }}</span>
+                      <svg class="chevron" [class.rotated]="openDropdown() === 'subtitle'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    @if (openDropdown() === 'subtitle') {
+                      <div class="select-options fade-in-down">
+                        @for (opt of subtitleOptions; track opt.value) {
+                          <div class="option" [class.selected]="languagePrefs.subtitle === opt.value" (click)="languagePrefs.subtitle = opt.value; closeDropdowns(); $event.stopPropagation()">
+                            {{ opt.label }}
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                  </div>
+                </div>
+
+                <div class="preference-item mt-3">
+                  <div class="pref-info">
+                    <h3>Mostra sempre Sottotitoli</h3>
+                    <p>Attiva i sottotitoli ogni volta che avvii un video.</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" [(ngModel)]="languagePrefs.alwaysShowSubs">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="setting-group-card mt-4">
+                <h3 class="group-title">Aspetto Sottotitoli</h3>
+                
+                <div class="subtitle-preview mt-3" [attr.data-size]="languagePrefs.subSize" [attr.data-style]="languagePrefs.subStyle">
+                  <div class="preview-bg"></div>
+                  <span class="sub-text">Così appariranno i sottotitoli a schermo.</span>
+                </div>
+
+                <div class="flex-row gap-4 mt-4">
+                  <div class="form-group flex-1">
+                    <label>Dimensione Testo</label>
+                    <div class="custom-select" (click)="toggleDropdown('subSize'); $event.stopPropagation()">
+                    <div class="select-header">
+                      <span>{{ getOptionLabel(sizeOptions, languagePrefs.subSize) }}</span>
+                      <svg class="chevron" [class.rotated]="openDropdown() === 'subSize'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    @if (openDropdown() === 'subSize') {
+                      <div class="select-options fade-in-down">
+                        @for (opt of sizeOptions; track opt.value) {
+                          <div class="option" [class.selected]="languagePrefs.subSize === opt.value" (click)="languagePrefs.subSize = opt.value; closeDropdowns(); $event.stopPropagation()">
+                            {{ opt.label }}
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                  </div>
+                  
+                  <div class="form-group flex-1">
+                    <label>Stile Testo</label>
+                    <div class="custom-select" (click)="toggleDropdown('subStyle'); $event.stopPropagation()">
+                    <div class="select-header">
+                      <span>{{ getOptionLabel(styleOptions, languagePrefs.subStyle) }}</span>
+                      <svg class="chevron" [class.rotated]="openDropdown() === 'subStyle'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    @if (openDropdown() === 'subStyle') {
+                      <div class="select-options fade-in-down">
+                        @for (opt of styleOptions; track opt.value) {
+                          <div class="option" [class.selected]="languagePrefs.subStyle === opt.value" (click)="languagePrefs.subStyle = opt.value; closeDropdowns(); $event.stopPropagation()">
+                            {{ opt.label }}
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- ASPETTO -->
+        @if (activeTab() === 'appearance') {
+          <div class="tab-pane fade-in">
+            <div class="centered-content-box">
+              <h2>Aspetto dell'App</h2>
+              <p class="subtitle mb-4">Scegli il tema preferito per DaisyMovie. L'impostazione "Dinamico" adatterà i colori in base al film in evidenza.</p>
+              
+              <div class="theme-cards mt-4">
+                <div class="theme-card" [class.active]="themeService.currentTheme() === 'dark'" (click)="setTheme('dark')">
+                  <div class="preview dark-preview"></div>
+                  <span>Scuro</span>
+                </div>
+                <div class="theme-card" [class.active]="themeService.currentTheme() === 'light'" (click)="setTheme('light')">
+                  <div class="preview light-preview"></div>
+                  <span>Chiaro</span>
+                </div>
+                <div class="theme-card" [class.active]="themeService.currentTheme() === 'dynamic'" (click)="setTheme('dynamic')">
+                  <div class="preview dynamic-preview"></div>
+                  <span>Dinamico</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- FILTRO FAMIGLIA -->
+        @if (activeTab() === 'family') {
+          <div class="tab-pane fade-in">
+            <div class="centered-content-box">
+              <h2 class="text-center">Filtro Famiglia e Sicurezza</h2>
+              
+              <div class="profile-selector-container mt-4">
+                <div class="profile-selector">
+                  @for (p of profiles(); track p.id) {
+                    <div class="profile-item" [class.active]="p.id === selectedProfileId()" (click)="selectProfile(p.id)">
+                      <img [src]="p.avatar" alt="Avatar">
+                      <span>{{ p.name }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="setting-group-card mt-5 fade-in">
+                <div class="card-header border-none pb-0">
+                  <h3 class="group-title">Limiti di Età per {{ selectedProfile.name }}</h3>
+                  <p class="helper-text mb-4">Imposta il limite massimo di età per i contenuti visibili da questo profilo.</p>
+                </div>
+                
+                <div class="rating-selector mt-2">
+                  <div class="rating-btn" [class.active]="selectedProfile.familyControls.maturityRating === 'Tutti'" (click)="selectedProfile.familyControls.maturityRating = 'Tutti'">Tutti</div>
+                  <div class="rating-btn" [class.active]="selectedProfile.familyControls.maturityRating === '7+'" (click)="selectedProfile.familyControls.maturityRating = '7+'">7+</div>
+                  <div class="rating-btn" [class.active]="selectedProfile.familyControls.maturityRating === '13+'" (click)="selectedProfile.familyControls.maturityRating = '13+'">13+</div>
+                  <div class="rating-btn" [class.active]="selectedProfile.familyControls.maturityRating === '16+'" (click)="selectedProfile.familyControls.maturityRating = '16+'">16+</div>
+                  <div class="rating-btn adult" [class.active]="selectedProfile.familyControls.maturityRating === '18+'" (click)="selectedProfile.familyControls.maturityRating = '18+'">18+</div>
+                </div>
+
+                <div class="preference-item mt-5 pt-4 border-top">
+                  <div class="pref-info">
+                    <h3>Blocco Profilo con PIN</h3>
+                    <p>Richiedi un PIN a 4 cifre per accedere a questo profilo.</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" [(ngModel)]="selectedProfile.familyControls.pinRequired">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                
+                @if (selectedProfile.familyControls.pinRequired) {
+                  <div class="form-group mt-3 fade-in">
+                    <label>PIN (4 cifre)</label>
+                    <div class="pin-input-container">
+                      <input type="password" maxlength="1" class="pin-box" id="pin-0" [value]="pin()[0]" (input)="onPinInput($event, 0)" (keydown)="onPinKeydown($event, 0)">
+                      <input type="password" maxlength="1" class="pin-box" id="pin-1" [value]="pin()[1]" (input)="onPinInput($event, 1)" (keydown)="onPinKeydown($event, 1)">
+                      <input type="password" maxlength="1" class="pin-box" id="pin-2" [value]="pin()[2]" (input)="onPinInput($event, 2)" (keydown)="onPinKeydown($event, 2)">
+                      <input type="password" maxlength="1" class="pin-box" id="pin-3" [value]="pin()[3]" (input)="onPinInput($event, 3)" (keydown)="onPinKeydown($event, 3)">
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+        </div>
+      </div>
+    </div>
+  </div>
+}

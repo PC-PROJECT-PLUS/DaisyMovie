@@ -108,11 +108,12 @@
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
             outline: none;
-            
+
             svg {
               fill: transparent;
               transition: fill 0.3s ease;
             }
+
             &.active svg {
               fill: #fff;
             }
@@ -479,11 +480,12 @@
           cursor: pointer;
           -webkit-tap-highlight-color: transparent;
           outline: none;
-          
+
           svg {
             fill: transparent;
             transition: fill 0.3s ease;
           }
+
           &.active svg {
             fill: #fff;
           }
@@ -526,7 +528,7 @@
       -webkit-tap-highlight-color: transparent;
       transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s ease, color 0.2s ease;
       z-index: 10;
-        
+
       svg {
         fill: transparent;
         transition: fill 0.3s ease;
@@ -535,19 +537,60 @@
       &:active {
         transform: scale(0.85);
       }
-        
+
       &.active {
         color: #fff;
         transform: scale(1.05);
-        
+
         svg {
           fill: #fff;
         }
-          
+
         &:active {
           transform: scale(0.85);
         }
       }
     }
+  }
+}
+
+/* --- ENTRY ANIMATIONS (Mirroring Desktop) --- */
+.mobile-hero-slider {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-section {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.home-mobile-container.loaded {
+  .mobile-hero-slider {
+    opacity: 1;
+    transition: opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  .mobile-section {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .mobile-section:nth-of-type(2) {
+    transition-delay: 0.1s;
+  }
+
+  .mobile-section:nth-of-type(3) {
+    transition-delay: 0.2s;
+  }
+
+  .mobile-section:nth-of-type(4) {
+    transition-delay: 0.3s;
+  }
+
+  .mobile-section:nth-of-type(n+5) {
+    transition-delay: 0.4s;
   }
 }

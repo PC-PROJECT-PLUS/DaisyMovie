@@ -1,11 +1,11 @@
 <div class="detail-container" [attr.data-theme]="activeTheme()">
   <!-- Top Navigation (Persists) -->
   <div class="desktop-only">
-  @if (movie()) {
+  @if (series()) {
   <div class="detail-content" [class.loaded]="pageLoaded()">
 
     <!-- Hero Backdrop & Gradient Overlay -->
-    <div class="backdrop-wrapper" [style.background-image]="'url(' + movie()!.backdropUrl + ')'">
+    <div class="backdrop-wrapper" [style.background-image]="'url(' + series()!.backdropUrl + ')'">
       <div class="backdrop-gradient"></div>
     </div>
 
@@ -19,8 +19,8 @@
 
         <div class="title-row">
           <div class="title-group">
-            <h1 class="movie-title">{{ movie()!.title | titlecase }}</h1>
-            <span class="duration">{{ movie()!.duration }}</span>
+            <h1 class="movie-title">{{ series()!.title | titlecase }}</h1>
+            <span class="duration">{{ series()!.episodeDuration }} &bull; {{ series()!.totalDuration }}</span>
           </div>
 
           <div class="ratings-group">
@@ -42,20 +42,20 @@
         </div>
 
         <div class="genres-row">
-          @for (genre of movie()!.genres || []; track genre) {
+          @for (genre of series()!.genres || []; track genre) {
           <span class="genre-pill">{{ genre }}</span>
           }
         </div>
 
         <div class="action-buttons">
-          <button class="play-btn" [style.background]="movie()!.accentColor">
+          <button class="play-btn" [style.background]="series()!.accentColor">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
             </svg>
             <span>Guarda Ora</span>
           </button>
 
-          <button class="play-btn trailer-btn" [style.background]="movie()!.secondaryColor || '#333'">
+          <button class="play-btn trailer-btn" [style.background]="series()!.secondaryColor || '#333'">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
@@ -70,83 +70,83 @@
             <span>Guarda Trailer</span>
           </button>
 
-          <button class="action-circle-btn bookmark-btn" [class.active]="movie()!.isBookmarked"
+          <button class="action-circle-btn bookmark-btn" [class.active]="series()!.isBookmarked"
             (click)="toggleBookmark()" title="Aggiungi alla lista">
-            <svg width="22" height="22" viewBox="0 0 24 24" [attr.fill]="movie()!.isBookmarked ? '#ffffff' : 'none'"
+            <svg width="22" height="22" viewBox="0 0 24 24" [attr.fill]="series()!.isBookmarked ? '#ffffff' : 'none'"
               stroke="currentColor" stroke-width="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
           </button>
         </div>
 
-        <p class="synopsis">{{ movie()!.synopsis }}</p>
+        <p class="synopsis">{{ series()!.synopsis }}</p>
 
         <div class="additional-info">
           <h3 class="info-title">Più informazioni</h3>
           <div class="info-line">
             <span class="label">Data di uscita:</span>
-            <span class="value">{{ movie()!.releaseDate }}</span>
+            <span class="value">{{ series()!.releaseDate }}</span>
           </div>
           <div class="info-line">
             <span class="label">Regista:</span>
-            <span class="value">{{ movie()!.director }}</span>
+            <span class="value">{{ series()!.director }}</span>
           </div>
           <div class="info-line">
             <span class="label">Produttori:</span>
-            <span class="value">{{ movie()!.producer }}</span>
+            <span class="value">{{ series()!.producer }}</span>
           </div>
-          @if (movie()!.music) {
+          @if (series()!.music) {
           <div class="info-line">
             <span class="label">Musiche:</span>
-            <span class="value">{{ movie()!.music }}</span>
+            <span class="value">{{ series()!.music }}</span>
           </div>
           }
-          @if (movie()!.productionCompanies) {
+          @if (series()!.productionCompanies) {
           <div class="info-line">
             <span class="label">Case di produzione:</span>
-            <span class="value">{{ movie()!.productionCompanies }}</span>
+            <span class="value">{{ series()!.productionCompanies }}</span>
           </div>
           }
-          @if (movie()!.distributedBy) {
+          @if (series()!.distributedBy) {
           <div class="info-line">
             <span class="label">Distribuito da:</span>
-            <span class="value">{{ movie()!.distributedBy }}</span>
+            <span class="value">{{ series()!.distributedBy }}</span>
           </div>
           }
-          @if (movie()!.editedBy) {
+          @if (series()!.editedBy) {
           <div class="info-line">
             <span class="label">Montaggio:</span>
-            <span class="value">{{ movie()!.editedBy }}</span>
+            <span class="value">{{ series()!.editedBy }}</span>
           </div>
           }
-          @if (movie()!.writers) {
+          @if (series()!.writers) {
           <div class="info-line">
             <span class="label">Sceneggiatura:</span>
-            <span class="value">{{ movie()!.writers }}</span>
+            <span class="value">{{ series()!.writers }}</span>
           </div>
           }
-          @if (movie()!.cinematography) {
+          @if (series()!.cinematography) {
           <div class="info-line">
             <span class="label">Fotografia:</span>
-            <span class="value">{{ movie()!.cinematography }}</span>
+            <span class="value">{{ series()!.cinematography }}</span>
           </div>
           }
-          @if (movie()!.budget) {
+          @if (series()!.budget) {
           <div class="info-line">
             <span class="label">Budget:</span>
-            <span class="value">{{ movie()!.budget }}</span>
+            <span class="value">{{ series()!.budget }}</span>
           </div>
           }
-          @if (movie()!.boxOffice) {
+          @if (series()!.boxOffice) {
           <div class="info-line">
             <span class="label">Botteghino:</span>
-            <span class="value">{{ movie()!.boxOffice }}</span>
+            <span class="value">{{ series()!.boxOffice }}</span>
           </div>
           }
-          @if (movie()!.languages) {
+          @if (series()!.languages) {
           <div class="info-line">
             <span class="label">Lingue:</span>
-            <span class="value">{{ movie()!.languages }}</span>
+            <span class="value">{{ series()!.languages }}</span>
           </div>
           }
         </div>
@@ -155,6 +155,66 @@
 
       <!-- LOWER SECTIONS (Static/Not loaded with hero animation) -->
       <div class="lower-sections">
+
+        <!-- EPISODES SECTION -->
+        <div class="section-block episodes-section">
+          <div class="section-header">
+            <div class="episodes-header-left">
+              <h2>Episodi</h2>
+              <div class="custom-dropdown-container" (mouseenter)="isDropdownOpen.set(true)" (mouseleave)="isDropdownOpen.set(false)">
+                <div class="dropdown-selected">
+                  Stagione {{ activeSeason() }}
+                  <svg class="dropdown-icon" [class.rotated]="isDropdownOpen()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"/>
+                  </svg>
+                </div>
+                <div class="dropdown-menu" [class.open]="isDropdownOpen()">
+                  <div class="dropdown-item" [class.active]="activeSeason() === 1" (click)="activeSeason.set(1); isDropdownOpen.set(false)">Stagione 1</div>
+                  <div class="dropdown-item" [class.active]="activeSeason() === 2" (click)="activeSeason.set(2); isDropdownOpen.set(false)">Stagione 2</div>
+                  <div class="dropdown-item" [class.active]="activeSeason() === 3" (click)="activeSeason.set(3); isDropdownOpen.set(false)">Stagione 3</div>
+                </div>
+              </div>
+            </div>
+            <div class="header-right-controls">
+              <div class="section-scroll-arrows">
+                <button class="section-arrow-btn" (click)="scrollEpisodes('left')" aria-label="Scroll left" [style.opacity]="showLeftArrowEpisodes() ? '1' : '0.3'" [style.cursor]="showLeftArrowEpisodes() ? 'pointer' : 'default'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                </button>
+                <button class="section-arrow-btn" (click)="scrollEpisodes('right')" aria-label="Scroll right" [style.opacity]="showRightArrowEpisodes() ? '1' : '0.3'" [style.cursor]="showRightArrowEpisodes() ? 'pointer' : 'default'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="slider-wrapper" [class.has-fade-right]="showRightArrowEpisodes()" [class.has-fade-left]="showLeftArrowEpisodes()">
+          <div class="episodes-slider" id="episodes-slider" (scroll)="checkScrollState()">
+            @for (episode of series()!.episodes || []; track episode.id) {
+            <div class="episode-card">
+              <div class="episode-thumbnail-container">
+                <img [src]="episode.thumbnailUrl" [alt]="episode.title" class="episode-thumbnail" loading="lazy">
+                <div class="play-overlay">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+              </div>
+              <div class="episode-info">
+                <div class="episode-header">
+                  <span class="episode-number">Episodio {{ episode.episodeNumber }}</span>
+                  <span class="episode-duration">{{ episode.duration }}</span>
+                </div>
+                <h4 class="episode-title">{{ episode.title }}</h4>
+                <p class="episode-synopsis">{{ episode.synopsis }}</p>
+              </div>
+            </div>
+            }
+          </div>
+          </div>
+        </div>
 
         <!-- CAST SECTION -->
         <div class="section-block cast-section">
@@ -178,7 +238,7 @@
           </div>
           <div class="slider-wrapper" [class.has-fade-right]="canScrollRightCast()" [class.has-fade-left]="canScrollLeftCast()">
             <div class="cast-grid" id="cast-slider" (scroll)="checkScrollState()">
-              @for (actor of movie()!.cast || []; track actor.name) {
+              @for (actor of series()!.cast || []; track actor.name) {
               <div class="cast-card">
                 <img [src]="actor.imageUrl" [alt]="actor.name" class="cast-img" />
                 <div class="cast-names">
@@ -199,28 +259,28 @@
 
           <div class="screenshot-grid">
             <div class="grid-item img-large">
-              <img [src]="movie()!.screenshots[0]" alt="Screenshot 1" />
+              <img [src]="series()!.screenshots[0]" alt="Screenshot 1" />
             </div>
             <div class="grid-item img-large">
-              <img [src]="movie()!.screenshots[1]" alt="Screenshot 2" />
+              <img [src]="series()!.screenshots[1]" alt="Screenshot 2" />
             </div>
 
             <div class="grid-item img-vertical">
-              <img [src]="movie()!.screenshots[2]" alt="Screenshot 3" />
+              <img [src]="series()!.screenshots[2]" alt="Screenshot 3" />
             </div>
             <div class="grid-item img-vertical">
-              <img [src]="movie()!.screenshots[3]" alt="Screenshot 4" />
+              <img [src]="series()!.screenshots[3]" alt="Screenshot 4" />
             </div>
             <div class="grid-item img-wide">
-              <img [src]="movie()!.screenshots[4]" alt="Screenshot 5" />
+              <img [src]="series()!.screenshots[4]" alt="Screenshot 5" />
             </div>
             
             <!-- Third Row (added) -->
             <div class="grid-item img-large">
-              <img [src]="movie()!.screenshots[5]" alt="Screenshot 6" />
+              <img [src]="series()!.screenshots[5]" alt="Screenshot 6" />
             </div>
             <div class="grid-item img-large">
-              <img [src]="movie()!.screenshots[6]" alt="Screenshot 7" />
+              <img [src]="series()!.screenshots[6]" alt="Screenshot 7" />
             </div>
           </div>
         </div>
@@ -268,7 +328,7 @@
           </div>
 
           <div class="reviews-subheader">
-            <span class="reviews-count">{{ movie()!.reviews?.length || 0 }} Recensioni</span>
+            <span class="reviews-count">{{ series()!.reviews?.length || 0 }} Recensioni</span>
             <label class="reviews-checkbox">
               <input type="checkbox" />
               <span class="checkmark"></span>
@@ -281,7 +341,7 @@
           </div>
 
           <div class="reviews-input-container">
-            <input type="text" class="reviews-input" placeholder="Scrivi la tua recensione per {{ movie()!.title }}" 
+            <input type="text" class="reviews-input" placeholder="Scrivi la tua recensione per {{ series()!.title }}" 
                    [ngModel]="newReviewText()" (ngModelChange)="newReviewText.set($event)" (keyup.enter)="submitReview()" />
             <button class="reviews-submit-btn" aria-label="Submit review" (click)="submitReview()">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
@@ -291,7 +351,7 @@
           </div>
 
           <div class="reviews-list">
-            @for (review of (showAllReviews() ? movie()!.reviews : (movie()!.reviews || []).slice(0, 3)); track review.id) {
+            @for (review of (showAllReviews() ? series()!.reviews : (series()!.reviews || []).slice(0, 3)); track review.id) {
             <div class="review-card">
               <div class="review-header">
                 <span class="review-author">{{ review.author }}</span>
@@ -326,7 +386,7 @@
             }
           </div>
 
-          @if ((movie()!.reviews?.length || 0) > 3) {
+          @if ((series()!.reviews?.length || 0) > 3) {
           <div class="reviews-see-all-container" [class.is-expanded]="showAllReviews()">
             <button class="reviews-see-all-btn" (click)="toggleReviews()">
               {{ showAllReviews() ? 'Mostra meno recensioni' : 'Vedi tutte le recensioni' }}
@@ -345,7 +405,7 @@
   }
   </div>
   <div class="mobile-only">
-  <app-movie-detail-mobile [movie]="movie()"></app-movie-detail-mobile>
+  <app-series-detail-mobile [series]="series()"></app-series-detail-mobile>
   </div>
   <app-footer></app-footer>
 </div>
@@ -356,31 +416,31 @@
 <div class="global-hover-panel" [class.visible]="isPanelVisible()" [class.switching]="isPanelSwitching()"
   [style.top.px]="panelPos().top" [style.left.px]="panelPos().left">
 
-  @if (panelMovie()) {
+  @if (panelSeries()) {
   <!-- LEFT: poster (pointer-events:none, scroll passes through) -->
   <div class="ghp-poster">
-    <img [src]="panelMovie()!.posterUrl" [alt]="panelMovie()!.title" />
+    <img [src]="panelSeries()!.posterUrl" [alt]="panelSeries()!.title" />
   </div>
 
   <!-- RIGHT: details (pointer-events:auto) -->
   <div class="ghp-details" (mouseenter)="onPanelMouseEnter()" (mouseleave)="onPanelMouseLeave()">
     <div class="ghp-meta">
-      <span class="ghp-year">{{ panelMovie()!.year }}</span>
-      @if (panelMovie()!.duration) {
+      <span class="ghp-year">{{ panelSeries()!.year }}</span>
+      @if (panelSeries()!.duration) {
       <span class="ghp-dot">•</span>
-      <span class="ghp-duration">{{ panelMovie()!.duration }}</span>
+      <span class="ghp-duration">{{ panelSeries()!.duration }}</span>
       }
     </div>
 
-    <h3 class="ghp-title">{{ panelMovie()!.title }}</h3>
+    <h3 class="ghp-title">{{ panelSeries()!.title }}</h3>
 
     <div class="ghp-genres">
-      @for (g of panelMovie()!.genres || []; track g) {
+      @for (g of panelSeries()!.genres || []; track g) {
       <span class="ghp-genre-pill">{{ g }}</span>
       }
     </div>
 
-    <p class="ghp-synopsis">{{ panelMovie()!.synopsis }}</p>
+    <p class="ghp-synopsis">{{ panelSeries()!.synopsis }}</p>
 
     <!-- BUTTONS -->
     <div class="ghp-actions">
@@ -392,7 +452,7 @@
         <span>Guarda ora</span>
       </button>
 
-      <button class="ghp-btn-bookmark" [class.active]="panelMovie()!.isBookmarked" title="Aggiungi alla lista">
+      <button class="ghp-btn-bookmark" [class.active]="panelSeries()!.isBookmarked" title="Aggiungi alla lista">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
         </svg>

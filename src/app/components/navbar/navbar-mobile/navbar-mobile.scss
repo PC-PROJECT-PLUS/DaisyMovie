@@ -10,6 +10,7 @@
   justify-content: flex-start;
   border-radius: 28px;
   transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  -webkit-tap-highlight-color: transparent;
   
   /* Pure Liquid Glass without visible borders */
   background: rgba(255, 255, 255, 0.1);
@@ -206,7 +207,8 @@
         padding-top: 16px;
 
         .footer-user {
-          display: flex;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
           align-items: center;
           gap: 12px;
 
