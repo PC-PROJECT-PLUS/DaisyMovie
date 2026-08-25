@@ -2,11 +2,11 @@
   <!-- HERO SLIDER -->
   <div class="mobile-hero-slider" id="mobile-hero" (touchstart)="onTouchStart($event)" (touchmove)="onTouchMove($event)"
     (touchend)="onTouchEnd($event)">
-    <div class="hero-track" [style.transform]="'translateX(-' + (currentHeroIndex() * 100) + '%)'">
+    <div class="hero-track">
       @for (movie of heroMovies; track movie.id; let i = $index) {
-      <div class="mobile-hero-slide" [class.active]="i === currentHeroIndex()">
+      <div class="mobile-hero-slide" [class.active]="i === currentHeroIndex()" (click)="onHeroClick($event, movie)">
         <img [src]="movie.backdropUrl" [alt]="movie.title" class="hero-bg" [attr.loading]="i === 0 ? null : 'lazy'"
-          (click)="goToMovie(movie)" />
+           />
         <div class="hero-overlay"></div>
         <div class="hero-content">
           <h2 class="hero-title">{{ movie.title }}</h2>

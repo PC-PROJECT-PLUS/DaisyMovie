@@ -397,9 +397,15 @@
               stroke: #ffffff;
             }
 
-            &:hover {
+            &:hover:not(:disabled) {
               background: rgba(255, 255, 255, 0.25);
-              color: var(--accent-blue);
+              transform: scale(1.1);
+            }
+
+            &:disabled {
+              opacity: 0.3;
+              cursor: not-allowed;
+              background: rgba(255, 255, 255, 0.05);
             }
           }
         }
@@ -476,7 +482,6 @@
    ========================================================================== */
 .continue-watching-slider,
 .trending-slider,
-.episodes-slider,
 .spotlight-slider {
   display: flex;
   overflow-x: auto;
@@ -487,10 +492,28 @@
   /* Prevent clipping of hover animations (transform up) and wide box-shadows */
   padding-top: 100px;
   padding-bottom: 120px;
+
   /* Offset padding with negative margins to preserve original visual spacing */
   margin-top: -100px;
   margin-bottom: -108px;
+
   /* Originally padding-bottom was 12px, so 120-12=108 */
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.episodes-slider {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  padding-top: 100px;
+  padding-bottom: 120px;
+  margin-top: -100px;
+  margin-bottom: -108px;
 
   &::-webkit-scrollbar {
     display: none;
@@ -675,46 +698,46 @@
     min-width: 320px;
     flex-shrink: 0;
     scroll-snap-align: start;
-    /* Remove padding so the image touches the borders */
     padding: 0 !important;
-    /* Remove glass-card border */
     border: none !important;
-    box-shadow: none !important;
-    /* Must be visible so the pseudo-element's shadow can bleed out */
-    overflow: visible !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     gap: 0;
 
     /* Tint the glass background using the dynamic --card-accent variable */
-    background-color: color-mix(in srgb, var(--card-accent) 15%, rgba(255, 255, 255, 0.1)) !important;
+    background-color: color-mix(in srgb, var(--card-accent) 15%, rgba(255, 255, 255, 0.05)) !important;
     background-image: none !important;
-    /* override the glass-card gradient if any */
-    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1) !important;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1) !important;
     cursor: pointer;
 
-    /* Use a pseudo-element for silky smooth 60fps fade animation of color-mix */
+    /* Smooth glow background layer */
     &::before {
       content: '';
       position: absolute;
       inset: 0;
       border-radius: inherit;
-      background-color: color-mix(in srgb, var(--card-accent) 40%, rgba(255, 255, 255, 0.15));
+      background-color: color-mix(in srgb, var(--card-accent) 30%, transparent);
       opacity: 0;
-      /* Fade OUT slowly (0.5s) so the card stays lit while the glow slides to the next card */
-      transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-      /* Sit above the card background but below its children (glass-card > * is z-index 2) */
+      transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
       z-index: 1;
       pointer-events: none;
     }
 
     &:hover {
-      transform: translateY(-8px);
+      z-index: 10;
+      transform: translateY(-6px);
+      /* Use a subtle drop shadow to provide elevation */
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7) !important;
 
       &::before {
         opacity: 1;
-        /* Fade IN fast (0.2s) for a snappy feel on hover */
         transition: opacity 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .banner-img {
+        transform: scale(1.08);
       }
     }
 
@@ -730,6 +753,7 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
+        transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
       }
 
       .banner-gradient {
@@ -833,39 +857,6 @@
   }
 }
 
-/* Global episode glow effect */
-.global-episode-glow {
-  position: fixed;
-  z-index: 5;
-  pointer-events: none;
-  border-radius: var(--radius-lg);
-  /* Radial gradient fades to transparent at edges → blends naturally into the external glow */
-  background: radial-gradient(ellipse at center,
-      color-mix(in srgb, var(--glow-color) 45%, rgba(8, 8, 16, 0.95)) 0%,
-      color-mix(in srgb, var(--glow-color) 20%, rgba(8, 8, 16, 0.5)) 55%,
-      transparent 100%);
-  /* Replicate the original wide glowing shadow */
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8),
-    0 0 100px color-mix(in srgb, var(--glow-color) 65%, transparent);
-  opacity: 0;
-  transform: translateY(0);
-  /* Animate position + opacity + shadow smoothly so moving between cards doesn't flicker */
-  transition:
-    opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    top 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-    left 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-    width 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-    height 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    background 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-
-  &.visible {
-    opacity: 1;
-    transform: translateY(-8px);
-  }
-}
-
 /* ==========================================================================
    MOST WATCHED CHART SECTION
    ========================================================================== */
@@ -930,6 +921,7 @@
       }
 
       &:hover {
+        z-index: 10;
         transform: translateY(-12px) scale(1.02);
         box-shadow: 0 30px 60px -15px color-mix(in srgb, var(--card-accent) 50%, rgba(0, 0, 0, 0.8)) !important;
 
@@ -1337,9 +1329,11 @@
     .hero-slide {
       padding: 0 40px 24px;
     }
+
     .hero-controls-overlay {
       padding: 0 40px;
     }
+
     .hero-arrows-right {
       right: 40px;
     }
@@ -2260,4 +2254,3 @@
 .category-transition-wrapper.fading {
   opacity: 0;
 }
-

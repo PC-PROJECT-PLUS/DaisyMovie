@@ -342,9 +342,15 @@
           stroke: #ffffff;
         }
 
-        &:hover {
+        &:hover:not(:disabled) {
           background: rgba(255, 255, 255, 0.25);
           transform: scale(1.1);
+        }
+        
+        &:disabled {
+          opacity: 0.3;
+          cursor: default;
+          background: rgba(255, 255, 255, 0.05);
         }
       }
     }

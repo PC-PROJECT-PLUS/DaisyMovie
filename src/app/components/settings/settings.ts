@@ -1,5 +1,6 @@
 import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Title } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { ResponsiveService } from '../../services/responsive';
 import { SettingsMobile } from './settings-mobile/settings-mobile';
@@ -15,6 +16,11 @@ import { ThemeService } from '../../services/theme.service';
 export class Settings {
   responsiveService = inject(ResponsiveService);
   themeService = inject(ThemeService);
+  titleService = inject(Title);
+
+  constructor() {
+    this.titleService.setTitle('Impostazioni');
+  }
 
   activeTab = signal<'account' | 'profile' | 'playback' | 'language' | 'appearance' | 'family'>('account');
 

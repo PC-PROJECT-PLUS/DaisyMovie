@@ -446,13 +446,32 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
     this.heroInterval = setInterval(() => {
       if (this.isHidden) return; // Pause timer when hidden
       this.nextHeroSlide();
-    }, 7000);
+    }, 6000);
   }
 
   stopHeroAutoplay() {
     if (this.heroInterval) {
       clearInterval(this.heroInterval);
       this.heroInterval = null;
+    }
+  }
+
+  onHeroClick(event: MouseEvent, movie: any) {
+    const target = event.target as HTMLElement;
+    if (target.closest('button')) {
+      return; // Ignore clicks on buttons (they handle their own actions)
+    }
+
+    const clickX = event.clientX;
+    const screenWidth = window.innerWidth;
+    const clickRatio = clickX / screenWidth;
+
+    if (clickRatio < 0.25) {
+      this.prevHeroSlide();
+    } else if (clickRatio > 0.75) {
+      this.nextHeroSlide();
+    } else {
+      this.goToMovie(movie);
     }
   }
 
@@ -463,6 +482,7 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     this.touchStartX = event.changedTouches[0].screenX;
+    this.touchEndX = event.changedTouches[0].screenX;
   }
 
   onTouchMove(event: TouchEvent) {
@@ -500,6 +520,7 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
     }
     // Extract real color from the new slide's backdrop
     this.extractDominantColor(this.heroMovies[index].backdropUrl).then(c => this.heroButtonColor.set(c));
+    this.startHeroAutoplay(); // Reset timer to prevent quick jumps
   }
 
   onHeroScroll(event: Event) {

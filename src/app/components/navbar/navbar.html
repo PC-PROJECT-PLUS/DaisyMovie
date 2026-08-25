@@ -2,13 +2,8 @@
 <nav class="navbar-container" [class.is-searching]="isSearchExpanded()">
   <!-- Left Side: Logo & Links -->
   <div class="nav-left">
-    <div class="navbar-logo" routerLink="/">
-      <div class="logo-mark">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-            fill="#000000" />
-        </svg>
-      </div>
+    <div class="navbar-logo" routerLink="/" (click)="onLogoClick()">
+      <img src="assets/Logo_cropped.png" alt="Logo" width="40" height="40" style="object-fit: contain;" />
       <span class="logo-name" [style.width]="getLogoWidth()" style="transition: width 0.3s ease;">Daisy<span>{{ getLogoText() }}</span></span>
     </div>
 
@@ -18,7 +13,7 @@
         <a href="javascript:void(0)">{{ item }}</a>
       </li>
       }
-      <div class="active-indicator" [style.left]="indicatorStyle().left" [style.width]="indicatorStyle().width"></div>
+      <div class="active-indicator" [class.no-transition]="!hasInitialized" [style.left]="indicatorStyle().left" [style.width]="indicatorStyle().width"></div>
     </ul>
   </div>
 
@@ -34,7 +29,7 @@
         </svg>
       </button>
       <input type="text" class="search-input" placeholder="Titolo, Genere, Regista, Attore..." [value]="searchQuery()"
-        (input)="searchQuery.set($any($event.target).value)" (focus)="onSearchFocus()" (blur)="onSearchBlur()" />
+        (input)="searchQuery.set($any($event.target).value)" (focus)="onSearchFocus()" (blur)="onSearchBlur()" (keydown.enter)="onSearchEnter()" />
     </div>
 
     <!-- Notification Bell -->
@@ -45,7 +40,7 @@
       </svg>
     </button>
 
-    <!-- User Profile Pill & Hover Dropdown (From Hand-Drawn Sketch) -->
+    <!-- User Profile Pill & Hover Dropdown -->
     <div class="user-wrapper" (mouseenter)="toggleUserMenu(true)" (mouseleave)="toggleUserMenu(false)">
       <div class="user-pill">
         <img class="user-avatar"

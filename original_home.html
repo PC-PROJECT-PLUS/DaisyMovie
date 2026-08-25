@@ -34,10 +34,8 @@
               <span>Guarda ora</span>
             </button>
 
-            <button class="btn-circle-action" title="Bookmark" [class.active]="movie.isBookmarked"
-              (click)="toggleBookmark(movie, $event)">
-              <svg width="20" height="20" viewBox="0 0 24 24" [attr.fill]="movie.isBookmarked ? '#ffffff' : 'none'"
-                stroke="currentColor" stroke-width="2">
+            <button class="btn-circle-action" title="Bookmark">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
               </svg>
             </button>
@@ -85,19 +83,20 @@
           <h2 class="section-title">Continua a guardare</h2>
           <div class="header-right-controls">
             <div class="section-scroll-arrows">
-              <button class="section-arrow-btn" (click)="scrollSlider('continue-slider', 'left')"
-                [disabled]="!canScrollLeftContinue()" aria-label="Scroll left">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('continue-slider', 'left')"
+                aria-label="Scroll left">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              <button class="section-arrow-btn" (click)="scrollSlider('continue-slider', 'right')"
-                [disabled]="!canScrollRightContinue()" aria-label="Scroll right">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('continue-slider', 'right')"
+                aria-label="Scroll right">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </button>
             </div>
+            <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
           </div>
         </div>
 
@@ -171,19 +170,20 @@
           <h2 class="section-title">In tendenza</h2>
           <div class="header-right-controls">
             <div class="section-scroll-arrows">
-              <button class="section-arrow-btn" (click)="scrollSlider('trending-slider', 'left')"
-                [disabled]="!canScrollLeftTrending()" aria-label="Scroll left">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('trending-slider', 'left')"
+                aria-label="Scroll left">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              <button class="section-arrow-btn" (click)="scrollSlider('trending-slider', 'right')"
-                [disabled]="!canScrollRightTrending()" aria-label="Scroll right">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('trending-slider', 'right')"
+                aria-label="Scroll right">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </button>
             </div>
+            <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
           </div>
         </div>
 
@@ -204,31 +204,35 @@
       <!-- SECTION 3: LATEST EPISODES AVAILABLE -->
       <section class="content-section">
         <div class="section-header">
-          <h2 class="section-title">Film che stanno per uscire</h2>
+          <h2 class="section-title">Ultimi episodi disponibili</h2>
           <div class="header-right-controls">
             <div class="section-scroll-arrows">
-              <button class="section-arrow-btn" (click)="scrollSlider('episodes-slider', 'left')"
-                [disabled]="!canScrollLeftEpisodes()" aria-label="Scroll left">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('episodes-slider', 'left')"
+                aria-label="Scroll left">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              <button class="section-arrow-btn" (click)="scrollSlider('episodes-slider', 'right')"
-                [disabled]="!canScrollRightEpisodes()" aria-label="Scroll right">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('episodes-slider', 'right')"
+                aria-label="Scroll right">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </button>
             </div>
+            <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
           </div>
         </div>
 
-        <div class="slider-wrapper episodes-slider-wrapper" [class.has-fade-right]="canScrollRightEpisodes()"
+        <div class="slider-wrapper" [class.has-fade-right]="canScrollRightEpisodes()"
           [class.has-fade-left]="canScrollLeftEpisodes()">
 
-          <div class="episodes-slider" id="episodes-slider" (scroll)="checkScrollState('episodes-slider')">
+          <div class="episodes-slider" id="episodes-slider"
+            (scroll)="checkScrollState('episodes-slider'); onEpisodeLeave()">
             @for (ep of latestEpisodes; track ep.id) {
-            <div class="episode-card glass-card" [style.--card-accent]="ep.accentColor" (click)="goToMovie(ep)">
+            <div class="episode-card glass-card" [style.--card-accent]="ep.accentColor"
+              (click)="goToMovie(ep)"
+              (mouseenter)="onEpisodeEnter($event, ep.accentColor)" (mouseleave)="onEpisodeLeave()">
               <div class="episode-banner">
                 <img [src]="ep.bannerUrl" [alt]="ep.title" class="banner-img" />
                 <div class="banner-gradient"></div>
@@ -241,18 +245,15 @@
                 </div>
 
                 <div class="ep-actions">
-                  <button class="action-circle-btn" [class.active]="ep.isNotified"
-                    (click)="toggleNotification(ep, $event)" aria-label="Notificami">
-                    <svg width="16" height="16" viewBox="0 0 24 24" [attr.fill]="ep.isNotified ? '#ffffff' : 'none'"
-                      stroke="currentColor" stroke-width="2">
-                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                  <button class="action-blue-pill" [style.background]="ep.accentColor" aria-label="Play Episode">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
                     </svg>
                   </button>
 
-                  <button class="action-circle-btn" [class.active]="ep.isBookmarked"
-                    (click)="toggleBookmark(ep, $event)" aria-label="Bookmark Episode">
-                    <svg width="16" height="16" viewBox="0 0 24 24" [attr.fill]="ep.isBookmarked ? '#ffffff' : 'none'"
+                  <button class="action-circle-btn" [class.active]="ep.isBookmarked" (click)="toggleBookmark(ep)"
+                    aria-label="Bookmark Episode">
+                    <svg width="16" height="16" viewBox="0 0 24 24" [attr.fill]="ep.isBookmarked ? '#0075ff' : 'none'"
                       stroke="currentColor" stroke-width="2">
                       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                     </svg>
@@ -271,19 +272,20 @@
           <h2 class="section-title">Nuove uscite</h2>
           <div class="header-right-controls">
             <div class="section-scroll-arrows">
-              <button class="section-arrow-btn" (click)="scrollSlider('new-releases-slider', 'left')"
-                [disabled]="!canScrollLeftNewReleases()" aria-label="Scroll left">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('new-releases-slider', 'left')"
+                aria-label="Scroll left">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              <button class="section-arrow-btn" (click)="scrollSlider('new-releases-slider', 'right')"
-                [disabled]="!canScrollRightNewReleases()" aria-label="Scroll right">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('new-releases-slider', 'right')"
+                aria-label="Scroll right">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </button>
             </div>
+            <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
           </div>
         </div>
 
@@ -313,7 +315,8 @@
         <!-- TOP 3 PODIUM -->
         <div class="chart-podium">
           @for (film of topWatchedMovies.slice(0, 3); track film.id; let i = $index) {
-          <div class="podium-card glass-card" [style.--card-accent]="film.accentColor">
+          <div class="podium-card glass-card" [style.--card-accent]="film.accentColor"
+            (mouseenter)="onEpisodeEnter($event, film.accentColor)" (mouseleave)="onEpisodeLeave()">
             <span class="podium-rank-bg">{{ (i + 1).toString().padStart(2, '0') }}</span>
             <div class="podium-poster-wrap">
               <img [src]="film.posterUrl" [alt]="film.title" class="podium-img" />
@@ -359,19 +362,20 @@
           <h2 class="section-title">Acclamati dalla critica</h2>
           <div class="header-right-controls">
             <div class="section-scroll-arrows">
-              <button class="section-arrow-btn" (click)="scrollSlider('acclaimed-slider', 'left')"
-                [disabled]="!canScrollLeftAcclaimed()" aria-label="Scroll left">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('acclaimed-slider', 'left')"
+                aria-label="Scroll left">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              <button class="section-arrow-btn" (click)="scrollSlider('acclaimed-slider', 'right')"
-                [disabled]="!canScrollRightAcclaimed()" aria-label="Scroll right">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('acclaimed-slider', 'right')"
+                aria-label="Scroll right">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </button>
             </div>
+            <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
           </div>
         </div>
 
@@ -395,19 +399,20 @@
           <h2 class="section-title">In primo piano</h2>
           <div class="header-right-controls">
             <div class="section-scroll-arrows">
-              <button class="section-arrow-btn" (click)="scrollSlider('spotlight-slider', 'left')"
-                [disabled]="!canScrollLeftSpotlight()" aria-label="Scroll left">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('spotlight-slider', 'left')"
+                aria-label="Scroll left">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              <button class="section-arrow-btn" (click)="scrollSlider('spotlight-slider', 'right')"
-                [disabled]="!canScrollRightSpotlight()" aria-label="Scroll right">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('spotlight-slider', 'right')"
+                aria-label="Scroll right">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </button>
             </div>
+            <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
           </div>
         </div>
 
@@ -465,19 +470,20 @@
           <h2 class="section-title">Prossimamente</h2>
           <div class="header-right-controls">
             <div class="section-scroll-arrows">
-              <button class="section-arrow-btn" (click)="scrollSlider('coming-soon-slider', 'left')"
-                [disabled]="!canScrollLeftComingSoon()" aria-label="Scroll left">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('coming-soon-slider', 'left')"
+                aria-label="Scroll left">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              <button class="section-arrow-btn" (click)="scrollSlider('coming-soon-slider', 'right')"
-                [disabled]="!canScrollRightComingSoon()" aria-label="Scroll right">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('coming-soon-slider', 'right')"
+                aria-label="Scroll right">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </button>
             </div>
+            <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
           </div>
         </div>
 
@@ -501,19 +507,20 @@
           <h2 class="section-title">Perle nascoste</h2>
           <div class="header-right-controls">
             <div class="section-scroll-arrows">
-              <button class="section-arrow-btn" (click)="scrollSlider('hidden-gems-slider', 'left')"
-                [disabled]="!canScrollLeftHiddenGems()" aria-label="Scroll left">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('hidden-gems-slider', 'left')"
+                aria-label="Scroll left">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              <button class="section-arrow-btn" (click)="scrollSlider('hidden-gems-slider', 'right')"
-                [disabled]="!canScrollRightHiddenGems()" aria-label="Scroll right">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('hidden-gems-slider', 'right')"
+                aria-label="Scroll right">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </button>
             </div>
+            <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
           </div>
         </div>
 
@@ -537,19 +544,20 @@
           <h2 class="section-title">Scelti per te</h2>
           <div class="header-right-controls">
             <div class="section-scroll-arrows">
-              <button class="section-arrow-btn" (click)="scrollSlider('top-picks-slider', 'left')"
-                [disabled]="!canScrollLeftTopPicks()" aria-label="Scroll left">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('top-picks-slider', 'left')"
+                aria-label="Scroll left">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              <button class="section-arrow-btn" (click)="scrollSlider('top-picks-slider', 'right')"
-                [disabled]="!canScrollRightTopPicks()" aria-label="Scroll right">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('top-picks-slider', 'right')"
+                aria-label="Scroll right">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </button>
             </div>
+            <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
           </div>
         </div>
 
@@ -573,19 +581,20 @@
           <h2 class="section-title">Thriller d'azione</h2>
           <div class="header-right-controls">
             <div class="section-scroll-arrows">
-              <button class="section-arrow-btn" (click)="scrollSlider('action-movies-slider', 'left')"
-                [disabled]="!canScrollLeftActionMovies()" aria-label="Scroll left">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('action-movies-slider', 'left')"
+                aria-label="Scroll left">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              <button class="section-arrow-btn" (click)="scrollSlider('action-movies-slider', 'right')"
-                [disabled]="!canScrollRightActionMovies()" aria-label="Scroll right">
+              <button class="section-arrow-btn glass-card" (click)="scrollSlider('action-movies-slider', 'right')"
+                aria-label="Scroll right">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </button>
             </div>
+            <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
           </div>
         </div>
 
@@ -647,7 +656,7 @@
             Guarda ora
           </button>
           <button class="ghp-btn-bookmark" [class.active]="panelMovie()!.isBookmarked"
-            (click)="toggleBookmark(panelMovie()!, $event)">
+            (click)="toggleBookmark(panelMovie()!)">
             <svg width="18" height="18" viewBox="0 0 24 24"
               [attr.fill]="panelMovie()!.isBookmarked ? '#ffffff' : 'none'" stroke="currentColor" stroke-width="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
@@ -658,15 +667,20 @@
       }
     </div>
 
+    <!-- Global Episode Glow Overlay (Position Fixed to escape clipping) -->
+    <div class="global-episode-glow" [class.visible]="episodeGlow().isHovered" [style.top.px]="episodeGlow().top"
+      [style.left.px]="episodeGlow().left" [style.width.px]="episodeGlow().width"
+      [style.height.px]="episodeGlow().height" [style.--glow-color]="episodeGlow().color">
+    </div>
+
   </div> <!-- chiusura div hidden per desktop -->
 
   <div class="mobile-only">
-    <app-home-mobile [isPageLoaded]="pageLoaded()" [heroMovies]="heroMovies"
-      [continueWatchingList]="continueWatchingList" [trendingMovies]="trendingMovies" [latestEpisodes]="latestEpisodes"
-      [newReleasesMovies]="newReleasesMovies" [topWatchedMovies]="topWatchedMovies" [spotlightMovies]="spotlightMovies"
-      [comingSoonMovies]="comingSoonMovies" [hiddenGemsMovies]="hiddenGemsMovies" [topPicksMovies]="topPicksMovies"
-      [actionMovies]="actionMovies" (themeChange)="onThemeChange($event)"
-      [isHidden]="!responsiveService.isMobile()"></app-home-mobile>
+    <app-home-mobile [isPageLoaded]="pageLoaded()" [heroMovies]="heroMovies" [continueWatchingList]="continueWatchingList"
+      [trendingMovies]="trendingMovies" [latestEpisodes]="latestEpisodes" [newReleasesMovies]="newReleasesMovies"
+      [topWatchedMovies]="topWatchedMovies" [spotlightMovies]="spotlightMovies" [comingSoonMovies]="comingSoonMovies"
+      [hiddenGemsMovies]="hiddenGemsMovies" [topPicksMovies]="topPicksMovies" [actionMovies]="actionMovies"
+      (themeChange)="onThemeChange($event)" [isHidden]="!responsiveService.isMobile()"></app-home-mobile>
   </div>
 
   <app-footer></app-footer>

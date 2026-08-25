@@ -259,7 +259,7 @@ export class MovieDetailComponent implements OnInit {
     const calcPos = () => {
       const r = card.getBoundingClientRect();
       let left = r.left;
-      if (left + this.PANEL_W > window.innerWidth - 16) left = r.right - this.PANEL_W;
+      if (left + this.PANEL_W > window.innerWidth - 16) left = window.innerWidth - this.PANEL_W - 16;
       if (left < 8) left = 8;
       let top = r.top + r.height / 2 - this.PANEL_H / 2;
       if (top < 88) top = 88;
@@ -538,7 +538,7 @@ export class MovieDetailComponent implements OnInit {
   submitReview() {
     const text = this.newReviewText().trim();
     if (!text) return;
-    
+
     this.movie.update(m => {
       if (!m) return m;
       const newReview: Review = {

@@ -177,12 +177,12 @@
             </div>
             <div class="header-right-controls">
               <div class="section-scroll-arrows">
-                <button class="section-arrow-btn" (click)="scrollEpisodes('left')" aria-label="Scroll left" [style.opacity]="showLeftArrowEpisodes() ? '1' : '0.3'" [style.cursor]="showLeftArrowEpisodes() ? 'pointer' : 'default'">
+                <button class="section-arrow-btn" (click)="scrollEpisodes('left')" aria-label="Scroll left" [disabled]="!showLeftArrowEpisodes()">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="15 18 9 12 15 6"></polyline>
                   </svg>
                 </button>
-                <button class="section-arrow-btn" (click)="scrollEpisodes('right')" aria-label="Scroll right" [style.opacity]="showRightArrowEpisodes() ? '1' : '0.3'" [style.cursor]="showRightArrowEpisodes() ? 'pointer' : 'default'">
+                <button class="section-arrow-btn" (click)="scrollEpisodes('right')" aria-label="Scroll right" [disabled]="!showRightArrowEpisodes()">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9 18 15 12 9 6"></polyline>
                   </svg>
@@ -222,12 +222,12 @@
             <h2 class="section-title">Cast</h2>
             <div class="header-right-controls">
               <div class="section-scroll-arrows">
-                <button class="section-arrow-btn" (click)="scrollCast('left')" aria-label="Scroll left">
+                <button class="section-arrow-btn" (click)="scrollCast('left')" aria-label="Scroll left" [disabled]="!canScrollLeftCast()">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="15 18 9 12 15 6"></polyline>
                   </svg>
                 </button>
-                <button class="section-arrow-btn" (click)="scrollCast('right')" aria-label="Scroll right">
+                <button class="section-arrow-btn" (click)="scrollCast('right')" aria-label="Scroll right" [disabled]="!canScrollRightCast()">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9 18 15 12 9 6"></polyline>
                   </svg>
@@ -292,12 +292,12 @@
             <h2 class="section-title">Film simili consigliati</h2>
             <div class="header-right-controls">
               <div class="section-scroll-arrows">
-                <button class="section-arrow-btn glass-card" (click)="scrollSuggested('left')" aria-label="Scroll left">
+                <button class="section-arrow-btn glass-card" (click)="scrollSuggested('left')" aria-label="Scroll left" [disabled]="!canScrollLeftSuggested()">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="15 18 9 12 15 6"></polyline>
                   </svg>
                 </button>
-                <button class="section-arrow-btn glass-card" (click)="scrollSuggested('right')" aria-label="Scroll right">
+                <button class="section-arrow-btn glass-card" (click)="scrollSuggested('right')" aria-label="Scroll right" [disabled]="!canScrollRightSuggested()">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9 18 15 12 9 6"></polyline>
                   </svg>

@@ -1,0 +1,60 @@
+<div class="search-mobile-page">
+  <div class="ambient-glow" [class.loaded]="pageLoaded()"></div>
+
+  <!-- HERO SECTION -->
+  @if (searchResults().length > 0) {
+    <section class="hero-section" [class.loaded]="pageLoaded()">
+      <div class="hero-backdrop-wrapper">
+        <img [src]="heroImage()" alt="Search Hero" class="hero-backdrop-img" loading="lazy" />
+        <div class="hero-gradient-overlay"></div>
+      </div>
+    </section>
+  }
+
+  <!-- CONTENT SECTION -->
+  <div class="mobile-container" [class.loaded]="pageLoaded()" [class.no-hero]="searchResults().length === 0">
+    <!-- HEADER -->
+    @if (searchResults().length > 0) {
+      <div class="header-section">
+        <h1 class="page-title">
+          <span *ngIf="query()">Risultati per "{{ query() }}"</span>
+          <span *ngIf="!query()">Cerca</span>
+        </h1>
+        <div class="results-count" *ngIf="query()">
+          Trovati {{ searchResults().length }} risultati
+        </div>
+      </div>
+    }
+
+    @if (searchResults().length > 0) {
+      <div class="search-grid">
+        @for (movie of searchResults(); track movie.id; let idx = $index) {
+          <div class="movie-card clean-card fade-in" 
+               [style.animation-delay]="(idx * 0.05) + 's'">
+            
+            <img [src]="movie.posterUrl" [alt]="movie.title" class="movie-poster" loading="lazy" />
+            
+            <button class="bookmark-btn" (click)="onToggleBookmark(movie, $event)" title="Aggiungi ai preferiti" [class.active]="movie.isBookmarked">
+              <svg viewBox="0 0 24 24" [attr.fill]="movie.isBookmarked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </button>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <div class="empty-icon-wrapper">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+        <h2 *ngIf="query()">Nessun risultato</h2>
+        <h2 *ngIf="!query()">Inizia a digitare</h2>
+      </div>
+    }
+  </div>
+</div>
+
+

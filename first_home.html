@@ -1,0 +1,676 @@
+<div class="home-container" [attr.data-theme]="activeTheme()" [class.loaded]="pageLoaded()">
+  <!-- Fixed Liquid Glass Navbar -->
+  <app-navbar (themeChange)="onThemeChange($event)"></app-navbar>
+
+  <!-- Ambient Glow Background -->
+  <div class="ambient-glow-bg"
+    [style.background]="'radial-gradient(circle at 50% 25%, ' + dynamicBgColor() + ' 0%, transparent 60%)'">
+  </div>
+
+  <!-- HERO SECTION SLIDER -->
+  <section class="hero-slider">
+    @for (movie of heroMovies; track movie.id; let idx = $index) {
+    <div class="hero-slide" [class.active]="currentHeroIndex() === idx">
+
+      <!-- Backdrop Image & Bottom Gradient Overlay -->
+      <div class="hero-backdrop-wrapper">
+        <img [src]="movie.backdropUrl" [alt]="movie.title" class="hero-backdrop-img" />
+        <div class="hero-gradient-overlay"></div>
+      </div>
+
+      <!-- Movie Details Card Overlay -->
+      <div class="hero-content">
+        <h1 class="hero-title">{{ movie.title }}</h1>
+        <p class="hero-synopsis">{{ movie.synopsis }}</p>
+
+        <!-- Hero Action Buttons -->
+        <div class="hero-actions">
+          <button class="btn-watch-now" (click)="goToMovie(movie)" [style.background]="heroButtonColor()"
+            [style.box-shadow]="'0 4px 24px ' + toRgba(heroButtonColor(), 0.5)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span>Guarda ora</span>
+          </button>
+
+          <button class="btn-circle-action" title="Bookmark">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- HERO CONTROLS OVERLAY (CENTERED DOTS + RIGHT ARROWS) -->
+    <div class="hero-controls-overlay">
+      <!-- CENTERED DOTS FOR ALL 6 SLIDES -->
+      <div class="hero-dots-center">
+        <span class="latest-label">Ultime uscite</span>
+        <div class="dots-wrapper">
+          @for (movie of heroMovies; track movie.id; let idx = $index) {
+          <button class="dot" [class.active]="currentHeroIndex() === idx" (click)="setHeroSlide(idx)"
+            [attr.aria-label]="'Go to slide ' + (idx + 1)">
+          </button>
+          }
+        </div>
+      </div>
+
+      <!-- RIGHT NAVIGATION ARROWS -->
+      <div class="hero-arrows-right">
+        <button class="arrow-btn glass-card" (click)="prevHeroSlide()" aria-label="Previous Slide">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <button class="arrow-btn glass-card" (click)="nextHeroSlide()" aria-label="Next Slide">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN CONTENT AREA -->
+  <main class="main-content">
+
+    <!-- SECTION 1: CONTINUE WATCHING -->
+    <section class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">Continua a guardare</h2>
+        <div class="header-right-controls">
+          <div class="section-scroll-arrows">
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('continue-slider', 'left')"
+              aria-label="Scroll left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('continue-slider', 'right')"
+              aria-label="Scroll right">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+          <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
+        </div>
+      </div>
+
+      <div class="slider-wrapper" [class.has-fade-right]="canScrollRightContinue()"
+        [class.has-fade-left]="canScrollLeftContinue()">
+
+        <div class="continue-watching-slider" id="continue-slider" (scroll)="checkScrollState('continue-slider')">
+          @for (item of continueWatchingList; track item.id) {
+          <div class="continue-card glass-card">
+            <div class="card-thumbnail-container">
+              <img [src]="item.thumbnailUrl" [alt]="item.showTitle" class="thumbnail-img" />
+              <div class="thumbnail-overlay"></div>
+
+              <!-- Episode Air Date Overlay Top -->
+              <div class="ep-info-badge">
+                <span class="ep-title">{{ item.showTitle }}: {{ item.episodeTitle }}</span>
+                <span class="air-date">In onda il: {{ item.airDate }}</span>
+              </div>
+
+              <!-- Floating Liquid Glass Video Control Bar -->
+              <div class="liquid-player-bar glass-card">
+                <button class="player-btn play-pause-btn" (click)="togglePlayState(item)">
+                  @if (item.isPlaying) {
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                  </svg>
+                  } @else {
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  }
+                </button>
+
+                <span class="player-time">{{ item.currentTime }}</span>
+
+                <!-- Seek Bar Progress -->
+                <div class="seek-bar-track">
+                  <div class="seek-bar-fill" [style.width.%]="item.progressPercent"></div>
+                  <div class="seek-bar-thumb" [style.left.%]="item.progressPercent"></div>
+                </div>
+
+                <span class="player-time total">{{ item.totalTime }}</span>
+
+                <button class="player-btn icon-only" title="Audio">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </svg>
+                </button>
+
+                <button class="player-btn icon-only" title="Fullscreen">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <polyline points="9 21 3 21 3 15"></polyline>
+                    <line x1="21" y1="3" x2="14" y2="10"></line>
+                    <line x1="3" y1="21" x2="10" y2="14"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: TRENDING NOW -->
+    <section class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">In tendenza</h2>
+        <div class="header-right-controls">
+          <div class="section-scroll-arrows">
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('trending-slider', 'left')"
+              aria-label="Scroll left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('trending-slider', 'right')"
+              aria-label="Scroll right">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+          <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
+        </div>
+      </div>
+
+      <div class="slider-wrapper" [class.has-fade-right]="canScrollRightTrending()"
+        [class.has-fade-left]="canScrollLeftTrending()">
+
+        <div class="trending-slider" id="trending-slider" (scroll)="checkScrollState('trending-slider')">
+          @for (movie of trendingMovies; track movie.id) {
+          <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
+            (mouseleave)="onPosterMouseLeave()">
+            <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
+          </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: LATEST EPISODES AVAILABLE -->
+    <section class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">Ultimi episodi disponibili</h2>
+        <div class="header-right-controls">
+          <div class="section-scroll-arrows">
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('episodes-slider', 'left')"
+              aria-label="Scroll left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('episodes-slider', 'right')"
+              aria-label="Scroll right">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+          <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
+        </div>
+      </div>
+
+      <div class="slider-wrapper" [class.has-fade-right]="canScrollRightEpisodes()"
+        [class.has-fade-left]="canScrollLeftEpisodes()">
+
+        <div class="episodes-slider" id="episodes-slider"
+          (scroll)="checkScrollState('episodes-slider'); onEpisodeLeave()">
+          @for (ep of latestEpisodes; track ep.id) {
+          <div class="episode-card glass-card" [style.--card-accent]="ep.accentColor"
+            (mouseenter)="onEpisodeEnter($event, ep.accentColor)" (mouseleave)="onEpisodeLeave()">
+            <div class="episode-banner">
+              <img [src]="ep.bannerUrl" [alt]="ep.title" class="banner-img" />
+              <div class="banner-gradient"></div>
+            </div>
+
+            <div class="episode-details">
+              <div class="ep-text">
+                <h3 class="ep-show-title">{{ ep.title }}</h3>
+                <span class="ep-number">{{ ep.seasonEpisode }}</span>
+              </div>
+
+              <div class="ep-actions">
+                <button class="action-blue-pill" [style.background]="ep.accentColor" aria-label="Play Episode">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                </button>
+
+                <button class="action-circle-btn" [class.active]="ep.isBookmarked" (click)="toggleBookmark(ep)"
+                  aria-label="Bookmark Episode">
+                  <svg width="16" height="16" viewBox="0 0 24 24" [attr.fill]="ep.isBookmarked ? '#0075ff' : 'none'"
+                    stroke="currentColor" stroke-width="2">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: NEW RELEASES -->
+    <section class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">Nuove uscite</h2>
+        <div class="header-right-controls">
+          <div class="section-scroll-arrows">
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('new-releases-slider', 'left')"
+              aria-label="Scroll left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('new-releases-slider', 'right')"
+              aria-label="Scroll right">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+          <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
+        </div>
+      </div>
+
+      <div class="slider-wrapper" [class.has-fade-right]="canScrollRightNewReleases()"
+        [class.has-fade-left]="canScrollLeftNewReleases()">
+
+        <div class="trending-slider" id="new-releases-slider" (scroll)="checkScrollState('new-releases-slider')">
+          @for (movie of newReleasesMovies; track movie.id) {
+          <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
+            (mouseleave)="onPosterMouseLeave()">
+            <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
+          </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: MOST WATCHED CHART -->
+    <section class="content-section most-watched-section">
+      <div class="section-header">
+        <div class="chart-heading">
+          <h2 class="section-title">I più visti</h2>
+          <span class="chart-badge">Questa settimana</span>
+        </div>
+      </div>
+
+      <!-- TOP 3 PODIUM -->
+      <div class="chart-podium">
+        @for (film of topWatchedMovies.slice(0, 3); track film.id; let i = $index) {
+        <div class="podium-card glass-card" [style.--card-accent]="film.accentColor"
+          (mouseenter)="onEpisodeEnter($event, film.accentColor)" (mouseleave)="onEpisodeLeave()">
+          <span class="podium-rank-bg">{{ (i + 1).toString().padStart(2, '0') }}</span>
+          <div class="podium-poster-wrap">
+            <img [src]="film.posterUrl" [alt]="film.title" class="podium-img" />
+            <div class="podium-img-overlay"></div>
+          </div>
+          <div class="podium-body">
+            <div class="podium-rank-badge">
+              #{{ i + 1 }}
+            </div>
+            <h3 class="podium-title">{{ film.title }}</h3>
+            <p class="podium-genre">{{ film.genres[0] }} · {{ film.year }}</p>
+            <div class="podium-bar-wrap">
+              <div class="podium-bar" [style.width]="film.watchPercent + '%'"></div>
+            </div>
+            <span class="podium-views">{{ film.watchCount }} views</span>
+          </div>
+        </div>
+        }
+      </div>
+
+      <!-- RANKS 4–10 LIST -->
+      <div class="chart-list">
+        @for (film of topWatchedMovies.slice(3); track film.id; let i = $index) {
+        <div class="chart-item glass-card" [style.--card-accent]="film.accentColor">
+          <div class="chart-item-rank">{{ (i + 4).toString().padStart(2, '0') }}</div>
+          <img [src]="film.posterUrl" [alt]="film.title" class="chart-item-thumb" />
+          <div class="chart-item-info">
+            <p class="chart-item-title">{{ film.title }}</p>
+            <p class="chart-item-meta">{{ film.genres[0] }} · {{ film.year }}</p>
+          </div>
+          <div class="chart-item-bar-wrap">
+            <div class="chart-item-bar" [style.width]="film.watchPercent + '%'"></div>
+            <span class="chart-item-count">{{ film.watchCount }}</span>
+          </div>
+        </div>
+        }
+      </div>
+    </section>
+
+    <!-- SECTION 6: CRITICALLY ACCLAIMED (Duplicated from Trending) -->
+    <section class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">Acclamati dalla critica</h2>
+        <div class="header-right-controls">
+          <div class="section-scroll-arrows">
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('acclaimed-slider', 'left')"
+              aria-label="Scroll left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('acclaimed-slider', 'right')"
+              aria-label="Scroll right">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+          <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
+        </div>
+      </div>
+
+      <div class="slider-wrapper" [class.has-fade-right]="canScrollRightAcclaimed()"
+        [class.has-fade-left]="canScrollLeftAcclaimed()">
+
+        <div class="trending-slider" id="acclaimed-slider" (scroll)="checkScrollState('acclaimed-slider')">
+          @for (movie of trendingMovies; track movie.id) {
+          <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
+            (mouseleave)="onPosterMouseLeave()">
+            <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
+          </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 7: SPOTLIGHT -->
+    <section class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">In primo piano</h2>
+        <div class="header-right-controls">
+          <div class="section-scroll-arrows">
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('spotlight-slider', 'left')"
+              aria-label="Scroll left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('spotlight-slider', 'right')"
+              aria-label="Scroll right">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+          <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
+        </div>
+      </div>
+
+      <div class="slider-wrapper" [class.has-fade-right]="canScrollRightSpotlight()"
+        [class.has-fade-left]="canScrollLeftSpotlight()">
+
+        <div class="spotlight-slider" id="spotlight-slider" (scroll)="checkScrollState('spotlight-slider')">
+          @for (movie of spotlightMovies; track movie.id) {
+          <div class="detailed-card glass-card" [style.--card-accent]="movie.accentColor">
+            <!-- Left Side: Poster -->
+            <div class="detailed-poster-wrap">
+              <img [src]="movie.posterUrl" [alt]="movie.title" class="detailed-poster" />
+            </div>
+
+            <!-- Right Side: Info -->
+            <div class="detailed-info">
+              <h3 class="detailed-title">{{ movie.title }}</h3>
+              <p class="detailed-synopsis">{{ movie.synopsis }}</p>
+
+              <div class="detailed-divider"></div>
+
+              <div class="detailed-meta">
+                <p><strong>Duration:</strong> {{ movie.duration }}</p>
+                <p><strong>Genere:</strong> {{ movie.genres.join(', ') }}</p>
+                <p><strong>Regista:</strong> {{ movie.director }}</p>
+                <p class="detailed-stars"><strong>Cast:</strong> {{ movie.stars.join(', ') }}</p>
+              </div>
+
+              <div class="detailed-actions">
+                <button class="action-btn play-btn" aria-label="Play" (click)="goToMovie(movie)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <span>Guarda Ora</span>
+                </button>
+                <button class="action-btn icon-btn" aria-label="Bookmark" (click)="toggleBookmark(movie)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                    @if (movie.isBookmarked) {
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" fill="currentColor"></path>
+                    }
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 8: COMING SOON -->
+    <section class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">Prossimamente</h2>
+        <div class="header-right-controls">
+          <div class="section-scroll-arrows">
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('coming-soon-slider', 'left')"
+              aria-label="Scroll left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('coming-soon-slider', 'right')"
+              aria-label="Scroll right">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+          <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
+        </div>
+      </div>
+
+      <div class="slider-wrapper" [class.has-fade-right]="canScrollRightComingSoon()"
+        [class.has-fade-left]="canScrollLeftComingSoon()">
+
+        <div class="trending-slider" id="coming-soon-slider" (scroll)="checkScrollState('coming-soon-slider')">
+          @for (movie of comingSoonMovies; track movie.id) {
+          <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
+            (mouseleave)="onPosterMouseLeave()">
+            <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
+          </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 9: HIDDEN GEMS -->
+    <section class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">Perle nascoste</h2>
+        <div class="header-right-controls">
+          <div class="section-scroll-arrows">
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('hidden-gems-slider', 'left')"
+              aria-label="Scroll left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('hidden-gems-slider', 'right')"
+              aria-label="Scroll right">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+          <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
+        </div>
+      </div>
+
+      <div class="slider-wrapper" [class.has-fade-right]="canScrollRightHiddenGems()"
+        [class.has-fade-left]="canScrollLeftHiddenGems()">
+
+        <div class="trending-slider" id="hidden-gems-slider" (scroll)="checkScrollState('hidden-gems-slider')">
+          @for (movie of hiddenGemsMovies; track movie.id) {
+          <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
+            (mouseleave)="onPosterMouseLeave()">
+            <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
+          </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 10: TOP PICKS FOR YOU -->
+    <section class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">Scelti per te</h2>
+        <div class="header-right-controls">
+          <div class="section-scroll-arrows">
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('top-picks-slider', 'left')"
+              aria-label="Scroll left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('top-picks-slider', 'right')"
+              aria-label="Scroll right">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+          <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
+        </div>
+      </div>
+
+      <div class="slider-wrapper" [class.has-fade-right]="canScrollRightTopPicks()"
+        [class.has-fade-left]="canScrollLeftTopPicks()">
+
+        <div class="trending-slider" id="top-picks-slider" (scroll)="checkScrollState('top-picks-slider')">
+          @for (movie of topPicksMovies; track movie.id) {
+          <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
+            (mouseleave)="onPosterMouseLeave()">
+            <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
+          </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 11: ACTION THRILLERS -->
+    <section class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">Thriller d'azione</h2>
+        <div class="header-right-controls">
+          <div class="section-scroll-arrows">
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('action-movies-slider', 'left')"
+              aria-label="Scroll left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="section-arrow-btn glass-card" (click)="scrollSlider('action-movies-slider', 'right')"
+              aria-label="Scroll right">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+          <a href="javascript:void(0)" class="see-all-link">Vedi tutti &gt;</a>
+        </div>
+      </div>
+
+      <div class="slider-wrapper" [class.has-fade-right]="canScrollRightActionMovies()"
+        [class.has-fade-left]="canScrollLeftActionMovies()">
+
+        <div class="trending-slider" id="action-movies-slider" (scroll)="checkScrollState('action-movies-slider')">
+          @for (movie of actionMovies; track movie.id) {
+          <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
+            (mouseleave)="onPosterMouseLeave()">
+            <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
+          </div>
+          }
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <app-footer></app-footer>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       GLOBAL HOVER PANEL — position:fixed so it escapes every overflow
+       clipping context (slider-wrapper overflow:hidden, trending-slider
+       overflow-x:auto). Toggled via .visible CSS class.
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="global-hover-panel" [class.visible]="isPanelVisible()" [class.switching]="isPanelSwitching()"
+    [style.top.px]="panelPos().top" [style.left.px]="panelPos().left">
+
+    @if (panelMovie()) {
+    <!-- LEFT: poster — pointer-events:none (from panel), scroll passes through -->
+    <div class="ghp-poster">
+      <img [src]="panelMovie()!.posterUrl" [alt]="panelMovie()!.title" />
+    </div>
+
+    <!-- RIGHT: details — pointer-events:auto, keeps panel alive + buttons clickable -->
+    <div class="ghp-details" (mouseenter)="onPanelMouseEnter()" (mouseleave)="onPanelMouseLeave()">
+      <div class="ghp-meta">
+        <span class="ghp-year">{{ panelMovie()!.year }}</span>
+        @if (panelMovie()!.duration) {
+        <span class="ghp-dot">·</span>
+        <span class="ghp-duration">{{ panelMovie()!.duration }}</span>
+        }
+      </div>
+
+      <h3 class="ghp-title">{{ panelMovie()!.title | titlecase }}</h3>
+
+      <div class="ghp-genres">
+        @for (g of panelMovie()!.genres; track $index) {
+        <span class="ghp-genre-pill">{{ g }}</span>
+        }
+      </div>
+
+      <p class="ghp-synopsis">{{ panelMovie()!.synopsis }}</p>
+
+      <div class="ghp-actions">
+        <button class="ghp-btn-watch" (click)="goToMovie(panelMovie()!)" [style.background]="panelAccentColor()"
+          [style.box-shadow]="'0 4px 20px ' + toRgba(panelAccentColor(), 0.55)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Guarda ora
+        </button>
+        <button class="ghp-btn-bookmark" [class.active]="panelMovie()!.isBookmarked"
+          (click)="toggleBookmark(panelMovie()!)">
+          <svg width="18" height="18" viewBox="0 0 24 24" [attr.fill]="panelMovie()!.isBookmarked ? '#ffffff' : 'none'"
+            stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- Global Episode Glow Overlay (Position Fixed to escape clipping) -->
+  <div class="global-episode-glow" [class.visible]="episodeGlow().isHovered" [style.top.px]="episodeGlow().top"
+    [style.left.px]="episodeGlow().left" [style.width.px]="episodeGlow().width" [style.height.px]="episodeGlow().height"
+    [style.--glow-color]="episodeGlow().color">
+  </div>
+
+</div>

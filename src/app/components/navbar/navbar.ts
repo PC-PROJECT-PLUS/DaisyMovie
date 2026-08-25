@@ -1,4 +1,4 @@
-import { Component, signal, output, inject, OnInit, AfterViewInit, effect } from '@angular/core';
+import { Component, signal, inject, AfterViewInit, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
 import { CommonModule } from '@angular/common';
@@ -7,6 +7,7 @@ import { RouterModule } from '@angular/router';
 import { ResponsiveService } from '../../services/responsive';
 import { NavbarMobile } from './navbar-mobile/navbar-mobile';
 import { CategoryService } from '../../services/category.service';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-navbar',
@@ -20,7 +21,8 @@ export class Navbar implements AfterViewInit {
   private router = inject(Router);
   public themeService = inject(ThemeService);
   public categoryService = inject(CategoryService);
-  
+  private titleService = inject(Title);
+
   isSearchExpanded = signal<boolean>(false);
   searchQuery = signal<string>('');
   isUserMenuOpen = signal<boolean>(false);
@@ -28,6 +30,7 @@ export class Navbar implements AfterViewInit {
   navItems = ['Film', 'Serie TV', 'Animazione', 'Anime'];
 
   indicatorStyle = signal({ left: '0px', width: '32px' });
+  hasInitialized = false;
 
   constructor() {
     effect(() => {
@@ -47,13 +50,17 @@ export class Navbar implements AfterViewInit {
     const activeIndex = this.navItems.indexOf(this.categoryService.activeCategory());
     if (activeIndex >= 0 && tabs[activeIndex]) {
       const target = tabs[activeIndex] as HTMLElement;
-      this.indicatorStyle.set({
-        left: target.offsetLeft + 'px',
-        width: target.offsetWidth + 'px'
-      });
+      if (target) {
+        this.indicatorStyle.set({
+          left: target.offsetLeft + 'px',
+          width: target.offsetWidth + 'px'
+        });
+        if (!this.hasInitialized) {
+          setTimeout(() => this.hasInitialized = true, 50);
+        }
+      }
     }
   }
-
 
   setActiveTab(tab: string) {
     this.categoryService.setCategory(tab);
@@ -62,10 +69,18 @@ export class Navbar implements AfterViewInit {
     }
   }
 
+  onLogoClick() {
+    const category = this.categoryService.activeCategory();
+    this.titleService.setTitle(`DaisyMovie - ${category}`);
+    if (this.router.url !== '/') {
+      this.router.navigate(['/']);
+    }
+  }
+
   getLogoText(): string {
     const category = this.categoryService.activeCategory();
     if (category === 'Serie TV') return 'SerieTV';
-    if (category === 'Animazione') return 'Animation';
+    if (category === 'Animazione') return 'Animazione';
     if (category === 'Anime') return 'Anime';
     return 'Movie';
   }
@@ -73,7 +88,7 @@ export class Navbar implements AfterViewInit {
   getLogoWidth(): string {
     const category = this.categoryService.activeCategory();
     if (category === 'Serie TV') return '135px';
-    if (category === 'Animazione') return '155px';
+    if (category === 'Animazione') return '190px';
     if (category === 'Anime') return '125px';
     return '125px'; // Movie
   }
@@ -87,8 +102,13 @@ export class Navbar implements AfterViewInit {
   }
 
   onSearchBlur() {
-    if (!this.searchQuery()) {
-      this.isSearchExpanded.set(false);
+    this.isSearchExpanded.set(false);
+  }
+
+  onSearchEnter() {
+    const q = this.searchQuery().trim();
+    if (q) {
+      this.router.navigate(['/search'], { queryParams: { q } });
     }
   }
 

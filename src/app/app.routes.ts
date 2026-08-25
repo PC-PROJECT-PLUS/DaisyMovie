@@ -5,6 +5,7 @@ import { SeriesDetailComponent } from './components/series-detail/series-detail'
 import { Settings } from './components/settings/settings';
 import { Favorites } from './components/favorites/favorites';
 import { HistoryComponent } from './components/history/history';
+import { SearchComponent } from './components/search/search';
 
 export const routes: Routes = [
   { path: '', component: Home },
@@ -12,5 +13,6 @@ export const routes: Routes = [
   { path: 'series/:id', component: SeriesDetailComponent },
   { path: 'settings', component: Settings },
   { path: 'favorites', component: Favorites },
-  { path: 'history', component: HistoryComponent }
+  { path: 'history', component: HistoryComponent },
+  { path: 'search', component: SearchComponent }
 ];

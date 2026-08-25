@@ -54,6 +54,7 @@ export interface LatestEpisodeItem {
   bannerUrl: string;
   accentColor: string;
   isBookmarked?: boolean;
+  isNotified?: boolean;
 }
 
 export interface TopWatchedItem {
@@ -268,60 +269,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   private lastMouseX = 0;
   private lastMouseY = 0;
 
-  onEpisodeEnter(event: MouseEvent, color: string) {
-    // Cancel any pending hide so rapid card-to-card moves don't flicker
-    if (this.episodeGlowHideTimer) {
-      clearTimeout(this.episodeGlowHideTimer);
-      this.episodeGlowHideTimer = null;
-    }
-
-    const target = event.currentTarget as HTMLElement;
-    const slider = target.closest('.episodes-slider') as HTMLElement;
-    // Get original position before transform moves it
-    const rect = target.getBoundingClientRect();
-    const computedStyle = window.getComputedStyle(target);
-    const transform = computedStyle.transform;
-
-    // Check if card is inside the visible (non-faded) zone of the slider
-    // The fade gradient is now 200px wide, so use 160px as the safe threshold
-    if (slider) {
-      const sliderRect = slider.getBoundingClientRect();
-      const scrollLeft = slider.scrollLeft;
-      const maxScroll = slider.scrollWidth - slider.clientWidth;
-      const leftThreshold = scrollLeft > 5 ? sliderRect.left + 160 : sliderRect.left - 1;
-      const rightThreshold = scrollLeft < maxScroll - 5 ? sliderRect.right - 160 : sliderRect.right + 1;
-      if (rect.left < leftThreshold || rect.right > rightThreshold) {
-        return; // Don't show glow if card is behind fade gradient
-      }
-    }
-
-    let originalTop = rect.top;
-    if (transform && transform !== 'none') {
-      const matrix = new DOMMatrix(transform);
-      originalTop -= matrix.m42; // subtract translateY
-    }
-
-    this.episodeGlow.set({
-      top: originalTop,
-      left: rect.left,
-      width: rect.width,
-      height: rect.height,
-      color: color,
-      isHovered: true
-    });
-  }
-
-  onEpisodeLeave() {
-    // Cancel any existing timer before starting a new one (prevents stale timers during scroll)
-    if (this.episodeGlowHideTimer) {
-      clearTimeout(this.episodeGlowHideTimer);
-    }
-    // 60ms grace window: if mouseenter fires on another card before this runs, hide is cancelled
-    this.episodeGlowHideTimer = setTimeout(() => {
-      this.episodeGlow.update(glow => ({ ...glow, isHovered: false }));
-      this.episodeGlowHideTimer = null;
-    }, 60);
-  }
+  onEpisodeEnter(event: MouseEvent, color: string) {}
+  onEpisodeLeave() {}
 
   private hideTimer: any = null;
   private showTimer: any = null;
@@ -351,7 +300,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     const calcPos = () => {
       const r = card.getBoundingClientRect();
       let left = r.left;
-      if (left + this.PANEL_W > window.innerWidth - 16) left = r.right - this.PANEL_W;
+      if (left + this.PANEL_W > window.innerWidth - 16) left = window.innerWidth - this.PANEL_W - 16;
       if (left < 8) left = 8;
       let top = r.top + r.height / 2 - this.PANEL_H / 2;
       if (top < 88) top = 88;
@@ -1003,12 +952,18 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     item.isPlaying = !item.isPlaying;
   }
 
-  toggleBookmark(item: LatestEpisodeItem | MovieItem | DetailedMovieItem | HeroMovie) {
-    if ('isBookmarked' in item) {
-      item.isBookmarked = !item.isBookmarked;
-    } else if ('isLiked' in item) {
-      item.isLiked = !item.isLiked;
+  toggleBookmark(item: any, event?: Event) {
+    if (event) {
+      event.stopPropagation();
     }
+    item.isBookmarked = !item.isBookmarked;
+  }
+
+  toggleNotification(item: LatestEpisodeItem, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    item.isNotified = !item.isNotified;
   }
 
   checkScrollState(containerId: string) {

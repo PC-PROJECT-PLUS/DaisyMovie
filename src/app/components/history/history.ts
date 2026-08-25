@@ -1,5 +1,6 @@
 import { Component, OnInit, signal, computed, inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Title } from '@angular/platform-browser';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ThemeService } from '../../services/theme.service';
@@ -31,6 +32,7 @@ export class HistoryComponent implements OnInit {
   platformId = inject(PLATFORM_ID);
   themeService = inject(ThemeService);
   router = inject(Router);
+  titleService = inject(Title);
   isMobile = signal(false);
   pageLoaded = signal(false);
   // Search and Sort State
@@ -102,6 +104,7 @@ export class HistoryComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.titleService.setTitle('Cronologia');
     if (isPlatformBrowser(this.platformId)) {
       this.checkScreenSize();
       window.addEventListener('resize', this.checkScreenSize.bind(this));

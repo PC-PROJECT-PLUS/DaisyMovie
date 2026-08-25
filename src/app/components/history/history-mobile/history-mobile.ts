@@ -16,6 +16,7 @@ interface HistoryItem {
   accentColor: string;
   duration: string;
   isSeries?: boolean;
+  isBookmarked?: boolean;
 }
 
 @Component({

@@ -2,10 +2,8 @@
   <!-- Top Bar -->
   <div class="top-bar">
     <div class="nav-left" routerLink="/">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#fff" />
-      </svg>
-      <span class="logo-text" [style.width]="getLogoWidth()" style="transition: width 0.3s ease; display: inline-block; white-space: nowrap;">Daisy{{ getLogoText() }}</span>
+      <img src="assets/Logo_cropped.png" alt="Logo" width="34" height="34" style="object-fit: contain;" />
+      <span class="logo-text" [style.width]="getLogoWidth()" style="transition: width 0.3s ease; display: inline-block; white-space: nowrap;">Daisy<span>{{ getLogoText() }}</span></span>
     </div>
     
     <div class="nav-right">
@@ -33,7 +31,7 @@
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input type="text" placeholder="Cerca film, serie..." [(ngModel)]="searchQuery" />
+        <input type="text" placeholder="Cerca film, serie..." [(ngModel)]="searchQuery" (keydown.enter)="onSearchEnter()" />
         <button class="clear-btn" *ngIf="searchQuery()" (click)="searchQuery.set('')">X</button>
       </div>
 

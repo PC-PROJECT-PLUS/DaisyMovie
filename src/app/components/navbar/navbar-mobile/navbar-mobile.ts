@@ -56,6 +56,14 @@ export class NavbarMobile {
     this.isGenresOpen.set(!this.isGenresOpen());
   }
 
+  onSearchEnter() {
+    const q = this.searchQuery().trim();
+    if (q) {
+      this.toggleMenu();
+      this.router.navigate(['/search'], { queryParams: { q } });
+    }
+  }
+
   setCategory(tab: string) {
     this.categoryService.setCategory(tab);
     if (this.router.url !== '/') {
@@ -67,7 +75,7 @@ export class NavbarMobile {
   getLogoText(): string {
     const category = this.categoryService.activeCategory();
     if (category === 'Serie TV') return 'SerieTV';
-    if (category === 'Animazione') return 'Animation';
+    if (category === 'Animazione') return 'Animazione';
     if (category === 'Anime') return 'Anime';
     return 'Movie';
   }
@@ -75,7 +83,7 @@ export class NavbarMobile {
   getLogoWidth(): string {
     const category = this.categoryService.activeCategory();
     if (category === 'Serie TV') return '135px';
-    if (category === 'Animazione') return '155px';
+    if (category === 'Animazione') return '190px';
     if (category === 'Anime') return '125px';
     return '125px'; // Movie
   }
