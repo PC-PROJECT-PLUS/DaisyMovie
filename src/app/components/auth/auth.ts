@@ -35,20 +35,11 @@ export class AuthComponent {
     this.email.set('');
     this.password.set('');
     this.confirmPassword.set('');
-    // Animate out then switch
-    this.pageVisible.set(false);
-    setTimeout(() => {
-      this.view.set(v);
-      this.pageVisible.set(true);
-    }, 280);
+    this.view.set(v);
   }
 
   backToLanding() {
-    this.pageVisible.set(false);
-    setTimeout(() => {
-      this.view.set('landing');
-      this.pageVisible.set(true);
-    }, 280);
+    this.view.set('landing');
   }
 
   async submit() {

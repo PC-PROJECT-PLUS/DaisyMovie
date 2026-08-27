@@ -1,0 +1,403 @@
+.mobile-profile {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 0 24px env(safe-area-inset-bottom, 24px);
+  z-index: 10;
+  transition: opacity 0.5s ease;
+
+  &.entering {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+// ิ๖วิ๖ว Header ิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖ว
+.mob-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 36px;
+}
+
+.mob-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(160, 100, 255, 0.6));
+  animation: mobLogoPulse 3s ease-in-out infinite;
+}
+
+@keyframes mobLogoPulse {
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 10px rgba(160, 100, 255, 0.4));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 22px rgba(160, 100, 255, 0.8));
+  }
+}
+
+.mob-headline {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+// ิ๖วิ๖ว Card Stage ิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖ว
+// All cards stacked in the center; CSS classes position them
+.mob-card-stage {
+  position: relative;
+  width: 100%;
+  height: 230px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.mob-card {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.42s ease,
+    filter 0.42s ease;
+
+  // Active ิว๖ center, full size
+  &.mob-active {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+    filter: none;
+    z-index: 5;
+    pointer-events: none; // already selected
+  }
+
+  // -ฆ1 cards ิว๖ visible side cards
+  &.mob-prev {
+    transform: translateX(-62%) scale(0.72);
+    opacity: 0.42;
+    filter: blur(1.5px);
+    z-index: 3;
+  }
+
+  &.mob-next {
+    transform: translateX(62%) scale(0.72);
+    opacity: 0.42;
+    filter: blur(1.5px);
+    z-index: 3;
+  }
+
+  // far cards ิว๖ hidden
+  &.mob-far {
+    transform: translateX(0) scale(0.5);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+// Per-card glow that pulses on active
+.mob-card-glow {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(234, 179, 8, 0.55), transparent 70%);
+  filter: blur(28px);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -60%);
+  z-index: 0;
+  animation: mobGlowPulse 2.6s ease-in-out infinite;
+
+  &.visible {
+    opacity: 1;
+  }
+}
+
+@keyframes mobGlowPulse {
+
+  0%,
+  100% {
+    transform: translate(-50%, -60%) scale(1);
+    opacity: 0.9;
+  }
+
+  50% {
+    transform: translate(-50%, -60%) scale(1.1);
+    opacity: 1;
+  }
+}
+
+// ิ๖วิ๖ว Avatar Ring ิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖ว
+.mob-avatar-ring {
+  position: relative;
+  z-index: 1;
+  border-radius: 50%;
+  padding: 3.5px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+
+  &.lit {
+    background: linear-gradient(135deg, #eab308, #ca8a04, #fbbf24);
+    box-shadow: 0 0 28px rgba(234, 179, 8, 0.6), 0 0 70px rgba(234, 179, 8, 0.2);
+  }
+}
+
+.mob-avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  background: #1a1a2e;
+}
+
+.mob-card-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: -0.01em;
+  text-align: center;
+  z-index: 1;
+}
+
+.mob-kids {
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #fff;
+  background: linear-gradient(90deg, #eab308, #eab308);
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+// ิ๖วิ๖ว Swipe hint ิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖ว
+.mob-swipe-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.04em;
+  margin-bottom: 16px;
+  animation: hintFade 2.5s ease 1.5s both;
+}
+
+@keyframes hintFade {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  20% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  80% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.25;
+  }
+}
+
+// ิ๖วิ๖ว Dot indicators ิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖ว
+.mob-dots {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.mob-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: background 0.3s ease, width 0.3s ease, border-radius 0.3s ease;
+
+  &.active {
+    background: #eab308;
+    width: 20px;
+    border-radius: 4px;
+    box-shadow: 0 0 8px rgba(234, 179, 8, 0.7);
+  }
+}
+
+// ิ๖วิ๖ว Name + CTA ิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖ว
+.mob-info {
+  text-align: center;
+  margin-bottom: 22px;
+
+  .mob-name {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.04em;
+    margin: 0 0 4px;
+    animation: mobNameSlide 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .mob-sub {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.38);
+    margin: 0;
+  }
+}
+
+@keyframes mobNameSlide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mob-enter-btn {
+  width: 100%;
+  max-width: 280px;
+  padding: 16px;
+  border-radius: 50px;
+  border: none;
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  
+  transition: transform 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  letter-spacing: 0.02em;
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &.loading {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+}
+
+.mob-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+}
+
+// ิ๖วิ๖ว PIN Collapse Animation & Styles ิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖วิ๖ว
+.pin-collapse-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  width: 100%;
+  max-width: 240px;
+  margin: 0 auto;
+
+  &.show {
+    grid-template-rows: 1fr;
+  }
+}
+
+.pin-container {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  opacity: 0;
+  transform: translateY(-10px);
+  padding-bottom: 4px; // prevent clipping
+}
+
+.pin-collapse-wrapper.show .pin-container {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pin-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 16px 0 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.pin-dots {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
+  position: relative;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.hidden-pin {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  top: 0;
+  left: 0;
+  border: none;
+  background: transparent;
+  color: transparent;
+  pointer-events: none;
+  outline: none;
+}
+
+.pin-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+
+  &.filled {
+    background: #fff;
+    border-color: #fff;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  }
+}
+
+
