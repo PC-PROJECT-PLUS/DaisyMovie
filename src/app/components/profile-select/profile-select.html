@@ -1,0 +1,170 @@
+<div class="profile-page" tabindex="0" (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)"
+  [class.entering]="isEntering()">
+  <!-- Animated background -->
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+  <div class="bg-grid"></div>
+
+  <!-- ════════════════════════════════════════════════════════
+       DESKTOP LAYOUT  (> 700px)
+       ════════════════════════════════════════════════════════ -->
+  @if (!isMobile()) {
+  <!-- Left panel: arc wheel -->
+  <div class="wheel-panel">
+    <div class="wheel-track">
+      @for (profile of profiles(); track profile.id; let i = $index) {
+      <div class="wheel-item" [class.active]="isActive(i)" [ngStyle]="getStyle(i)" (click)="selectIndex(i)">
+        <div class="avatar-ring" [class.lit]="isActive(i)">
+          <img [src]="profile.avatar" [alt]="profile.name" class="avatar-img" />
+        </div>
+        <span class="profile-name">{{ profile.name }}</span>
+        @if (profile.isKids) {
+        <span class="kids-badge">Kids</span>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- Navigation arrows -->
+    <div class="nav-arrows">
+      <button class="arrow-btn" (click)="nudge(-1)" [disabled]="activeIndex() === 0">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+      </button>
+      <button class="arrow-btn" (click)="nudge(1)" [disabled]="activeIndex() === profiles().length - 1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Right panel: active profile detail -->
+  <div class="detail-panel" [class.entering]="isEntering()">
+    <div class="detail-inner">
+      <div class="big-avatar-wrap">
+        <div class="avatar-glow"></div>
+        <img [src]="activeProfile.avatar" [alt]="activeProfile.name" class="big-avatar" />
+      </div>
+      <div class="detail-text">
+        <h1 class="profile-title">{{ activeProfile.name }}</h1>
+        <p class="profile-sub">
+          @if (activeProfile.isKids) { Profilo bambini — contenuti sicuri }
+          @else { Accedi come <strong>{{ activeProfile.name }}</strong> }
+        </p>
+      </div>
+
+      <div class="pin-collapse-wrapper" [class.show]="activeProfile.requiresPin">
+        <div class="pin-container">
+          <p class="pin-label">Inserisci PIN</p>
+          <div class="pin-dots" (click)="pinInputDesktop.focus()">
+            <input #pinInputDesktop type="tel" inputmode="numeric" maxlength="4" class="hidden-pin"
+              [ngModel]="pinValue()" (ngModelChange)="onPinChange($event)" />
+            <span class="pin-dot" [class.filled]="pinValue().length > 0"></span>
+            <span class="pin-dot" [class.filled]="pinValue().length > 1"></span>
+            <span class="pin-dot" [class.filled]="pinValue().length > 2"></span>
+            <span class="pin-dot" [class.filled]="pinValue().length > 3"></span>
+          </div>
+        </div>
+      </div>
+      <button class="enter-btn" (click)="confirmProfile()" [class.loading]="isEntering()">
+        @if (isEntering()) { <span class="spinner"></span> }
+        @else {
+        Entra
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+        }
+      </button>
+      <div class="dot-row">
+        @for (profile of profiles(); track profile.id; let i = $index) {
+        <span class="dot" [class.active]="isActive(i)" (click)="selectIndex(i)"></span>
+        }
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ════════════════════════════════════════════════════════
+       MOBILE LAYOUT  (≤ 700px)  —  Card Swiper
+       ════════════════════════════════════════════════════════ -->
+  @if (isMobile()) {
+  <div class="mobile-profile" [class.entering]="isEntering()">
+
+    <!-- Header -->
+    <div class="mob-header">
+      <img src="assets/Logo_cropped.png" alt="Daisy" class="mob-logo" />
+      <p class="mob-headline">Chi guarda?</p>
+    </div>
+
+    <!-- Card carousel -->
+    <div class="mob-card-stage">
+      @for (profile of profiles(); track profile.id; let i = $index) {
+      <div class="mob-card" [class.mob-active]="isActive(i)" [class.mob-prev]="i === activeIndex() - 1"
+        [class.mob-next]="i === activeIndex() + 1" [class.mob-far]="i < activeIndex() - 1 || i > activeIndex() + 1"
+        (click)="selectIndex(i)">
+        <div class="mob-card-glow" [class.visible]="isActive(i)"></div>
+        <div class="mob-avatar-ring" [class.lit]="isActive(i)">
+          <img [src]="profile.avatar" [alt]="profile.name" class="mob-avatar" />
+        </div>
+        <span class="mob-card-name">{{ profile.name }}</span>
+        @if (profile.isKids) {
+        <span class="mob-kids">Kids</span>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- Swipe hint (only shows if more than 1 profile) -->
+    @if (profiles().length > 1) {
+    <p class="mob-swipe-hint">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+      scorri
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </p>
+    }
+
+    <!-- Dot indicators -->
+    <div class="mob-dots">
+      @for (profile of profiles(); track profile.id; let i = $index) {
+      <span class="mob-dot" [class.active]="isActive(i)" (click)="selectIndex(i)"></span>
+      }
+    </div>
+
+    <!-- Active profile info + CTA -->
+    <div class="mob-info">
+      <h2 class="mob-name">{{ activeProfile.name }}</h2>
+      @if (activeProfile.isKids) {
+      <p class="mob-sub">Profilo bambini – contenuti sicuri</p>
+      }
+
+      <div class="pin-collapse-wrapper" [class.show]="activeProfile.requiresPin">
+        <div class="pin-container">
+          <p class="pin-label">Inserisci PIN</p>
+          <div class="pin-dots" (click)="pinInputMobile.focus()">
+            <input #pinInputMobile type="tel" inputmode="numeric" maxlength="4" class="hidden-pin"
+              [ngModel]="pinValue()" (ngModelChange)="onPinChange($event)" />
+            <span class="pin-dot" [class.filled]="pinValue().length > 0"></span>
+            <span class="pin-dot" [class.filled]="pinValue().length > 1"></span>
+            <span class="pin-dot" [class.filled]="pinValue().length > 2"></span>
+            <span class="pin-dot" [class.filled]="pinValue().length > 3"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="mob-enter-btn" (click)="confirmProfile()" [class.loading]="isEntering()">
+      @if (isEntering()) { <span class="mob-spinner"></span> }
+      @else { Entra }
+    </button>
+
+  </div>
+  }
+
+</div>

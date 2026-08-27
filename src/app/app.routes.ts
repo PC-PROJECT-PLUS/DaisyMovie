@@ -1,18 +1,52 @@
 import { Routes } from '@angular/router';
-import { Home } from './components/home/home';
-import { MovieDetailComponent } from './components/movie-detail/movie-detail';
-import { SeriesDetailComponent } from './components/series-detail/series-detail';
-import { Settings } from './components/settings/settings';
-import { Favorites } from './components/favorites/favorites';
-import { HistoryComponent } from './components/history/history';
-import { SearchComponent } from './components/search/search';
+import { authGuard, guestGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', component: Home },
-  { path: 'movie/:id', component: MovieDetailComponent },
-  { path: 'series/:id', component: SeriesDetailComponent },
-  { path: 'settings', component: Settings },
-  { path: 'favorites', component: Favorites },
-  { path: 'history', component: HistoryComponent },
-  { path: 'search', component: SearchComponent }
+  // Public auth routes
+  {
+    path: 'auth',
+    loadComponent: () => import('./components/auth/auth').then(m => m.AuthComponent),
+    canActivate: [guestGuard]
+  },
+  {
+    path: 'profile',
+    loadComponent: () => import('./components/profile-select/profile-select').then(m => m.ProfileSelectComponent)
+  },
+
+  // Protected app routes — lazy loaded
+  {
+    path: '',
+    loadComponent: () => import('./components/home/home').then(m => m.Home),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'movie/:id',
+    loadComponent: () => import('./components/movie-detail/movie-detail').then(m => m.MovieDetailComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'series/:id',
+    loadComponent: () => import('./components/series-detail/series-detail').then(m => m.SeriesDetailComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'settings',
+    loadComponent: () => import('./components/settings/settings').then(m => m.Settings),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'favorites',
+    loadComponent: () => import('./components/favorites/favorites').then(m => m.Favorites),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'history',
+    loadComponent: () => import('./components/history/history').then(m => m.HistoryComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'search',
+    loadComponent: () => import('./components/search/search').then(m => m.SearchComponent),
+    canActivate: [authGuard]
+  },
 ];

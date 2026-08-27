@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { CategoryService } from '../../../services/category.service';
+import { NotificationsMobile } from './notifications-mobile/notifications-mobile';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-navbar-mobile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, NotificationsMobile],
   templateUrl: './navbar-mobile.html',
   styleUrl: './navbar-mobile.scss',
 })
@@ -15,11 +17,13 @@ export class NavbarMobile {
   isSearchExpanded = signal<boolean>(false);
   isMenuOpen = signal<boolean>(false);
   isGenresOpen = signal<boolean>(false);
+  isNotificationsOpen = signal<boolean>(false);
   searchQuery = signal<string>('');
   
   private elementRef = inject(ElementRef);
   private router = inject(Router);
   public categoryService = inject(CategoryService);
+  private authService = inject(AuthService);
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
@@ -56,6 +60,15 @@ export class NavbarMobile {
     this.isGenresOpen.set(!this.isGenresOpen());
   }
 
+  openNotifications() {
+    this.isNotificationsOpen.set(true);
+    this.isMenuOpen.set(false);
+  }
+
+  closeNotifications() {
+    this.isNotificationsOpen.set(false);
+  }
+
   onSearchEnter() {
     const q = this.searchQuery().trim();
     if (q) {
@@ -86,5 +99,11 @@ export class NavbarMobile {
     if (category === 'Animazione') return '190px';
     if (category === 'Anime') return '125px';
     return '125px'; // Movie
+  }
+
+  logout() {
+    this.authService.logout();
+    this.isMenuOpen.set(false);
+    this.router.navigate(['/auth']);
   }
 }
