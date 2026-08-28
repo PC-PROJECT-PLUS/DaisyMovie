@@ -1,7 +1,7 @@
 export const MOCK_HISTORY_ITEMS = [
   { id: 401, title: 'Your Name', year: 2016, matchScore: '99% Match', genres: ['Anime', 'Romance'], synopsis: 'Due sconosciuti scoprono di essere legati in un modo bizzarro.', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1920&auto=format&fit=crop&q=80', accentColor: '#3b82f6', duration: '1h 52m', isSeries: false },
-  { id: 701, title: 'Stranger Things', year: 2016, matchScore: '99% Match', genres: ['Sci-Fi', 'Thriller'], synopsis: 'Quando un ragazzino scompare, i suoi amici e la famiglia si trovano a scoprire forze occulte.', posterUrl: 'https://image.tmdb.org/t/p/original/49WJfeN0moxb9IPfGn8b2AOjG09.jpg', accentColor: '#ef4444', duration: '4 Seasons', isSeries: true },
-  { id: 702, title: 'Oppenheimer', year: 2023, matchScore: '98% Match', genres: ['Biography', 'Drama'], synopsis: 'La storia del fisico J. Robert Oppenheimer e la creazione della bomba atomica.', posterUrl: 'https://image.tmdb.org/t/p/original/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', accentColor: '#f59e0b', duration: '3h 0m', isSeries: false },
+  { id: 701, title: 'Stranger Things', year: 2016, matchScore: '99% Match', genres: ['Sci-Fi', 'Thriller'], synopsis: 'Quando un ragazzino scompare, i suoi amici e la famiglia si trovano a scoprire forze occulte.', posterUrl: 'https://images.unsplash.com/photo-1618331835717-801e976710b2?w=1920&q=80', accentColor: '#ef4444', duration: '4 Seasons', isSeries: true },
+  { id: 702, title: 'Oppenheimer', year: 2023, matchScore: '98% Match', genres: ['Biography', 'Drama'], synopsis: 'La storia del fisico J. Robert Oppenheimer e la creazione della bomba atomica.', posterUrl: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1920&q=80', accentColor: '#f59e0b', duration: '3h 0m', isSeries: false },
   { id: 612, title: 'Severance', year: 2022, matchScore: '96% Match', genres: ['Sci-Fi', 'Thriller'], synopsis: 'Mark guida un team i cui ricordi sono stati divisi chirurgicamente tra lavoro e vita privata.', accentColor: '#3b82f6', posterUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1920&q=80', duration: '1 Season', isSeries: true },
   { id: 404, title: 'Akira', year: 1988, matchScore: '95% Match', genres: ['Anime', 'Sci-Fi'], synopsis: 'Un progetto militare segreto mette in pericolo Neo-Tokyo.', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1920&auto=format&fit=crop&q=80', accentColor: '#ef4444', duration: '2h 4m', isSeries: false },
   { id: 608, title: 'Succession', year: 2018, matchScore: '94% Match', genres: ['Drama'], synopsis: 'La famiglia Roy controlla la pi grande azienda di media e intrattenimento del mondo...', posterUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80', accentColor: '#d4af37', duration: '4 Seasons', isSeries: true },
@@ -29,12 +29,18 @@ export class PreferencesService {
   private platformId = inject(PLATFORM_ID);
   
   historyHeroMovieId = signal<number | null>(null);
+  favoritesHeroMovieId = signal<number | null>(null);
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
-      const savedId = localStorage.getItem('daisy-history-hero-id');
-      if (savedId) {
-        this.historyHeroMovieId.set(parseInt(savedId, 10));
+      const savedHistoryId = localStorage.getItem('daisy-history-hero-id');
+      if (savedHistoryId) {
+        this.historyHeroMovieId.set(parseInt(savedHistoryId, 10));
+      }
+      
+      const savedFavoritesId = localStorage.getItem('daisy-favorites-hero-id');
+      if (savedFavoritesId) {
+        this.favoritesHeroMovieId.set(parseInt(savedFavoritesId, 10));
       }
     }
   }
@@ -49,6 +55,18 @@ export class PreferencesService {
       }
     }
   }
+
+  setFavoritesHeroMovieId(id: number | null) {
+    this.favoritesHeroMovieId.set(id);
+    if (isPlatformBrowser(this.platformId)) {
+      if (id !== null) {
+        localStorage.setItem('daisy-favorites-hero-id', id.toString());
+      } else {
+        localStorage.removeItem('daisy-favorites-hero-id');
+      }
+    }
+  }
 }
+
 
 

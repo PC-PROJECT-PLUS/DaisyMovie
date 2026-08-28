@@ -1,5 +1,6 @@
 import { Component, signal, OnDestroy, OnInit, AfterViewInit, inject, PLATFORM_ID, effect } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { Navbar } from '../navbar/navbar';
 import { FooterComponent } from '../footer/footer';
@@ -97,6 +98,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   public categoryService = inject(CategoryService);
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
+  private titleService = inject(Title);
   private isBrowser = isPlatformBrowser(this.platformId);
 
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
@@ -733,6 +735,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   ngOnInit() {
+    this.titleService.setTitle('DaisyMovie - Home');
     // Trigger entrance animations
     setTimeout(() => {
       this.pageLoaded.set(true);

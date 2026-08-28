@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ThemeService } from '../../../services/theme.service';
 import { PreferencesService, MOCK_HISTORY_ITEMS } from '../../../services/preferences.service';
+import { FAVORITE_ITEMS } from '../../favorites/favorites';
 
 @Component({
   selector: 'app-settings-mobile',
@@ -27,9 +28,9 @@ export class SettingsMobile {
   @Input() styleOptions: any[] = [];
   @Input() themeService!: ThemeService;
 
-    preferencesService = inject(PreferencesService);
+  preferencesService = inject(PreferencesService);
   availableHistoryItems = MOCK_HISTORY_ITEMS;
-  isHistoryDropdownOpen = signal(false);
+  availableFavoritesItems = FAVORITE_ITEMS;
 
   get historyHeroLabel(): string {
     const id = this.preferencesService.historyHeroMovieId();
@@ -39,7 +40,10 @@ export class SettingsMobile {
 
   selectHistoryHero(id: number | null) {
     this.preferencesService.setHistoryHeroMovieId(id);
-    this.isHistoryDropdownOpen.set(false);
+  }
+
+  selectFavoritesHero(id: number | null) {
+    this.preferencesService.setFavoritesHeroMovieId(id);
   }
 
   openDropdown = signal<string | null>(null);

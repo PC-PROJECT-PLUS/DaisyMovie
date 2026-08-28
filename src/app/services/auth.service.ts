@@ -34,12 +34,16 @@ export class AuthService {
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
       try {
-        const stored = localStorage.getItem('daisy_auth');
-        if (stored) {
-          const { isLoggedIn, user, profile } = JSON.parse(stored);
+        const storedAuth = localStorage.getItem('daisy_auth');
+        if (storedAuth) {
+          const { isLoggedIn, user } = JSON.parse(storedAuth);
           this.isLoggedIn.set(isLoggedIn ?? false);
           this.currentUser.set(user ?? null);
-          this.selectedProfile.set(profile ?? null);
+        }
+        
+        const storedProfile = sessionStorage.getItem('daisy_profile');
+        if (storedProfile) {
+          this.selectedProfile.set(JSON.parse(storedProfile));
         }
       } catch { /* ignore */ }
     }
@@ -82,6 +86,7 @@ export class AuthService {
     this.selectedProfile.set(null);
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem('daisy_auth');
+      sessionStorage.removeItem('daisy_profile');
     }
   }
 
@@ -94,8 +99,14 @@ export class AuthService {
       localStorage.setItem('daisy_auth', JSON.stringify({
         isLoggedIn: this.isLoggedIn(),
         user: this.currentUser(),
-        profile: this.selectedProfile(),
       }));
+      
+      const profile = this.selectedProfile();
+      if (profile) {
+        sessionStorage.setItem('daisy_profile', JSON.stringify(profile));
+      } else {
+        sessionStorage.removeItem('daisy_profile');
+      }
     }
   }
 }

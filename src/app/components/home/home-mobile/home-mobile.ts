@@ -1,6 +1,6 @@
 import { Component, signal, OnDestroy, OnInit, AfterViewInit, inject, PLATFORM_ID, ViewChild, ElementRef, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { DomSanitizer } from '@angular/platform-browser';
+import { DomSanitizer, Title } from '@angular/platform-browser';
 import { Router, RouterModule } from '@angular/router';
 import { CategoryService } from '../../../services/category.service';
 import { HeroMovie, ContinueWatchingItem, MovieItem, LatestEpisodeItem, TopWatchedItem, DetailedMovieItem, globalColorCache } from '../home';
@@ -17,6 +17,7 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
   private router = inject(Router);
   private categoryService = inject(CategoryService);
   private sanitizer = inject(DomSanitizer);
+  private titleService = inject(Title);
   private isBrowser = isPlatformBrowser(this.platformId);
 
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
@@ -264,6 +265,7 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.titleService.setTitle('DaisyMovie - Home');
     this.startHeroAutoplay();
   }
 

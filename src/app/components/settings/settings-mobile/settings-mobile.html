@@ -319,7 +319,7 @@
           </div>
         </div>
           
-          <div class="mt-4 pt-3" style="border-top: 1px solid var(--border-color); padding-bottom: 2rem;">
+          <div style="border-top: 1px solid var(--border-color); margin-top: 36px; padding-top: 24px; padding-bottom: 2rem;">
             <h3 class="mb-2" style="color: var(--text-color); font-size: 1.1rem;">Copertina Cronologia</h3>
             <p class="subtitle mb-3" style="font-size: 0.9rem;">Scegli il film da visualizzare come immagine in evidenza.</p>
                 <div class="history-hero-selector">
@@ -331,6 +331,24 @@
                   
                   @for (movie of availableHistoryItems; track movie.id) {
                     <div class="hero-option" [class.selected]="preferencesService.historyHeroMovieId() === movie.id" (click)="selectHistoryHero(movie.id)">
+                      <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy">
+                    </div>
+                  }
+                </div>
+          </div>
+
+          <div class="mt-4 pt-3" style="border-top: 1px solid var(--border-color); padding-bottom: 2rem;">
+            <h3 class="mb-2" style="color: var(--text-color); font-size: 1.1rem;">Copertina Preferiti</h3>
+            <p class="subtitle mb-3" style="font-size: 0.9rem;">Scegli il film da visualizzare come immagine in evidenza.</p>
+                <div class="history-hero-selector">
+                  <div class="hero-option" [class.selected]="preferencesService.favoritesHeroMovieId() === null" (click)="selectFavoritesHero(null)">
+                    <div class="poster-placeholder">
+                      <span>Predefinito<br><small>(Notte Stellata)</small></span>
+                    </div>
+                  </div>
+                  
+                  @for (movie of availableFavoritesItems; track movie.id) {
+                    <div class="hero-option" [class.selected]="preferencesService.favoritesHeroMovieId() === movie.id" (click)="selectFavoritesHero(movie.id)">
                       <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy">
                     </div>
                   }

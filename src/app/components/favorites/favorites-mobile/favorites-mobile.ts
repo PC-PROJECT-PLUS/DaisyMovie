@@ -4,6 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NavbarMobile } from '../../navbar/navbar-mobile/navbar-mobile';
 import { ThemeService } from '../../../services/theme.service';
+import { PreferencesService } from '../../../services/preferences.service';
 
 interface FavoriteItem {
   id: number;
@@ -32,6 +33,7 @@ export class FavoritesMobile implements OnInit {
   onRemove = output<FavoriteItem>();
   themeService = inject(ThemeService);
   router = inject(Router);
+  preferencesService = inject(PreferencesService);
   pageLoaded = signal(false);
 
   // Search and Sort State
@@ -43,6 +45,18 @@ export class FavoritesMobile implements OnInit {
   // Hero Image Data
   heroImage = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1920px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg'; 
   heroTitle = 'I tuoi Preferiti';
+
+  get currentHeroImage(): string {
+    const prefId = this.preferencesService.favoritesHeroMovieId();
+    if (prefId) {
+      const movie = this.favoriteItems().find(m => m.id === prefId);
+      if (movie) {
+        const url = movie.backdropUrl || movie.posterUrl;
+        return url ? url.replace('w=500', 'w=1920') : url;
+      }
+    }
+    return this.heroImage;
+  }
 
   // Computed state for filtered and sorted items
   filteredItems = computed(() => {
