@@ -1,7 +1,8 @@
-import { Component, Input, output, signal } from '@angular/core';
+import { Component, Input, output, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ThemeService } from '../../../services/theme.service';
+import { PreferencesService, MOCK_HISTORY_ITEMS } from '../../../services/preferences.service';
 
 @Component({
   selector: 'app-settings-mobile',
@@ -25,6 +26,21 @@ export class SettingsMobile {
   @Input() sizeOptions: any[] = [];
   @Input() styleOptions: any[] = [];
   @Input() themeService!: ThemeService;
+
+    preferencesService = inject(PreferencesService);
+  availableHistoryItems = MOCK_HISTORY_ITEMS;
+  isHistoryDropdownOpen = signal(false);
+
+  get historyHeroLabel(): string {
+    const id = this.preferencesService.historyHeroMovieId();
+    if (!id) return 'Predefinito (Ultimo film visto)';
+    return this.availableHistoryItems.find(m => m.id === id)?.title || 'Sconosciuto';
+  }
+
+  selectHistoryHero(id: number | null) {
+    this.preferencesService.setHistoryHeroMovieId(id);
+    this.isHistoryDropdownOpen.set(false);
+  }
 
   openDropdown = signal<string | null>(null);
 
@@ -88,3 +104,6 @@ export class SettingsMobile {
     this.themeService.setTheme(theme);
   }
 }
+
+
+

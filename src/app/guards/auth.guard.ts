@@ -1,9 +1,13 @@
-import { inject } from '@angular/core';
+import { inject, PLATFORM_ID } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { isPlatformServer } from '@angular/common';
 import { AuthService } from '../services/auth.service';
 
-/** Protects all main app routes — requires login AND profile selected */
+/** Protects all main app routes */
 export const authGuard: CanActivateFn = () => {
+  const platformId = inject(PLATFORM_ID);
+  if (isPlatformServer(platformId)) return true; // bypass on server
+
   const auth = inject(AuthService);
   const router = inject(Router);
 
@@ -18,8 +22,11 @@ export const authGuard: CanActivateFn = () => {
   return true;
 };
 
-/** Redirects already-authenticated users away from /auth and /profile */
+/** Redirects already-authenticated users */
 export const guestGuard: CanActivateFn = (_route, _state) => {
+  const platformId = inject(PLATFORM_ID);
+  if (isPlatformServer(platformId)) return true; // bypass on server
+
   const auth = inject(AuthService);
   const router = inject(Router);
 

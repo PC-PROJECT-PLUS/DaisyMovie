@@ -1,5 +1,5 @@
 @if (isMobile()) {
-  <app-history-mobile [historyItems]="historyItems()" (onRemove)="removeHistory($event)"></app-history-mobile>
+  <app-history-mobile [historyItems]="historyItems()" (onBookmarkToggle)="toggleBookmark($event)"></app-history-mobile>
 } @else {
   <div class="history-page" [attr.data-theme]="themeService.currentTheme()">
 
@@ -8,7 +8,7 @@
     <!-- HERO SECTION -->
     <section class="hero-section" [class.loaded]="pageLoaded()">
       <div class="hero-backdrop-wrapper">
-        <img [src]="heroImage" alt="history Hero" class="hero-backdrop-img" loading="lazy" />
+        <img [src]="heroImage()" alt="history Hero" class="hero-backdrop-img" loading="lazy" />
         <div class="hero-gradient-overlay"></div>
       </div>
     </section>
@@ -83,7 +83,7 @@
               
               <img class="movie-poster" [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
               
-              <button class="remove-favorite-btn" (click)="removeHistory(movie, $event)" title="Rimuovi dai preferiti">
+              <button class="remove-favorite-btn" (click)="toggleBookmark(movie, $event)" title="Rimuovi dai preferiti">
                 <svg viewBox="0 0 24 24" [attr.fill]="movie.isBookmarked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                 </svg>
@@ -121,5 +121,8 @@
     </div>
   </div>
 }
+
+
+
 
 

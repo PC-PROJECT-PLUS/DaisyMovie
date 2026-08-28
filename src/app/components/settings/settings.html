@@ -435,6 +435,25 @@
                   <span>Dinamico</span>
                 </div>
               </div>
+
+              <div class="mt-5 pt-4" style="border-top: 1px solid var(--border-color);">
+                <h3 class="mb-2" style="color: var(--text-color); font-size: 1.1rem; font-weight: 500;">Copertina Cronologia</h3>
+                <p class="subtitle mb-3">Scegli il film da visualizzare come immagine in evidenza nella pagina Cronologia.</p>
+                
+                <div class="history-hero-selector">
+                  <div class="hero-option" [class.selected]="preferencesService.historyHeroMovieId() === null" (click)="selectHistoryHero(null)">
+                    <div class="poster-placeholder">
+                      <span>Predefinito<br><small>(Ultimo Visto)</small></span>
+                    </div>
+                  </div>
+                  
+                  @for (movie of availableHistoryItems; track movie.id) {
+                    <div class="hero-option" [class.selected]="preferencesService.historyHeroMovieId() === movie.id" (click)="selectHistoryHero(movie.id)" [title]="movie.title">
+                      <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy">
+                    </div>
+                  }
+                </div>
+              </div>
             </div>
           </div>
         }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ThemeService } from '../../../services/theme.service';
+import { PreferencesService } from '../../../services/preferences.service';
 
 interface HistoryItem {
   id: number;
@@ -28,8 +29,9 @@ interface HistoryItem {
 })
 export class HistoryMobile implements OnInit {
   historyItems = input<HistoryItem[]>([]);
-  onRemove = output<HistoryItem>();
+  onBookmarkToggle = output<HistoryItem>();
   themeService = inject(ThemeService);
+  preferencesService = inject(PreferencesService);
   router = inject(Router);
   pageLoaded = signal(false);
 
@@ -39,8 +41,16 @@ export class HistoryMobile implements OnInit {
   isSortDropdownOpen = signal(false);
   isSearchFocused = signal(false);
 
-  // Hero Image Data
-  heroImage = 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Great_Wave_off_Kanagawa2.jpg/1920px-Great_Wave_off_Kanagawa2.jpg'; 
+    heroItem = computed(() => {
+    const id = this.preferencesService.historyHeroMovieId();
+    if (id) {
+      const item = this.historyItems().find(i => i.id === id);
+      if (item) return item;
+    }
+    return this.historyItems().length > 0 ? this.historyItems()[0] : null;
+  });
+
+  heroImage = computed(() => this.heroItem()?.backdropUrl || this.heroItem()?.posterUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Great_Wave_off_Kanagawa2.jpg/1920px-Great_Wave_off_Kanagawa2.jpg');
   heroTitle = 'Cronologia';
 
   // Computed state for filtered and sorted items
@@ -87,9 +97,9 @@ export class HistoryMobile implements OnInit {
     }
   }
 
-  removeHistory(item: HistoryItem, event: Event) {
+  toggleBookmark(item: HistoryItem, event: Event) {
     event.stopPropagation();
-    this.onRemove.emit(item);
+    this.onBookmarkToggle.emit(item);
   }
   toggleSortDropdown() {
     this.isSortDropdownOpen.update(val => !val);
@@ -109,3 +119,7 @@ export class HistoryMobile implements OnInit {
     return map[this.sortOption()];
   }
 }
+
+
+
+

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ResponsiveService } from '../../services/responsive';
 import { SettingsMobile } from './settings-mobile/settings-mobile';
 import { ThemeService } from '../../services/theme.service';
+import { PreferencesService, MOCK_HISTORY_ITEMS } from '../../services/preferences.service';
 
 @Component({
   selector: 'app-settings',
@@ -17,6 +18,20 @@ export class Settings {
   responsiveService = inject(ResponsiveService);
   themeService = inject(ThemeService);
   titleService = inject(Title);
+    preferencesService = inject(PreferencesService);
+  availableHistoryItems = MOCK_HISTORY_ITEMS;
+  isHistoryDropdownOpen = signal(false);
+
+  get historyHeroLabel(): string {
+    const id = this.preferencesService.historyHeroMovieId();
+    if (!id) return 'Predefinito (Ultimo film visto)';
+    return this.availableHistoryItems.find(m => m.id === id)?.title || 'Sconosciuto';
+  }
+
+  selectHistoryHero(id: number | null) {
+    this.preferencesService.setHistoryHeroMovieId(id);
+    this.isHistoryDropdownOpen.set(false);
+  }
 
   constructor() {
     this.titleService.setTitle('Impostazioni');
@@ -193,3 +208,6 @@ export class Settings {
     this.themeService.setTheme(theme);
   }
 }
+
+
+

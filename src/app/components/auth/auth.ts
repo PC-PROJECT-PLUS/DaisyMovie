@@ -2,6 +2,7 @@ import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { AuthService } from '../../services/auth.service';
 
 type AuthView = 'landing' | 'login' | 'register';
@@ -16,6 +17,7 @@ type AuthView = 'landing' | 'login' | 'register';
 export class AuthComponent {
   private router = inject(Router);
   private authService = inject(AuthService);
+  private titleService = inject(Title);
 
   view = signal<AuthView>('landing');
   email = signal('');
@@ -26,6 +28,7 @@ export class AuthComponent {
   pageVisible = signal(false);
 
   constructor() {
+    this.titleService.setTitle('DaisyMovie');
     // Trigger entrance animation
     setTimeout(() => this.pageVisible.set(true), 20);
   }
@@ -36,10 +39,12 @@ export class AuthComponent {
     this.password.set('');
     this.confirmPassword.set('');
     this.view.set(v);
+    this.titleService.setTitle(v === 'login' ? 'DaisyMovie - Login' : 'DaisyMovie - Register');
   }
 
   backToLanding() {
     this.view.set('landing');
+    this.titleService.setTitle('DaisyMovie');
   }
 
   async submit() {

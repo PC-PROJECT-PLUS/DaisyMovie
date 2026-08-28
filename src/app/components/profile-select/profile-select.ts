@@ -1,11 +1,12 @@
 import {
   Component, signal, computed, inject, HostListener, PLATFORM_ID, OnDestroy, ViewChild, ElementRef
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { AuthService, UserProfile } from '../../services/auth.service';
+import { CategoryService } from '../../services/category.service';
 
 // Arc curve parameters per distance from active index (desktop)
 const ARC_STEPS = [
@@ -28,6 +29,8 @@ const WHEEL_COOLDOWN_MS = 480; // how long to wait before next wheel step
 export class ProfileSelectComponent implements OnDestroy {
   private router = inject(Router);
   public authService = inject(AuthService);
+  private titleService = inject(Title);
+  private categoryService = inject(CategoryService);
   private platformId = inject(PLATFORM_ID);
 
   profiles = computed(() => this.authService.getProfiles());
@@ -50,6 +53,13 @@ export class ProfileSelectComponent implements OnDestroy {
   private isDragging = false;
 
   constructor() {
+    let userName = this.authService.currentUser()?.name;
+    if (userName) {
+      userName = userName.charAt(0).toUpperCase() + userName.slice(1);
+    }
+    const title = userName ? `${userName} - Profili` : 'Profili';
+    this.titleService.setTitle(title);
+
     if (isPlatformBrowser(this.platformId)) {
       this.checkMobile();
       window.addEventListener('resize', this.onResize);
@@ -190,6 +200,7 @@ export class ProfileSelectComponent implements OnDestroy {
     this.isEntering.set(true);
     setTimeout(() => {
       this.authService.selectProfile(profile);
+      this.categoryService.setCategory('Film');
       this.router.navigate(['/']);
     }, 600);
   }
@@ -198,3 +209,4 @@ export class ProfileSelectComponent implements OnDestroy {
     return this.profiles()[this.activeIndex()];
   }
 }
+
