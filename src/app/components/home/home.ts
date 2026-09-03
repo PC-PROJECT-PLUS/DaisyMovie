@@ -1,4 +1,4 @@
-import { Component, signal, OnDestroy, OnInit, AfterViewInit, inject, PLATFORM_ID, effect } from '@angular/core';
+import { Component, signal, OnDestroy, OnInit, AfterViewInit, inject, PLATFORM_ID, effect, Injector, NgZone } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
@@ -8,6 +8,7 @@ import { ResponsiveService } from '../../services/responsive';
 import { ThemeService } from '../../services/theme.service';
 import { CategoryService } from '../../services/category.service';
 import { HomeMobile } from './home-mobile/home-mobile';
+import { TmdbService } from '../../services/tmdb.service';
 
 export const globalColorCache = new Map<string, string>();
 
@@ -96,6 +97,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   public responsiveService = inject(ResponsiveService);
   public themeService = inject(ThemeService);
   public categoryService = inject(CategoryService);
+  public tmdbService = inject(TmdbService);
+  public ngZone = inject(NgZone);
+  private injector = inject(Injector);
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
   private titleService = inject(Title);
@@ -109,113 +113,23 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   pageLoaded = signal<boolean>(false);
   private heroInterval: any;
 
+  pages: any = {
+    trending: 1,
+    newReleases: 1,
+    spotlight: 1,
+    classics: 1,
+    hiddenGems: 1,
+    topPicks: 1,
+    action: 1
+  };
+  loadingPages: any = {};
+
   // Backup of original movies
   private originalHeroMovies: HeroMovie[] = [];
   private originalTrending: MovieItem[] = [];
   private originalTopWatched: TopWatchedItem[] = [];
 
-  constructor() {
-    effect(() => {
-      const cat = this.categoryService.activeCategory();
-      this.pageLoaded.set(false);
-      setTimeout(() => {
-        this.loadMockData(cat);
-        if (this.isBrowser && this.heroMovies.length > 0) {
-          this.extractDominantColor(this.heroMovies[0].backdropUrl).then(c => this.heroButtonColor.set(c));
-          this.startHeroAutoplay();
-        }
-        // Piccolo ritardo per permettere il rendering prima del fade-in
-        setTimeout(() => this.pageLoaded.set(true), 50);
-      }, 300);
-    });
-  }
-
-  loadMockData(category: string) {
-    this.currentHeroIndex.set(0);
-    if (this.originalHeroMovies.length === 0 && this.heroMovies && this.heroMovies.length > 0) {
-      this.originalHeroMovies = [...this.heroMovies];
-      this.originalTrending = [...this.trendingMovies];
-      this.originalTopWatched = [...this.topWatchedMovies];
-    }
-
-    if (category === 'Animazione' || category === 'Anime') {
-      this.heroMovies = [
-        {
-          id: 301,
-          title: 'Spider-Man: Across the Spider-Verse',
-          synopsis: 'Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence.',
-          backdropUrl: 'https://images.unsplash.com/photo-1608889476518-738c9b1dcb40?w=1600&auto=format&fit=crop&q=80',
-          primaryColor: '#ef4444'
-        },
-        {
-          id: 302,
-          title: 'Arcane',
-          synopsis: 'Set in utopian Piltover and the oppressed underground of Zaun, the story follows the origins of two iconic League champions-and the power that will tear them apart.',
-          backdropUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=1600&auto=format&fit=crop&q=80',
-          primaryColor: '#3b82f6'
-        },
-        {
-          id: 303,
-          title: 'Cyberpunk: Edgerunners',
-          synopsis: 'A street kid trying to survive in a technology and body modification-obsessed city of the future. Having everything to lose, he chooses to stay alive by becoming an edgerunner.',
-          backdropUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1600&auto=format&fit=crop&q=80',
-          primaryColor: '#00f0ff'
-        }
-      ];
-      this.trendingMovies = [
-        { id: 401, title: 'Your Name', year: 2016, matchScore: '99% Match', genres: ['Anime', 'Romance'], synopsis: 'Two strangers find themselves linked in a bizarre way.', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80', accentColor: '#3b82f6', duration: '1h 52m', isSeries: true },
-        { id: 402, title: 'Spirited Away', year: 2001, matchScore: '98% Match', genres: ['Anime', 'Fantasy'], synopsis: 'During her family\'s move to the suburbs...', posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80', accentColor: '#ef4444', duration: '2h 5m', isSeries: true },
-        { id: 404, title: 'Akira', year: 1988, matchScore: '95% Match', genres: ['Anime', 'Sci-Fi'], synopsis: 'A secret military project endangers Neo-Tokyo.', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80', accentColor: '#ef4444', duration: '2h 4m', isSeries: true },
-        { id: 405, title: 'Princess Mononoke', year: 1997, matchScore: '97% Match', genres: ['Anime', 'Adventure'], synopsis: 'On a journey to find the cure for a Tatarigami\'s curse...', posterUrl: 'https://images.unsplash.com/photo-1608889476518-738c9b1dcb40?w=500&auto=format&fit=crop&q=80', accentColor: '#10b981', duration: '2h 14m', isSeries: true },
-        { id: 406, title: 'Ghost in the Shell', year: 1995, matchScore: '94% Match', genres: ['Anime', 'Cyberpunk'], synopsis: 'A cyborg policewoman and her partner hunt a mysterious and powerful hacker.', posterUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=500&auto=format&fit=crop&q=80', accentColor: '#00f0ff', duration: '1h 23m', isSeries: true }
-      ];
-      this.topWatchedMovies = [
-        { id: 403, title: 'Demon Slayer: Mugen Train', genres: ['Anime', 'Action'], year: 2020, watchPercent: 100, watchCount: '5M+', accentColor: '#ef4444', posterUrl: 'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=500&auto=format&fit=crop&q=80', isSeries: true },
-        { id: 407, title: 'Jujutsu Kaisen 0', genres: ['Anime', 'Action'], year: 2021, watchPercent: 95, watchCount: '4M+', accentColor: '#3b82f6', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80', isSeries: true },
-        { id: 408, title: 'A Silent Voice', genres: ['Anime', 'Drama'], year: 2016, watchPercent: 90, watchCount: '3.5M+', accentColor: '#f43f5e', posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80', isSeries: true },
-        { id: 409, title: 'Howl\'s Moving Castle', genres: ['Anime', 'Fantasy'], year: 2004, watchPercent: 88, watchCount: '3M+', accentColor: '#10b981', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80', isSeries: true },
-        { id: 410, title: 'Neon Genesis Evangelion', genres: ['Anime', 'Mecha'], year: 1995, watchPercent: 85, watchCount: '2.5M+', accentColor: '#8b5cf6', posterUrl: 'https://images.unsplash.com/photo-1608889476518-738c9b1dcb40?w=500&auto=format&fit=crop&q=80', isSeries: true }
-      ];
-    } else if (category === 'Serie TV') {
-      this.heroMovies = [
-        {
-          id: 501,
-          title: 'Stranger Things',
-          synopsis: 'When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces and one strange little girl.',
-          backdropUrl: 'https://images.unsplash.com/photo-1614749219355-6b43d6c14175?w=1600&auto=format&fit=crop&q=80',
-          primaryColor: '#ef4444',
-          isSeries: true
-        },
-        {
-          id: 502,
-          title: 'The Crown',
-          synopsis: 'Follows the political rivalries and romance of Queen Elizabeth II\'s reign and the events that shaped the second half of the twentieth century.',
-          backdropUrl: 'https://images.unsplash.com/photo-1574676451642-171b3e8a4a58?w=1600&auto=format&fit=crop&q=80',
-          primaryColor: '#d4af37',
-          isSeries: true
-        }
-      ];
-      this.trendingMovies = [
-        { id: 601, title: 'Breaking Bad', year: 2008, matchScore: '99% Match', genres: ['Crime', 'Drama'], synopsis: 'A high school chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine.', posterUrl: 'https://images.unsplash.com/photo-1506744626753-1fa30fd20055?w=500&auto=format&fit=crop&q=80', accentColor: '#10b981', duration: '5 Seasons', isSeries: true },
-        { id: 604, title: 'Game of Thrones', year: 2011, matchScore: '98% Match', genres: ['Fantasy', 'Drama'], synopsis: 'Nine noble families fight for control over the lands of Westeros...', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80', accentColor: '#3b82f6', duration: '8 Seasons', isSeries: true },
-        { id: 605, title: 'The Office', year: 2005, matchScore: '97% Match', genres: ['Comedy'], synopsis: 'A mockumentary on a group of typical office workers...', posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80', accentColor: '#ef4444', duration: '9 Seasons', isSeries: true },
-        { id: 606, title: 'Dark', year: 2017, matchScore: '96% Match', genres: ['Sci-Fi', 'Thriller'], synopsis: 'A family saga with a supernatural twist...', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80', accentColor: '#f59e0b', duration: '3 Seasons', isSeries: true },
-        { id: 607, title: 'Peaky Blinders', year: 2013, matchScore: '95% Match', genres: ['Crime', 'History'], synopsis: 'A gangster family epic set in 1900s England...', posterUrl: 'https://images.unsplash.com/photo-1608889476518-738c9b1dcb40?w=500&auto=format&fit=crop&q=80', accentColor: '#6b7280', duration: '6 Seasons', isSeries: true },
-        { id: 608, title: 'Succession', year: 2018, matchScore: '94% Match', genres: ['Drama'], synopsis: 'The Roy family is known for controlling the biggest media and entertainment company in the world...', posterUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=500&auto=format&fit=crop&q=80', accentColor: '#d4af37', duration: '4 Seasons', isSeries: true }
-      ];
-      this.topWatchedMovies = [
-        { id: 603, title: 'The Witcher', genres: ['Fantasy', 'Action'], year: 2019, watchPercent: 80, watchCount: '3M+', accentColor: '#3b82f6', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80', isSeries: true },
-        { id: 609, title: 'The Mandalorian', genres: ['Sci-Fi', 'Action'], year: 2019, watchPercent: 85, watchCount: '4M+', accentColor: '#10b981', posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80', isSeries: true },
-        { id: 610, title: 'Better Call Saul', genres: ['Crime', 'Drama'], year: 2015, watchPercent: 78, watchCount: '2.5M+', accentColor: '#ef4444', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80', isSeries: true },
-        { id: 611, title: 'Fargo', genres: ['Crime', 'Thriller'], year: 2014, watchPercent: 75, watchCount: '2M+', accentColor: '#f97316', posterUrl: 'https://images.unsplash.com/photo-1608889476518-738c9b1dcb40?w=500&auto=format&fit=crop&q=80', isSeries: true },
-        { id: 612, title: 'Severance', genres: ['Sci-Fi', 'Thriller'], year: 2022, watchPercent: 82, watchCount: '3.2M+', accentColor: '#3b82f6', posterUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=500&auto=format&fit=crop&q=80', isSeries: true }
-      ];
-    } else {
-      this.heroMovies = [...this.originalHeroMovies];
-      this.trendingMovies = [...this.originalTrending];
-      this.topWatchedMovies = [...this.originalTopWatched];
-    }
-  }
+  // Mock data removed
 
   // Dynamic Edge Fade Signals for Slider Scroll State
   canScrollRightContinue = signal<boolean>(true);
@@ -236,8 +150,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   canScrollRightSpotlight = signal<boolean>(true);
   canScrollLeftSpotlight = signal<boolean>(false);
 
-  canScrollRightComingSoon = signal<boolean>(true);
-  canScrollLeftComingSoon = signal<boolean>(false);
+  canScrollRightClassics = signal<boolean>(true);
+  canScrollLeftClassics = signal<boolean>(false);
 
   canScrollRightHiddenGems = signal<boolean>(true);
   canScrollLeftHiddenGems = signal<boolean>(false);
@@ -245,8 +159,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   canScrollRightTopPicks = signal<boolean>(true);
   canScrollLeftTopPicks = signal<boolean>(false);
 
-  canScrollRightActionMovies = signal<boolean>(true);
-  canScrollLeftActionMovies = signal<boolean>(false);
+  
 
   // ─── HOVER PANEL STATE ───────────────────────────────────────────────────────
   /** The movie currently displayed in the hover panel (kept even during exit animation) */
@@ -271,8 +184,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   private lastMouseX = 0;
   private lastMouseY = 0;
 
-  onEpisodeEnter(event: MouseEvent, color: string) {}
-  onEpisodeLeave() {}
+  onEpisodeEnter(event: MouseEvent, color: string) { }
+  onEpisodeLeave() { }
 
   private hideTimer: any = null;
   private showTimer: any = null;
@@ -383,50 +296,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   // ─────────────────────────────────────────────────────────────────────────────
 
   // Hero Carousel (6 Movies)
-  heroMovies: HeroMovie[] = [
-    {
-      id: 1,
-      title: 'Ballerina',
-      synopsis: 'An assassin trained in the traditions of the Ruska Roma organization sets out to seek revenge after her father\'s death. It is the fifth film in the John Wick franchise, serving as a spin-off set between the events of John Wick: Chapter 3 - Parabellum and John Wick: Chapter 4.',
-      backdropUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1600&auto=format&fit=crop&q=80',
-      primaryColor: '#8a2be2'
-    },
-    {
-      id: 2,
-      title: 'Dune: Part Two',
-      synopsis: 'Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family. Facing a choice between the love of his life and the fate of the universe, he endeavors to prevent a terrible future.',
-      backdropUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&auto=format&fit=crop&q=80',
-      primaryColor: '#ff9900'
-    },
-    {
-      id: 3,
-      title: 'Cyberpunk: Edgerunners',
-      synopsis: 'A street kid trying to survive in a technology and body modification-obsessed city of the future. Having everything to lose, he chooses to stay alive by becoming an edgerunner—a mercenary outlaw.',
-      backdropUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1600&auto=format&fit=crop&q=80',
-      primaryColor: '#00f0ff'
-    },
-    {
-      id: 4,
-      title: 'Mickey 17',
-      synopsis: 'Mickey 17, an expendable human clone, is sent on a high-risk expedition to colonize the ice planet Niflheim. Whenever he dies, a new body is regenerated with most of his memories intact.',
-      backdropUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1600&auto=format&fit=crop&q=80',
-      primaryColor: '#00d2ff'
-    },
-    {
-      id: 5,
-      title: 'The Gorge',
-      synopsis: 'Two highly trained elite snipers are assigned to guard opposite sides of a mysterious, lethal canyon, protecting the world from an unspeakable danger lurking within.',
-      backdropUrl: 'https://images.unsplash.com/photo-1509281373149-e957c6296406?w=1600&auto=format&fit=crop&q=80',
-      primaryColor: '#ff5e00'
-    },
-    {
-      id: 6,
-      title: 'Solo Leveling',
-      synopsis: 'Sung Jinwoo, known as the weakest hunter of all mankind, gains access to a mysterious system allowing him to level up infinitely and transcend human limits.',
-      backdropUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=1600&auto=format&fit=crop&q=80',
-      primaryColor: '#3a86ef'
-    }
-  ];
+  heroMovies: any[] = [];
 
   // Continue Watching List
   continueWatchingList: ContinueWatchingItem[] = [
@@ -481,164 +351,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   // Trending Movies Slider List
-  trendingMovies: MovieItem[] = [
-    {
-      id: 201,
-      title: 'MICKEY 17',
-      year: 2026,
-      matchScore: '98% Match',
-      genres: ['Sci-Fi', 'Comedy'],
-      synopsis: 'Mickey 17, an "expendable," is sent on a human expedition to colonize the ice world Niflheim.',
-      posterUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=80',
-      accentColor: '#00d2ff',
-      duration: '2h 17min'
-    },
-    {
-      id: 202,
-      title: 'THE GORGE',
-      year: 2026,
-      matchScore: '95% Match',
-      genres: ['Action', 'Mystery'],
-      synopsis: 'Two highly trained snipers are posted at guard posts on opposite sides of a lethal gorge.',
-      posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80',
-      accentColor: '#ff5e00',
-      duration: '2h 1min'
-    },
-    {
-      id: 203,
-      title: 'SOLO LEVELING',
-      year: 2026,
-      matchScore: '99% Match',
-      genres: ['Anime', 'Fantasy'],
-      synopsis: 'Sung Jinwoo, the weakest hunter, gains a secret system allowing him to level up indefinitely.',
-      posterUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=500&auto=format&fit=crop&q=80',
-      accentColor: '#3a86ef',
-      duration: '24min / ep'
-    },
-    {
-      id: 204,
-      title: 'NOSFERATU',
-      year: 2026,
-      matchScore: '92% Match',
-      genres: ['Horror', 'Drama'],
-      synopsis: 'A gothic tale of obsession between a haunted young woman and a terrifying vampire.',
-      posterUrl: 'https://images.unsplash.com/photo-1509281373149-e957c6296406?w=500&auto=format&fit=crop&q=80',
-      accentColor: '#a855f7',
-      duration: '2h 12min'
-    },
-    {
-      id: 205,
-      title: 'NICKEL BOYS',
-      year: 2026,
-      matchScore: '94% Match',
-      genres: ['Drama', 'History'],
-      synopsis: 'Chronicles the powerful friendship of two young men at a 1960s reform school.',
-      posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80',
-      accentColor: '#eab308',
-      duration: '2h 20min'
-    },
-    {
-      id: 206,
-      title: 'PLANKTON MOVIE',
-      year: 2026,
-      matchScore: '90% Match',
-      genres: ['Animation', 'Comedy'],
-      synopsis: 'Plankton\'s world is turned upside down when his plan for world domination takes a twist.',
-      posterUrl: 'https://images.unsplash.com/photo-1569437061241-a848be43cc82?w=500&auto=format&fit=crop&q=80',
-      accentColor: '#22c55e',
-      duration: '1h 38min'
-    },
-    {
-      id: 207,
-      title: 'LIGHT BREAKS',
-      year: 2026,
-      matchScore: '96% Match',
-      genres: ['Romance', 'Drama'],
-      synopsis: 'From dusk to dawn, a young woman experiences a memorable day filled with emotion.',
-      posterUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&auto=format&fit=crop&q=80',
-      accentColor: '#f43f5e',
-      duration: '1h 52min'
-    },
-    {
-      id: 208,
-      title: 'AVATAR 3',
-      year: 2026,
-      matchScore: '97% Match',
-      genres: ['Sci-Fi', 'Adventure'],
-      synopsis: 'Jake Sully and Neytiri encounter the Ash People, a fiery tribe of Na\'vi.',
-      posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80',
-      accentColor: '#0075ff',
-      duration: '3h 5min'
-    },
-    {
-      id: 209,
-      title: 'BLADE RUNNER 2099',
-      year: 2026,
-      matchScore: '93% Match',
-      genres: ['Sci-Fi', 'Thriller'],
-      synopsis: 'Los Angeles fifty years after the events of 2049, uncovering new replicant secrets.',
-      posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80',
-      accentColor: '#ec4899',
-      duration: '2h 35min'
-    },
-    {
-      id: 210,
-      title: 'THE BATMAN II',
-      year: 2026,
-      matchScore: '99% Match',
-      genres: ['Action', 'Crime'],
-      synopsis: 'Bruce Wayne delves deeper into Gotham\'s criminal underworld.',
-      posterUrl: 'https://images.unsplash.com/photo-1509281373149-e957c6296406?w=500&auto=format&fit=crop&q=80',
-      accentColor: '#6366f1',
-      duration: '2h 48min'
-    }
-  ];
+  trendingMovies: any[] = [];
 
   // Latest Episodes Available
-  latestEpisodes: LatestEpisodeItem[] = [
-    {
-      id: 301,
-      title: 'Daredevil: Born Again',
-      seasonEpisode: 'Season1, Episode 2',
-      bannerUrl: 'https://images.unsplash.com/photo-1509281373149-e957c6296406?w=600&auto=format&fit=crop&q=80',
-      accentColor: '#ff3b30'
-    },
-    {
-      id: 302,
-      title: 'The Wheel of Time',
-      seasonEpisode: 'Season3, Episode 6',
-      bannerUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-      accentColor: '#ff9500'
-    },
-    {
-      id: 303,
-      title: 'Devil May Cry',
-      seasonEpisode: 'Season1, Episode 8',
-      bannerUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600&auto=format&fit=crop&q=80',
-      accentColor: '#a855f7'
-    },
-    {
-      id: 304,
-      title: 'Severance',
-      seasonEpisode: 'Season2, Episode 10',
-      bannerUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&auto=format&fit=crop&q=80',
-      accentColor: '#00d2ff'
-    },
-    {
-      id: 305,
-      title: 'Arcane',
-      seasonEpisode: 'Season2, Episode 9',
-      bannerUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=80',
-      accentColor: '#ec4899'
-    },
-    {
-      id: 306,
-      title: 'House of the Dragon',
-      seasonEpisode: 'Season3, Episode 1',
-      bannerUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-      accentColor: '#ff5e00'
-    }
-  ];
+  latestEpisodes: any[] = [];
 
   // New Releases List
   newReleasesMovies: MovieItem[] = [
@@ -652,96 +368,170 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     { id: 308, title: 'DEADPOOL & WOLVERINE 2', year: 2026, matchScore: '98% Match', genres: ['Action', 'Comedy'], synopsis: 'The Merc with a Mouth and Wolverine return for another chaotic adventure.', posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80', accentColor: '#ec4899', duration: '2h 7min' }
   ];
 
-  // Top 10 Most Watched List
-  topWatchedMovies: TopWatchedItem[] = [
-    { id: 401, title: 'Severance', genres: ['Thriller', 'Sci-Fi'], year: 2026, watchPercent: 100, watchCount: '3.2M', accentColor: '#ff5e00', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80' },
-    { id: 402, title: 'Arcane', genres: ['Animation', 'Action'], year: 2025, watchPercent: 85, watchCount: '2.8M', accentColor: '#f43f5e', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80' },
-    { id: 403, title: 'The Last of Us', genres: ['Drama', 'Action'], year: 2025, watchPercent: 72, watchCount: '2.1M', accentColor: '#eab308', posterUrl: 'https://images.unsplash.com/photo-1509281373149-e957c6296406?w=500&auto=format&fit=crop&q=80' },
-    { id: 404, title: 'Dune: Part Two', genres: ['Sci-Fi', 'Adventure'], year: 2024, watchPercent: 65, watchCount: '1.9M', accentColor: '#00d2ff', posterUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=80' },
-    { id: 405, title: 'Spider-Man: Beyond', genres: ['Animation', 'Action'], year: 2025, watchPercent: 58, watchCount: '1.5M', accentColor: '#ec4899', posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80' },
-    { id: 406, title: 'Oppenheimer', genres: ['Drama', 'History'], year: 2023, watchPercent: 45, watchCount: '1.1M', accentColor: '#6366f1', posterUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=500&auto=format&fit=crop&q=80' },
-    { id: 407, title: 'Succession', genres: ['Drama', 'Comedy'], year: 2023, watchPercent: 38, watchCount: '900K', accentColor: '#a855f7', posterUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&auto=format&fit=crop&q=80' },
-    { id: 408, title: 'The Bear', genres: ['Drama', 'Comedy'], year: 2024, watchPercent: 30, watchCount: '850K', accentColor: '#22c55e', posterUrl: 'https://images.unsplash.com/photo-1569437061241-a848be43cc82?w=500&auto=format&fit=crop&q=80' },
-    { id: 409, title: 'House of the Dragon', genres: ['Drama', 'Fantasy'], year: 2024, watchPercent: 25, watchCount: '720K', accentColor: '#ff9500', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80' },
-    { id: 410, title: 'Shogun', genres: ['Drama', 'History'], year: 2024, watchPercent: 20, watchCount: '600K', accentColor: '#ff3b30', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80' }
+  topWatchedMovies: any[] = [];
+
+  trendingPeriod: string = 'week';
+  isDropdownOpen: boolean = false;
+  isLoadingTrending: boolean = false;
+  trendingPeriodOptions = [
+    { value: 'week', label: 'Questa settimana' },
+    { value: 'month', label: 'Questo mese' },
+    { value: 'year', label: 'Quest\'anno' }
   ];
 
-  comingSoonMovies: MovieItem[] = [
-    { id: 801, title: 'Inception 2', genres: ['Sci-Fi', 'Action'], year: 2026, matchScore: '99% Match', synopsis: 'A new level of dreams is explored.', posterUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&auto=format&fit=crop&q=80', accentColor: '#3b82f6', duration: '2h 30min' },
-    { id: 802, title: 'Dune: Part Three', genres: ['Sci-Fi', 'Adventure'], year: 2026, matchScore: '95% Match', synopsis: 'Paul Atreides continues his journey.', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80', accentColor: '#f59e0b', duration: '2h 50min' },
-    { id: 803, title: 'Avenger: Secret Wars', genres: ['Action', 'Superhero'], year: 2027, matchScore: '98% Match', synopsis: 'The final battle for the multiverse.', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80', accentColor: '#ef4444', duration: '3h 0min' },
-    { id: 804, title: 'Interstellar 2', genres: ['Sci-Fi', 'Drama'], year: 2026, matchScore: '90% Match', synopsis: 'Beyond the wormhole.', posterUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=500&auto=format&fit=crop&q=80', accentColor: '#8b5cf6', duration: '2h 49min' },
-    { id: 805, title: 'Matrix 5', genres: ['Sci-Fi', 'Action'], year: 2027, matchScore: '85% Match', synopsis: 'The matrix reloads once more.', posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80', accentColor: '#10b981', duration: '2h 16min' },
-    { id: 806, title: 'Avatar 4', genres: ['Sci-Fi', 'Adventure'], year: 2028, matchScore: '92% Match', synopsis: 'The tulkun return.', posterUrl: 'https://images.unsplash.com/photo-1509281373149-e957c6296406?w=500&auto=format&fit=crop&q=80', accentColor: '#3b82f6', duration: '3h 12min' },
-    { id: 807, title: 'Blade', genres: ['Action', 'Horror'], year: 2025, matchScore: '88% Match', synopsis: 'The daywalker rises.', posterUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=80', accentColor: '#ef4444', duration: '2h 5min' },
-    { id: 808, title: 'Tron: Ares', genres: ['Sci-Fi', 'Action'], year: 2025, matchScore: '82% Match', synopsis: 'Return to the grid.', posterUrl: 'https://images.unsplash.com/photo-1569437061241-a848be43cc82?w=500&auto=format&fit=crop&q=80', accentColor: '#06b6d4', duration: '1h 58min' }
-  ];
+  get currentTrendingLabel() {
+    return this.trendingPeriodOptions.find(o => o.value === this.trendingPeriod)?.label || 'Questa settimana';
+  }
 
-  hiddenGemsMovies: MovieItem[] = [
-    { id: 901, title: 'The Fall', genres: ['Fantasy', 'Adventure'], year: 2006, matchScore: '85% Match', synopsis: 'A beautiful tale of imagination.', posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80', accentColor: '#f59e0b', duration: '1h 57min' },
-    { id: 902, title: 'Coherence', genres: ['Sci-Fi', 'Thriller'], year: 2013, matchScore: '92% Match', synopsis: 'A comet brings strange occurrences.', posterUrl: 'https://images.unsplash.com/photo-1509281373149-e957c6296406?w=500&auto=format&fit=crop&q=80', accentColor: '#3b82f6', duration: '1h 29min' },
-    { id: 903, title: 'Primer', genres: ['Sci-Fi', 'Drama'], year: 2004, matchScore: '78% Match', synopsis: 'Accidental time travel.', posterUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=80', accentColor: '#10b981', duration: '1h 17min' },
-    { id: 904, title: 'Moon', genres: ['Sci-Fi', 'Mystery'], year: 2009, matchScore: '90% Match', synopsis: 'Three years on the moon.', posterUrl: 'https://images.unsplash.com/photo-1569437061241-a848be43cc82?w=500&auto=format&fit=crop&q=80', accentColor: '#f97316', duration: '1h 37min' },
-    { id: 905, title: 'Ex Machina', genres: ['Sci-Fi', 'Thriller'], year: 2014, matchScore: '95% Match', synopsis: 'Testing artificial intelligence.', posterUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=500&auto=format&fit=crop&q=80', accentColor: '#ef4444', duration: '1h 48min' },
-    { id: 906, title: 'The Man from Earth', genres: ['Drama', 'Sci-Fi'], year: 2007, matchScore: '88% Match', synopsis: 'A story of immortality.', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80', accentColor: '#8b5cf6', duration: '1h 27min' },
-    { id: 907, title: 'Gattaca', genres: ['Sci-Fi', 'Drama'], year: 1997, matchScore: '94% Match', synopsis: 'Defying genetic destiny.', posterUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&auto=format&fit=crop&q=80', accentColor: '#f43f5e', duration: '1h 52min' },
-    { id: 908, title: 'Children of Men', genres: ['Sci-Fi', 'Thriller'], year: 2006, matchScore: '96% Match', synopsis: 'A world without children.', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80', accentColor: '#6366f1', duration: '1h 49min' }
-  ];
+  classicsMovies: any[] = [];
 
-  topPicksMovies: MovieItem[] = [
-    { id: 1001, title: 'The Prestige', genres: ['Drama', 'Mystery'], year: 2006, matchScore: '98% Match', synopsis: 'Rival magicians engage in competitive one-upmanship.', posterUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=80', accentColor: '#3b82f6', duration: '2h 10min' },
-    { id: 1002, title: 'Arrival', genres: ['Sci-Fi', 'Drama'], year: 2016, matchScore: '95% Match', synopsis: 'A linguist works with the military to communicate with alien lifeforms.', posterUrl: 'https://images.unsplash.com/photo-1509281373149-e957c6296406?w=500&auto=format&fit=crop&q=80', accentColor: '#f59e0b', duration: '1h 56min' },
-    { id: 1003, title: 'Se7en', genres: ['Crime', 'Drama'], year: 1995, matchScore: '94% Match', synopsis: 'Two detectives hunt a serial killer.', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80', accentColor: '#ef4444', duration: '2h 7min' },
-    { id: 1004, title: 'Gladiator', genres: ['Action', 'Drama'], year: 2000, matchScore: '97% Match', synopsis: 'A former Roman General sets out to exact vengeance.', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80', accentColor: '#8b5cf6', duration: '2h 35min' },
-    { id: 1005, title: 'The Departed', genres: ['Crime', 'Thriller'], year: 2006, matchScore: '92% Match', synopsis: 'An undercover cop and a mole in the police attempt to identify each other.', posterUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=500&auto=format&fit=crop&q=80', accentColor: '#10b981', duration: '2h 31min' },
-    { id: 1006, title: 'Whiplash', genres: ['Drama', 'Music'], year: 2014, matchScore: '96% Match', synopsis: 'A promising young drummer enrolls at a cut-throat music conservatory.', posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80', accentColor: '#3b82f6', duration: '1h 47min' },
-    { id: 1007, title: 'Parasite', genres: ['Comedy', 'Thriller'], year: 2019, matchScore: '99% Match', synopsis: 'Greed and class discrimination threaten the newly formed symbiotic relationship between two families.', posterUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&auto=format&fit=crop&q=80', accentColor: '#ef4444', duration: '2h 12min' },
-    { id: 1008, title: 'Prisoners', genres: ['Crime', 'Drama'], year: 2013, matchScore: '91% Match', synopsis: 'When Keller Dover\'s daughter goes missing, he takes matters into his own hands.', posterUrl: 'https://images.unsplash.com/photo-1569437061241-a848be43cc82?w=500&auto=format&fit=crop&q=80', accentColor: '#06b6d4', duration: '2h 33min' }
-  ];
+  hiddenGemsMovies: any[] = [];
 
-  actionMovies: MovieItem[] = [
-    { id: 1101, title: 'Mad Max: Fury Road', genres: ['Action', 'Sci-Fi'], year: 2015, matchScore: '99% Match', synopsis: 'In a post-apocalyptic wasteland, a woman rebels against a tyrannical ruler in search for her homeland.', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80', accentColor: '#f59e0b', duration: '2h 0min' },
-    { id: 1102, title: 'John Wick: Chapter 4', genres: ['Action', 'Thriller'], year: 2023, matchScore: '97% Match', synopsis: 'John Wick uncovers a path to defeating The High Table.', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80', accentColor: '#3b82f6', duration: '2h 49min' },
-    { id: 1103, title: 'Die Hard', genres: ['Action', 'Thriller'], year: 1988, matchScore: '94% Match', synopsis: 'An NYPD officer tries to save his wife and several others taken hostage by German terrorists.', posterUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=500&auto=format&fit=crop&q=80', accentColor: '#10b981', duration: '2h 12min' },
-    { id: 1104, title: 'The Dark Knight', genres: ['Action', 'Crime'], year: 2008, matchScore: '99% Match', synopsis: 'When the menace known as the Joker wreaks havoc on Gotham, Batman must accept one of the greatest psychological and physical tests of his ability.', posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=80', accentColor: '#f97316', duration: '2h 32min' },
-    { id: 1105, title: 'Mission: Impossible - Fallout', genres: ['Action', 'Adventure'], year: 2018, matchScore: '96% Match', synopsis: 'Ethan Hunt and his IMF team, along with some familiar allies, race against time after a mission goes wrong.', posterUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&auto=format&fit=crop&q=80', accentColor: '#ef4444', duration: '2h 27min' },
-    { id: 1106, title: 'Terminator 2: Judgment Day', genres: ['Action', 'Sci-Fi'], year: 1991, matchScore: '95% Match', synopsis: 'A cyborg, identical to the one who failed to kill Sarah Connor, must now protect her ten year old son.', posterUrl: 'https://images.unsplash.com/photo-1569437061241-a848be43cc82?w=500&auto=format&fit=crop&q=80', accentColor: '#8b5cf6', duration: '2h 17min' },
-    { id: 1107, title: 'The Matrix', genres: ['Action', 'Sci-Fi'], year: 1999, matchScore: '98% Match', synopsis: 'A computer hacker learns from mysterious rebels about the true nature of his reality.', posterUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=80', accentColor: '#f43f5e', duration: '2h 16min' },
-    { id: 1108, title: 'Kill Bill: Vol. 1', genres: ['Action', 'Crime'], year: 2003, matchScore: '93% Match', synopsis: 'After awakening from a four-year coma, a former assassin wreaks vengeance on the team of assassins who betrayed her.', posterUrl: 'https://images.unsplash.com/photo-1509281373149-e957c6296406?w=500&auto=format&fit=crop&q=80', accentColor: '#6366f1', duration: '1h 51min' }
-  ];
+  topPicksMovies: any[] = [];
+  acclaimedMovies: any[] = [];
+
+  dynamicSliders: { id: string, title: string, genreId: number, movies: any[], canScrollLeft: any, canScrollRight: any, page: number, isLoaded?: boolean, isLoading?: boolean }[] = [];
 
   // Detailed Spotlight Movies
-  spotlightMovies: DetailedMovieItem[] = [
-    {
-      id: 501, title: 'F1 2025', synopsis: 'In the 1990s, Sonny Hayes was Formula 1\'s most promising driver until an accident on the track nearly ended his career...',
-      posterUrl: 'https://images.unsplash.com/photo-1541443131876-44b03de101c5?w=500&auto=format&fit=crop&q=80', accentColor: '#14b8a6',
-      duration: '122 minute', genres: ['Drama', 'Motorsport', 'Action'], director: 'Joseph Kosinski', stars: ['Brad Pitt', 'Javier Bardem'], likes: '1.2k'
-    },
-    {
-      id: 502, title: 'Cyber Drift', synopsis: 'A rogue hacker enters an underground neon-lit racing tournament to win back her stolen memories.',
-      posterUrl: 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=500&auto=format&fit=crop&q=80', accentColor: '#ec4899',
-      duration: '110 minute', genres: ['Sci-Fi', 'Racing', 'Thriller'], director: 'Lana Wachowski', stars: ['Zendaya', 'Keanu Reeves'], likes: '3.4k'
-    },
-    {
-      id: 503, title: 'The Last Ascent', synopsis: 'A group of expert mountaineers face the ultimate test of survival when a sudden blizzard traps them on K2.',
-      posterUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500&auto=format&fit=crop&q=80', accentColor: '#0ea5e9',
-      duration: '135 minute', genres: ['Adventure', 'Drama'], director: 'Alfonso Cuarón', stars: ['Oscar Isaac', 'Florence Pugh'], likes: '800'
-    },
-    {
-      id: 504, title: 'Neon Shadows', synopsis: 'In a dystopian future, a former detective is dragged back into the underworld to solve a series of mysterious disappearances.',
-      posterUrl: 'https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=500&auto=format&fit=crop&q=80', accentColor: '#f97316',
-      duration: '142 minute', genres: ['Noir', 'Cyberpunk', 'Mystery'], director: 'Denis Villeneuve', stars: ['Ryan Gosling', 'Ana de Armas'], likes: '2.5k'
-    }
-  ];
+  spotlightMovies: any[] = [];
+
+  getUpcomingTitle(): string {
+    const cat = this.categoryService.activeCategory();
+    if (cat === 'Serie TV') return 'Serie tv che stanno per uscire';
+    if (cat === 'Anime') return 'Anime e film che stanno per uscire';
+    return 'Film che stanno per uscire';
+  }
 
   ngOnInit() {
     this.titleService.setTitle('DaisyMovie - Home');
-    // Trigger entrance animations
-    setTimeout(() => {
-      this.pageLoaded.set(true);
-    }, 100);
 
-    this.startHeroAutoplay();
+    effect(() => {
+      const cat = this.categoryService.activeCategory();
+      const fetchStartTime = Date.now();
+      if (this.isBrowser) {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }
+      this.pageLoaded.set(false);
+      this.currentHeroIndex.set(0);
+      Object.keys(this.pages).forEach((k) => (this.pages as any)[k] = 1);
+
+      // We intentionally do not clear arrays here so the old content remains visible while fading out.
+      
+
+      this.tmdbService.getGenreList(cat).subscribe(genres => {
+      this.dynamicSliders = genres
+        .filter(g => g.id !== 28 && g.id !== 9648 && g.id !== 14)
+        .sort(() => Math.random() - 0.5)
+        .map(g => ({
+          id: `genre-${g.id}`,
+          title: g.name,
+          genreId: g.id,
+          movies: [],
+          canScrollLeft: signal(false),
+          canScrollRight: signal(true),
+          page: 1,
+          isLoaded: false,
+          isLoading: false
+        }));
+      setTimeout(() => this.checkVerticalSliders(), 500);
+    });
+
+    this.tmdbService.getHomeData(cat, '1').subscribe(data1 => {
+        const finishPhase1 = () => {
+          if (data1.heroMovies) this.heroMovies = data1.heroMovies;
+          if (data1.trendingMovies) this.trendingMovies = data1.trendingMovies;
+          if (data1.latestEpisodes) {
+            Promise.all(data1.latestEpisodes.map((ep: any) =>
+              this.extractDominantColor(ep.bannerUrl).then(color => ({ ...ep, accentColor: color }))
+            )).then(updatedEps => {
+              this.latestEpisodes = updatedEps;
+            });
+          }
+
+          if (this.isBrowser && this.heroMovies.length > 0) {
+            this.heroMovies.forEach(movie => {
+              this.extractDominantColor(movie.backdropUrl);
+            });
+            this.setHeroSlide(0);
+            this.startHeroAutoplay();
+          }
+
+          setTimeout(() => {
+            this.pageLoaded.set(true);
+          }, 50);
+        };
+
+        const executePhase1 = () => {
+          const elapsed = Date.now() - fetchStartTime;
+          const remaining = Math.max(0, 400 - elapsed);
+          setTimeout(finishPhase1, remaining);
+        };
+
+        if (this.isBrowser && data1.heroMovies && data1.heroMovies.length > 0) {
+          const img = new Image();
+          img.onload = executePhase1;
+          img.onerror = executePhase1;
+          img.src = data1.heroMovies[0].backdropUrl;
+        } else {
+          executePhase1();
+        }
+      });
+
+      // Fase 2: il resto della pagina (avviato in parallelo alla Fase 1)
+      this.tmdbService.getHomeData(cat, '2').subscribe(data2 => {
+        if (data2.newReleasesMovies) this.newReleasesMovies = data2.newReleasesMovies;
+
+        // Initial load for Top 10
+        this.loadTrendingTop10(cat);
+
+        if (data2.spotlightMovies) {
+          Promise.all(data2.spotlightMovies.map((movie: any) =>
+            this.extractDominantColor(movie.posterUrl).then(color => ({ ...movie, accentColor: color }))
+          )).then(updatedMovies => {
+            this.spotlightMovies = updatedMovies;
+          });
+        }
+
+        if (data2.classicsMovies) this.classicsMovies = data2.classicsMovies;
+        if (data2.hiddenGemsMovies) this.hiddenGemsMovies = data2.hiddenGemsMovies;
+          if (data2.topPicksMovies) this.topPicksMovies = data2.topPicksMovies;
+          if (data2.acclaimedMovies) this.acclaimedMovies = data2.acclaimedMovies;
+      });
+    }, { injector: this.injector });
+  }
+
+  checkVerticalSliders() {
+    if (!this.isBrowser) return;
+    const viewportBottom = window.innerHeight;
+    for (const slider of this.dynamicSliders) {
+      if (!slider.isLoaded && !slider.isLoading) {
+        const el = document.getElementById(slider.id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top < viewportBottom + 3000) {
+            this.loadDynamicSlider(slider);
+          }
+        }
+      }
+    }
+  }
+
+  loadDynamicSlider(slider: any) {
+    slider.isLoading = true;
+    const cat = this.categoryService.activeCategory();
+    this.tmdbService.getCategoryPage(slider.genreId.toString(), cat, 1).subscribe({
+      next: (data) => {
+        if (data) {
+          slider.movies = data;
+        }
+        slider.isLoaded = true;
+        slider.isLoading = false;
+        setTimeout(() => this.checkScrollState(slider.id), 200);
+      },
+      error: () => {
+        slider.isLoading = false;
+      }
+    });
   }
 
   ngAfterViewInit() {
@@ -753,28 +543,17 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       this.checkScrollState('new-releases-slider');
       this.checkScrollState('acclaimed-slider');
       this.checkScrollState('spotlight-slider');
-      this.checkScrollState('coming-soon-slider');
+      this.checkScrollState('classics-slider');
       this.checkScrollState('hidden-gems-slider');
       this.checkScrollState('top-picks-slider');
-      this.checkScrollState('action-movies-slider');
+      this.checkScrollState('acclaimed-slider');
       this.checkScrollState('top-charts-slider');
-
-      // Extract real dominant colors from spotlight poster images
-      this.spotlightMovies.forEach(movie => {
-        this.extractDominantColor(movie.posterUrl).then(color => {
-          movie.accentColor = color;
-        });
-      });
-
-      // Extract hero button color for first slide
-      this.extractDominantColor(this.heroMovies[0].backdropUrl).then(c => {
-        this.heroButtonColor.set(c);
-      });
 
       // Global capture-phase scroll listener:
       // This catches ANY scroll event on the page (horizontal or vertical,
       // on window, body, or any internal slider) and dismisses the panel.
       const handleGlobalScroll = (e: Event) => {
+        this.ngZone.run(() => this.checkVerticalSliders());
         const target = e.target as HTMLElement | Document;
         const isInsideSynopsis = target && 'closest' in target && !!(target as HTMLElement).closest('.ghp-synopsis');
         const isInsidePanel = target && 'closest' in target && !!(target as HTMLElement).closest('.global-hover-panel');
@@ -805,26 +584,81 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       // Use capture: true so we intercept the scroll event before it bubbles
       // (actually, scroll events don't bubble, so capture is required to catch
       // them globally on the document).
-      document.addEventListener('scroll', handleGlobalScroll, { capture: true, passive: true });
-      document.addEventListener('wheel', handleGlobalScroll, { capture: true, passive: true });
-      document.addEventListener('touchmove', handleGlobalScroll, { capture: true, passive: true });
-      this.globalScrollCleanup = () => {
-        document.removeEventListener('scroll', handleGlobalScroll, { capture: true });
-        document.removeEventListener('wheel', handleGlobalScroll, { capture: true });
-        document.removeEventListener('touchmove', handleGlobalScroll, { capture: true });
-      };
-      // Track mouse position so we can re-check glow after slider scrolls
-      const trackMouse = (e: MouseEvent) => {
-        this.lastMouseX = e.clientX;
-        this.lastMouseY = e.clientY;
-      };
-      document.addEventListener('mousemove', trackMouse, { passive: true });
-      const prevCleanup = this.globalScrollCleanup;
-      this.globalScrollCleanup = () => {
-        if (prevCleanup) prevCleanup();
-        document.removeEventListener('mousemove', trackMouse);
-      };
+      this.ngZone.runOutsideAngular(() => {
+        document.addEventListener('scroll', handleGlobalScroll, { capture: true, passive: true });
+        document.addEventListener('wheel', handleGlobalScroll, { capture: true, passive: true });
+        document.addEventListener('touchmove', handleGlobalScroll, { capture: true, passive: true });
+
+        // Delegated scroll listener for all sliders to replace the (scroll) template bindings
+        const handleSliderScroll = (e: Event) => {
+          const target = e.target as HTMLElement;
+          if (target && target.classList) {
+            if (target.classList.contains('trending-slider') ||
+              target.classList.contains('episodes-slider') ||
+              target.classList.contains('continue-watching-slider') ||
+              target.classList.contains('spotlight-slider')) {
+              if (target.id) this.checkScrollState(target.id);
+            }
+          }
+        };
+        document.addEventListener('scroll', handleSliderScroll, { capture: true, passive: true });
+
+        const trackMouse = (e: MouseEvent) => {
+          this.lastMouseX = e.clientX;
+          this.lastMouseY = e.clientY;
+        };
+        document.addEventListener('mousemove', trackMouse, { passive: true });
+
+        this.globalScrollCleanup = () => {
+          document.removeEventListener('scroll', handleGlobalScroll, { capture: true });
+          document.removeEventListener('wheel', handleGlobalScroll, { capture: true });
+          document.removeEventListener('touchmove', handleGlobalScroll, { capture: true });
+          document.removeEventListener('scroll', handleSliderScroll, { capture: true });
+          document.removeEventListener('mousemove', trackMouse);
+        };
+      });
     }, 200);
+  }
+
+  toggleDropdown() {
+    this.isDropdownOpen = !this.isDropdownOpen;
+  }
+
+  selectTrendingPeriod(value: string) {
+    if (this.trendingPeriod === value) {
+      this.isDropdownOpen = false;
+      return;
+    }
+    this.trendingPeriod = value;
+    this.isDropdownOpen = false;
+    this.isLoadingTrending = true;
+    const cat = this.categoryService.activeCategory();
+    this.loadTrendingTop10(cat);
+  }
+
+  changeTrendingPeriod(event: Event) {
+    const selectElement = event.target as HTMLSelectElement;
+    this.trendingPeriod = selectElement.value;
+    const cat = this.categoryService.activeCategory();
+    this.loadTrendingTop10(cat);
+  }
+
+  loadTrendingTop10(category: string) {
+    this.tmdbService.getTrendingTop10(category, this.trendingPeriod).subscribe(movies => {
+      if (movies) {
+        const slicedMovies = movies.slice(0, 10);
+        // Assegna immediatamente i film per non bloccare l'interfaccia (mostra il fallback scuro)
+        this.topWatchedMovies = [...slicedMovies];
+        this.isLoadingTrending = false;
+
+        // Estrai i colori in background e aggiorna l'array
+        Promise.all(slicedMovies.map((movie: any) =>
+          this.extractDominantColor(movie.posterUrl).then(color => ({ ...movie, accentColor: color }))
+        )).then(updatedMovies => {
+          this.topWatchedMovies = updatedMovies;
+        });
+      }
+    });
   }
 
   /**
@@ -832,6 +666,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
    * Falls back to a neutral accent if extraction fails.
    */
   extractDominantColor(imageUrl: string): Promise<string> {
+    if (!this.isBrowser || typeof Image === 'undefined') {
+      return Promise.resolve('#141414'); // Fallback sicuro per SSR
+    }
+
     if (globalColorCache.has(imageUrl)) {
       return Promise.resolve(globalColorCache.get(imageUrl)!);
     }
@@ -849,17 +687,27 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           const data = ctx.getImageData(0, 0, size, size).data;
 
           let rSum = 0, gSum = 0, bSum = 0, count = 0;
-          // Sample every 4th pixel, skip very dark/bright/desaturated ones
+          let rTotal = 0, gTotal = 0, bTotal = 0, totalCount = 0;
+
+          // Sample every 4th pixel
           for (let i = 0; i < data.length; i += 16) {
             const r = data[i], g = data[i + 1], b = data[i + 2];
+            rTotal += r; gTotal += g; bTotal += b; totalCount++;
+
             const max = Math.max(r, g, b);
             const min = Math.min(r, g, b);
             const saturation = max === 0 ? 0 : (max - min) / max;
             const brightness = max / 255;
-            // Keep only vivid, mid-brightness pixels
-            if (saturation > 0.25 && brightness > 0.2 && brightness < 0.95) {
+
+            // Keep vivid, mid-brightness pixels
+            if (saturation > 0.15 && brightness > 0.1 && brightness < 0.95) {
               rSum += r; gSum += g; bSum += b; count++;
             }
+          }
+
+          if (count === 0 && totalCount > 0) {
+            // Fallback to overall average if no vivid pixels found
+            rSum = rTotal; gSum = gTotal; bSum = bTotal; count = totalCount;
           }
 
           if (count > 0) {
@@ -882,8 +730,18 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           resolve('#6366f1');
         }
       };
-      img.onerror = () => resolve('#6366f1');
-      img.src = imageUrl;
+      img.onerror = () => resolve('#6366f1'); // Fallback
+
+      // Ottimizzazione estrema: invece di scaricare l'immagine originale da 2MB
+      // per estrarre il colore, usiamo una miniatura da pochi KB ('w300' invece di 'original').
+      // Questo rende l'estrazione istantanea ed elimina l'effetto "switch di colore" ritardato.
+      let smallImageUrl = imageUrl;
+      if (smallImageUrl.includes('/original/')) {
+        smallImageUrl = smallImageUrl.replace('/original/', '/w300/');
+      }
+
+      // Append a query param to bypass the browser's disk cache.
+      img.src = smallImageUrl + (smallImageUrl.includes('?') ? '&' : '?') + 'corsbuster=1';
     });
   }
 
@@ -949,6 +807,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     }
     // Extract real color from the new slide's backdrop
     this.extractDominantColor(this.heroMovies[index].backdropUrl).then(c => this.heroButtonColor.set(c));
+
+    // Reset timer when a slide is changed (manually or automatically)
+    this.startHeroAutoplay();
   }
 
   togglePlayState(item: ContinueWatchingItem) {
@@ -996,19 +857,93 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     } else if (containerId === 'spotlight-slider') {
       this.canScrollRightSpotlight.set(canRight);
       this.canScrollLeftSpotlight.set(canLeft);
-    } else if (containerId === 'coming-soon-slider') {
-      this.canScrollRightComingSoon.set(canRight);
-      this.canScrollLeftComingSoon.set(canLeft);
+    } else if (containerId === 'classics-slider') {
+      this.canScrollRightClassics.set(canRight);
+      this.canScrollLeftClassics.set(canLeft);
     } else if (containerId === 'hidden-gems-slider') {
       this.canScrollRightHiddenGems.set(canRight);
       this.canScrollLeftHiddenGems.set(canLeft);
     } else if (containerId === 'top-picks-slider') {
       this.canScrollRightTopPicks.set(canRight);
       this.canScrollLeftTopPicks.set(canLeft);
-    } else if (containerId === 'action-movies-slider') {
-      this.canScrollRightActionMovies.set(canRight);
-      this.canScrollLeftActionMovies.set(canLeft);
+    } else if (containerId === 'acclaimed-slider') {
+      this.canScrollRightAcclaimed.set(canRight);
+      this.canScrollLeftAcclaimed.set(canLeft);
+    } else if (containerId.startsWith('genre-')) {
+      const sliderObj = this.dynamicSliders.find(s => s.id === containerId);
+      if (sliderObj) {
+        sliderObj.canScrollRight.set(canRight);
+        sliderObj.canScrollLeft.set(canLeft);
+      }
     }
+
+    // Trigger infinite loading early (when within 3500px of the end) to make it smooth
+    // This aggressive buffer ensures the slider never blocks waiting for the network
+    const shouldLoadMore = el.scrollLeft + el.clientWidth > el.scrollWidth - 3500;
+
+    if (shouldLoadMore) {
+      let listMap: any = {
+        'trending-slider': 'trending',
+        'new-releases-slider': 'newReleases',
+        'spotlight-slider': 'spotlight',
+        'classics-slider': 'classics',
+        'hidden-gems-slider': 'hiddenGems',
+        'top-picks-slider': 'topPicks',
+        'acclaimed-slider': 'acclaimed'
+      };
+      if (listMap[containerId]) {
+        this.loadMore(listMap[containerId]);
+      } else if (containerId.startsWith('genre-')) {
+        const sliderObj = this.dynamicSliders.find(s => s.id === containerId);
+        if (sliderObj && !this.loadingPages[sliderObj.genreId]) {
+          this.loadingPages[sliderObj.genreId] = true;
+          sliderObj.page = (sliderObj.page || 1) + 1;
+          this.tmdbService.getCategoryPage(sliderObj.genreId.toString(), this.categoryService.activeCategory(), sliderObj.page).subscribe(data => {
+            if (data && data.length > 0) {
+              const filterNew = (existing: any[], incoming: any[]) => {
+                const existingIds = new Set(existing.map(i => i.id));
+                return [...existing, ...incoming.filter(i => !existingIds.has(i.id))];
+              };
+              sliderObj.movies = filterNew(sliderObj.movies, data);
+            }
+            this.loadingPages[sliderObj.genreId] = false;
+          });
+        }
+      }
+    }
+  }
+
+  loadMore(listName: string) {
+    if (this.loadingPages[listName]) return;
+    this.loadingPages[listName] = true;
+    this.pages[listName] = (this.pages[listName] || 1) + 1;
+
+    const cat = this.categoryService.activeCategory();
+    this.tmdbService.getCategoryPage(listName, cat, this.pages[listName]).subscribe({
+      next: (data) => {
+        if (data && data.length > 0) {
+          const filterNew = (existing: any[], incoming: any[]) => {
+            const existingIds = new Set(existing.map(i => i.id));
+            return [...existing, ...incoming.filter(i => !existingIds.has(i.id))];
+          };
+
+          if (listName === 'trending') this.trendingMovies = filterNew(this.trendingMovies, data);
+          if (listName === 'newReleases') this.newReleasesMovies = filterNew(this.newReleasesMovies, data);
+          if (listName === 'spotlight') {
+            this.spotlightMovies = filterNew(this.spotlightMovies, data);
+            data.forEach((movie: any) => this.extractDominantColor(movie.posterUrl).then(c => movie.accentColor = c));
+          }
+          if (listName === 'classics') this.classicsMovies = filterNew(this.classicsMovies, data);
+          if (listName === 'hiddenGems') this.hiddenGemsMovies = filterNew(this.hiddenGemsMovies, data);
+          if (listName === 'topPicks') this.topPicksMovies = filterNew(this.topPicksMovies, data);
+          if (listName === 'acclaimed') this.acclaimedMovies = filterNew(this.acclaimedMovies, data);
+        }
+        this.loadingPages[listName] = false;
+      },
+      error: () => {
+        this.loadingPages[listName] = false;
+      }
+    });
   }
 
   scrollSlider(containerId: string, direction: 'left' | 'right') {
@@ -1016,8 +951,28 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
     const el = document.getElementById(containerId);
     if (el) {
-      const scrollAmount = direction === 'left' ? -460 : 460;
+      let scrollAmount = direction === 'left' ? -460 : 460;
+      
+      // Calculate exact stride based on the first card to align perfectly with scroll-snap
+      const card = el.firstElementChild as HTMLElement;
+      if (card) {
+        const cardWidth = card.getBoundingClientRect().width;
+        const elStyle = window.getComputedStyle(el);
+        const gap = parseInt(elStyle.gap) || 0;
+        const stride = cardWidth + gap;
+        const visibleCards = Math.max(1, Math.floor(el.clientWidth / stride));
+        scrollAmount = direction === 'left' ? -(stride * visibleCards) : (stride * visibleCards);
+      }
+      
+      // Disabilita temporaneamente lo snap per evitare conflitti e "scatti" visivi
+      el.style.scrollSnapType = 'none';
+      
       el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      
+      // Riabilita lo snap dopo che l'animazione è finita
+      setTimeout(() => {
+        el.style.scrollSnapType = '';
+      }, 600);
 
       if (containerId === 'episodes-slider') {
         // Use scrollend (supported in Chrome 111+, FF 109+) with a 600ms fallback.
@@ -1142,3 +1097,6 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 }
+
+
+

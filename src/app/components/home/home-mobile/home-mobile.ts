@@ -46,8 +46,8 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
   canScrollRightSpotlight = signal<boolean>(true);
   canScrollLeftSpotlight = signal<boolean>(false);
 
-  canScrollRightComingSoon = signal<boolean>(true);
-  canScrollLeftComingSoon = signal<boolean>(false);
+  canScrollRightClassics = signal<boolean>(true);
+  canScrollLeftClassics = signal<boolean>(false);
 
   canScrollRightHiddenGems = signal<boolean>(true);
   canScrollLeftHiddenGems = signal<boolean>(false);
@@ -65,7 +65,7 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
   @Input() newReleasesMovies: MovieItem[] = [];
   @Input() topWatchedMovies: TopWatchedItem[] = [];
   @Input() spotlightMovies: DetailedMovieItem[] = [];
-  @Input() comingSoonMovies: MovieItem[] = [];
+  @Input() classicsMovies: MovieItem[] = [];
   @Input() hiddenGemsMovies: MovieItem[] = [];
   @Input() topPicksMovies: MovieItem[] = [];
   @Input() actionMovies: MovieItem[] = [];
@@ -278,7 +278,7 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
       this.checkScrollState('new-releases-slider');
       this.checkScrollState('acclaimed-slider');
       this.checkScrollState('spotlight-slider');
-      this.checkScrollState('coming-soon-slider');
+      this.checkScrollState('classics-slider');
       this.checkScrollState('hidden-gems-slider');
       this.checkScrollState('top-picks-slider');
       this.checkScrollState('action-movies-slider');
@@ -582,9 +582,9 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
     } else if (containerId === 'spotlight-slider') {
       this.canScrollRightSpotlight.set(canRight);
       this.canScrollLeftSpotlight.set(canLeft);
-    } else if (containerId === 'coming-soon-slider') {
-      this.canScrollRightComingSoon.set(canRight);
-      this.canScrollLeftComingSoon.set(canLeft);
+    } else if (containerId === 'classics-slider') {
+      this.canScrollRightClassics.set(canRight);
+      this.canScrollLeftClassics.set(canLeft);
     } else if (containerId === 'hidden-gems-slider') {
       this.canScrollRightHiddenGems.set(canRight);
       this.canScrollLeftHiddenGems.set(canLeft);
@@ -726,3 +726,5 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 }
+
+

@@ -184,7 +184,7 @@
       <h2>In Arrivo</h2>
     </div>
     <div class="mobile-slider posters-only">
-      @for (movie of comingSoonMovies; track movie.id) {
+      @for (movie of classicsMovies; track movie.id) {
       <div class="poster-card" (click)="goToMovie(movie)">
         <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
         <button class="btn-bookmark-mini" [class.active]="movie.isBookmarked" (click)="toggleBookmark(movie, $event)"
@@ -238,3 +238,4 @@
   </section>
 
 </div>
+

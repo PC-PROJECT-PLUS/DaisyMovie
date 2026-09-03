@@ -104,7 +104,7 @@
         <div class="slider-wrapper" [class.has-fade-right]="canScrollRightContinue()"
           [class.has-fade-left]="canScrollLeftContinue()">
 
-          <div class="continue-watching-slider" id="continue-slider" (scroll)="checkScrollState('continue-slider')">
+          <div class="continue-watching-slider" id="continue-slider">
             @for (item of continueWatchingList; track item.id) {
             <div class="continue-card glass-card">
               <div class="card-thumbnail-container">
@@ -190,7 +190,7 @@
         <div class="slider-wrapper" [class.has-fade-right]="canScrollRightTrending()"
           [class.has-fade-left]="canScrollLeftTrending()">
 
-          <div class="trending-slider" id="trending-slider" (scroll)="checkScrollState('trending-slider')">
+          <div class="trending-slider" id="trending-slider">
             @for (movie of trendingMovies; track movie.id) {
             <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
               (mouseleave)="onPosterMouseLeave()">
@@ -204,7 +204,7 @@
       <!-- SECTION 3: LATEST EPISODES AVAILABLE -->
       <section class="content-section">
         <div class="section-header">
-          <h2 class="section-title">Film che stanno per uscire</h2>
+          <h2 class="section-title">{{ getUpcomingTitle() }}</h2>
           <div class="header-right-controls">
             <div class="section-scroll-arrows">
               <button class="section-arrow-btn" (click)="scrollSlider('episodes-slider', 'left')"
@@ -226,7 +226,7 @@
         <div class="slider-wrapper episodes-slider-wrapper" [class.has-fade-right]="canScrollRightEpisodes()"
           [class.has-fade-left]="canScrollLeftEpisodes()">
 
-          <div class="episodes-slider" id="episodes-slider" (scroll)="checkScrollState('episodes-slider')">
+          <div class="episodes-slider" id="episodes-slider">
             @for (ep of latestEpisodes; track ep.id) {
             <div class="episode-card glass-card" [style.--card-accent]="ep.accentColor" (click)="goToMovie(ep)">
               <div class="episode-banner">
@@ -290,7 +290,7 @@
         <div class="slider-wrapper" [class.has-fade-right]="canScrollRightNewReleases()"
           [class.has-fade-left]="canScrollLeftNewReleases()">
 
-          <div class="trending-slider" id="new-releases-slider" (scroll)="checkScrollState('new-releases-slider')">
+          <div class="trending-slider" id="new-releases-slider">
             @for (movie of newReleasesMovies; track movie.id) {
             <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
               (mouseleave)="onPosterMouseLeave()">
@@ -378,8 +378,8 @@
         <div class="slider-wrapper" [class.has-fade-right]="canScrollRightAcclaimed()"
           [class.has-fade-left]="canScrollLeftAcclaimed()">
 
-          <div class="trending-slider" id="acclaimed-slider" (scroll)="checkScrollState('acclaimed-slider')">
-            @for (movie of trendingMovies; track movie.id) {
+          <div class="trending-slider" id="acclaimed-slider">
+            @for (movie of acclaimedMovies; track movie.id) {
             <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
               (mouseleave)="onPosterMouseLeave()">
               <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
@@ -414,7 +414,7 @@
         <div class="slider-wrapper" [class.has-fade-right]="canScrollRightSpotlight()"
           [class.has-fade-left]="canScrollLeftSpotlight()">
 
-          <div class="spotlight-slider" id="spotlight-slider" (scroll)="checkScrollState('spotlight-slider')">
+          <div class="spotlight-slider" id="spotlight-slider">
             @for (movie of spotlightMovies; track movie.id) {
             <div class="detailed-card glass-card" [style.--card-accent]="movie.accentColor">
               <!-- Left Side: Poster -->
@@ -431,9 +431,10 @@
 
                 <div class="detailed-meta">
                   <p><strong>Duration:</strong> {{ movie.duration }}</p>
-                  <p><strong>Genere:</strong> {{ movie.genres.join(', ') }}</p>
-                  <p><strong>Regista:</strong> {{ movie.director }}</p>
-                  <p class="detailed-stars"><strong>Cast:</strong> {{ movie.stars.join(', ') }}</p>
+                  <p><strong>Genere:</strong> {{ movie.genres?.length ? movie.genres.join(', ') : 'N/A' }}</p>
+                  <p><strong>Regista:</strong> {{ movie.director || 'N/A' }}</p>
+                  <p class="detailed-stars"><strong>Cast:</strong> {{ movie.stars?.length ? movie.stars.join(', ') :
+                    'N/A' }}</p>
                 </div>
 
                 <div class="detailed-actions">
@@ -462,17 +463,17 @@
       <!-- SECTION 8: COMING SOON -->
       <section class="content-section">
         <div class="section-header">
-          <h2 class="section-title">Prossimamente</h2>
+          <h2 class="section-title">Grandi Classici</h2>
           <div class="header-right-controls">
             <div class="section-scroll-arrows">
-              <button class="section-arrow-btn" (click)="scrollSlider('coming-soon-slider', 'left')"
-                [disabled]="!canScrollLeftComingSoon()" aria-label="Scroll left">
+              <button class="section-arrow-btn" (click)="scrollSlider('classics-slider', 'left')"
+                [disabled]="!canScrollLeftClassics()" aria-label="Scroll left">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              <button class="section-arrow-btn" (click)="scrollSlider('coming-soon-slider', 'right')"
-                [disabled]="!canScrollRightComingSoon()" aria-label="Scroll right">
+              <button class="section-arrow-btn" (click)="scrollSlider('classics-slider', 'right')"
+                [disabled]="!canScrollRightClassics()" aria-label="Scroll right">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
@@ -481,11 +482,11 @@
           </div>
         </div>
 
-        <div class="slider-wrapper" [class.has-fade-right]="canScrollRightComingSoon()"
-          [class.has-fade-left]="canScrollLeftComingSoon()">
+        <div class="slider-wrapper" [class.has-fade-right]="canScrollRightClassics()"
+          [class.has-fade-left]="canScrollLeftClassics()">
 
-          <div class="trending-slider" id="coming-soon-slider" (scroll)="checkScrollState('coming-soon-slider')">
-            @for (movie of comingSoonMovies; track movie.id) {
+          <div class="trending-slider" id="classics-slider">
+            @for (movie of classicsMovies; track movie.id) {
             <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
               (mouseleave)="onPosterMouseLeave()">
               <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
@@ -520,7 +521,7 @@
         <div class="slider-wrapper" [class.has-fade-right]="canScrollRightHiddenGems()"
           [class.has-fade-left]="canScrollLeftHiddenGems()">
 
-          <div class="trending-slider" id="hidden-gems-slider" (scroll)="checkScrollState('hidden-gems-slider')">
+          <div class="trending-slider" id="hidden-gems-slider">
             @for (movie of hiddenGemsMovies; track movie.id) {
             <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
               (mouseleave)="onPosterMouseLeave()">
@@ -556,7 +557,7 @@
         <div class="slider-wrapper" [class.has-fade-right]="canScrollRightTopPicks()"
           [class.has-fade-left]="canScrollLeftTopPicks()">
 
-          <div class="trending-slider" id="top-picks-slider" (scroll)="checkScrollState('top-picks-slider')">
+          <div class="trending-slider" id="top-picks-slider">
             @for (movie of topPicksMovies; track movie.id) {
             <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
               (mouseleave)="onPosterMouseLeave()">
@@ -567,20 +568,21 @@
         </div>
       </section>
 
-      <!-- SECTION 11: ACTION THRILLERS -->
+      <!-- DYNAMIC GENRE SLIDERS (INFINITE SCROLL) -->
+      @for (slider of dynamicSliders; track slider.id) {
       <section class="content-section">
         <div class="section-header">
-          <h2 class="section-title">Thriller d'azione</h2>
+          <h2 class="section-title">{{ slider.title }}</h2>
           <div class="header-right-controls">
             <div class="section-scroll-arrows">
-              <button class="section-arrow-btn" (click)="scrollSlider('action-movies-slider', 'left')"
-                [disabled]="!canScrollLeftActionMovies()" aria-label="Scroll left">
+              <button class="section-arrow-btn" (click)="scrollSlider(slider.id, 'left')"
+                [disabled]="!slider.canScrollLeft()" aria-label="Scroll left">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              <button class="section-arrow-btn" (click)="scrollSlider('action-movies-slider', 'right')"
-                [disabled]="!canScrollRightActionMovies()" aria-label="Scroll right">
+              <button class="section-arrow-btn" (click)="scrollSlider(slider.id, 'right')"
+                [disabled]="!slider.canScrollRight()" aria-label="Scroll right">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
@@ -589,11 +591,19 @@
           </div>
         </div>
 
-        <div class="slider-wrapper" [class.has-fade-right]="canScrollRightActionMovies()"
-          [class.has-fade-left]="canScrollLeftActionMovies()">
+        <div class="slider-wrapper" [class.has-fade-right]="slider.canScrollRight()"
+          [class.has-fade-left]="slider.canScrollLeft()" style="min-height: 220px;">
+          @if (!slider.isLoaded) {
+          <div
+            style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; padding: 40px;">
+            <div class="loader"
+              style="border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite;">
+            </div>
+          </div>
+          }
 
-          <div class="trending-slider" id="action-movies-slider" (scroll)="checkScrollState('action-movies-slider')">
-            @for (movie of actionMovies; track movie.id) {
+          <div class="dynamic-slider trending-slider" [id]="slider.id">
+            @for (movie of slider.movies; track movie.id) {
             <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
               (mouseleave)="onPosterMouseLeave()">
               <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
@@ -602,6 +612,9 @@
           </div>
         </div>
       </section>
+      }
+
+
     </main>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
@@ -664,9 +677,8 @@
     <app-home-mobile [isPageLoaded]="pageLoaded()" [heroMovies]="heroMovies"
       [continueWatchingList]="continueWatchingList" [trendingMovies]="trendingMovies" [latestEpisodes]="latestEpisodes"
       [newReleasesMovies]="newReleasesMovies" [topWatchedMovies]="topWatchedMovies" [spotlightMovies]="spotlightMovies"
-      [comingSoonMovies]="comingSoonMovies" [hiddenGemsMovies]="hiddenGemsMovies" [topPicksMovies]="topPicksMovies"
-      [actionMovies]="actionMovies" (themeChange)="onThemeChange($event)"
-      [isHidden]="!responsiveService.isMobile()"></app-home-mobile>
+      [classicsMovies]="classicsMovies" [hiddenGemsMovies]="hiddenGemsMovies" [topPicksMovies]="topPicksMovies"
+      (themeChange)="onThemeChange($event)" [isHidden]="!responsiveService.isMobile()"></app-home-mobile>
   </div>
 
   <app-footer></app-footer>
