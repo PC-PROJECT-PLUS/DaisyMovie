@@ -46,4 +46,27 @@ export class TmdbService {
   getGenreList(category: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.BFF_URL}/genre-list?category=${encodeURIComponent(category)}`);
   }
+
+  /**
+   * Search for movies and tv shows
+   */
+  search(query: string, page: number = 1): Observable<any[]> {
+    return this.http.get<any[]>(`${this.BFF_URL}/search?q=${encodeURIComponent(query)}&page=${page}`);
+  }
+
+  getMovieDetails(id: number): Observable<any> {
+    return this.http.get<any>(`${this.BFF_URL}/detail/movie/${id}`);
+  }
+
+  getSeriesDetails(id: number): Observable<any> {
+    return this.http.get<any>(`${this.BFF_URL}/detail/tv/${id}`);
+  }
+
+  getRecommendations(type: 'movie' | 'tv', id: number, page: number = 1): Observable<any[]> {
+    return this.http.get<any[]>(`${this.BFF_URL}/recommendations/${type}/${id}?page=${page}`);
+  }
+
+  getSeasonEpisodes(seriesId: number, seasonNumber: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.BFF_URL}/season/${seriesId}/${seasonNumber}`);
+  }
 }

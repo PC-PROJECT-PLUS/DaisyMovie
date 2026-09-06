@@ -6,7 +6,7 @@
 :host {
   display: block;
   min-height: 100vh;
-  background-color: var(--background, #0a0a0a);
+  background-color: var(--bg-primary);
   color: var(--text-color, #ffffff);
   font-family: var(--font-body);
 }
@@ -16,6 +16,8 @@
   width: 100%;
   min-height: 100vh;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── BACKGROUND / HERO ────────────────────────────────────────────── */
@@ -39,11 +41,11 @@
 .backdrop-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom,
-      rgba(10, 10, 10, 0.1) 0%,
-      rgba(10, 10, 10, 0.3) 30%,
-      rgba(10, 10, 10, 0.8) 70%,
-      var(--background, #0a0a0a) 100%);
+  background: linear-gradient(180deg,
+      rgba(11, 12, 16, 0) 0%,
+      rgba(11, 12, 16, 0.4) 40%,
+      rgba(11, 12, 16, 0.9) 75%,
+      var(--bg-primary) 100%);
 }
 
 /* Trigger Entrance Animations */
@@ -65,7 +67,7 @@
   z-index: 10;
   width: 100%;
   margin: 0;
-  padding: 58vh 64px 100px;
+  padding: 65vh 64px 100px;
 }
 
 /* ── TOP SECTION (Animated in) ────────────────────────────────────────────── */
@@ -76,6 +78,8 @@
   display: flex;
   flex-direction: column;
   gap: 25px;
+  position: relative;
+  padding-top: 105px;
 }
 
 /* Action Buttons */
@@ -112,6 +116,20 @@
   }
 }
 
+.trailer-btn {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
 .action-circle-btn {
   width: 50px;
   height: 50px;
@@ -145,17 +163,19 @@
 /* Title & Duration */
 .title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 20px;
-  position: relative;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% - 80px);
   flex-wrap: wrap;
 }
 
 .title-group {
-  display: flex;
-  align-items: baseline;
-  gap: 20px;
+  display: block;
+  max-width: 800px;
 }
 
 .ratings-group {
@@ -200,6 +220,11 @@
       justify-content: center;
       padding: 0;
     }
+
+    &.tmdb {
+      background: #01b4e4;
+      color: #ffffff;
+    }
   }
 
   .rating-icon.tomato {
@@ -208,11 +233,12 @@
 }
 
 .movie-title {
+  display: inline;
   font-family: var(--font-heading, inherit);
   font-size: clamp(2.5rem, 5vw, 4.8rem);
   font-weight: 300;
   letter-spacing: -2px;
-  line-height: 1;
+  line-height: 1.1;
   margin: 0;
   text-transform: none !important;
   color: #ffffff;
@@ -220,9 +246,12 @@
 }
 
 .duration {
+  display: inline-block;
+  margin-left: 15px;
   font-size: 1.2rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
 }
 
 /* Genres */
@@ -442,7 +471,9 @@
   align-items: center;
   gap: 15px;
   text-align: center;
+  width: 140px;
   min-width: 140px;
+  max-width: 140px;
   scroll-snap-align: start;
 
   /* Create an invisible bounding box for smooth hover triggers */
@@ -453,6 +484,7 @@
     height: 120px;
     border-radius: 50%;
     object-fit: cover;
+    flex-shrink: 0;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease, filter 0.4s ease;
   }
@@ -461,6 +493,7 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+    width: 100%;
     transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
@@ -495,17 +528,24 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: 100%;
 
   .actor-name {
     font-size: 1.1rem;
     font-weight: 600;
     color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .character-name {
     font-size: 0.9rem;
     font-weight: 400;
     color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -1273,9 +1313,24 @@
   scroll-behavior: smooth;
   scrollbar-width: none;
   padding: 10px 0 30px 0;
+  // Smooth season-switch animation
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
 
   &::-webkit-scrollbar {
     display: none;
+  }
+
+  &.ep-fade-out {
+    opacity: 0;
+    transform: translateX(-24px);
+    pointer-events: none;
+  }
+
+  &.ep-fade-in {
+    opacity: 0;
+    transform: translateX(24px);
+    pointer-events: none;
   }
 }
 
@@ -1311,7 +1366,8 @@
 .episode-thumbnail-container {
   position: relative;
   width: 100%;
-  padding-bottom: 56.25%; /* 16:9 */
+  padding-bottom: 56.25%;
+  /* 16:9 */
   overflow: hidden;
 }
 
@@ -1381,4 +1437,17 @@
   line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* ── SCROLL REVEAL ANIMATIONS ────────────────────────────────────────────── */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+
+  &.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

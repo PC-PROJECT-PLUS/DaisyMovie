@@ -670,8 +670,9 @@
     scroll-snap-align: start;
     cursor: pointer;
     padding: 0 !important;
-    border: none;
-    background: transparent;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
     overflow: hidden;
     transform: translateZ(0);
     /* Fix subpixel rounding clips */
@@ -964,9 +965,9 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
     margin-bottom: 40px;
-    align-items: end;
+    align-items: stretch;
     transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    
+
     &.loading {
       opacity: 0.4;
       transform: scale(0.98) translateY(10px);
@@ -1012,26 +1013,6 @@
         .podium-img {
           transform: scale(1.1);
         }
-
-        .podium-rank-bg {
-          transform: translate(-10px, 15px) scale(1.15);
-          color: rgba(255, 255, 255, 0.08);
-        }
-      }
-
-      /* Giant faded background number */
-      .podium-rank-bg {
-        position: absolute;
-        top: -10px;
-        right: -10px;
-        font-size: 140px;
-        font-weight: 800;
-        line-height: 1;
-        color: rgba(255, 255, 255, 0.03);
-        z-index: 2;
-        pointer-events: none;
-        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), color 0.6s ease;
-        transform-origin: top right;
       }
 
       .podium-poster-wrap {
@@ -1057,6 +1038,7 @@
         z-index: 3;
         display: flex;
         flex-direction: column;
+        flex: 1;
         gap: 6px;
 
         .podium-rank-badge {
@@ -1075,6 +1057,11 @@
           font-weight: 600;
           margin: 0;
           color: var(--text-primary);
+          display: -webkit-box;
+          -webkit-line-clamp: 1;
+          line-clamp: 1;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
 
         .podium-genre {
@@ -1112,7 +1099,7 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    
+
     &.loading {
       opacity: 0.4;
       transform: scale(0.98) translateY(10px);
@@ -1133,7 +1120,6 @@
 
       &:first-child {
         grid-column: 1 / -1;
-        /* Rank 4 spans both columns */
       }
 
       &:hover {
@@ -1160,12 +1146,16 @@
         display: flex;
         flex-direction: column;
         gap: 4px;
+        overflow: hidden;
 
         .chart-item-title {
           font-size: 1rem;
           font-weight: 600;
           margin: 0;
           color: var(--text-primary);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .chart-item-meta {

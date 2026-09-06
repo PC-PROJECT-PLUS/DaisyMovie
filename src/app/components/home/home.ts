@@ -6,6 +6,7 @@ import { Navbar } from '../navbar/navbar';
 import { FooterComponent } from '../footer/footer';
 import { ResponsiveService } from '../../services/responsive';
 import { ThemeService } from '../../services/theme.service';
+import { LoaderService } from '../../services/loader.service';
 import { CategoryService } from '../../services/category.service';
 import { HomeMobile } from './home-mobile/home-mobile';
 import { TmdbService } from '../../services/tmdb.service';
@@ -96,6 +97,7 @@ export interface DetailedMovieItem {
 export class Home implements OnInit, AfterViewInit, OnDestroy {
   public responsiveService = inject(ResponsiveService);
   public themeService = inject(ThemeService);
+  loaderService = inject(LoaderService);
   public categoryService = inject(CategoryService);
   public tmdbService = inject(TmdbService);
   public ngZone = inject(NgZone);
@@ -110,7 +112,17 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
   currentHeroIndex = signal<number>(0);
   heroButtonColor = signal<string>('#c026d3');
-  pageLoaded = signal<boolean>(false);
+  pageLoaded = signal(false);
+
+  constructor() {
+    effect(() => {
+      if (!this.loaderService.isPageLoading()) {
+        this.pageLoaded.set(true);
+      } else {
+        this.pageLoaded.set(false);
+      }
+    });
+  }
   private heroInterval: any;
 
   pages: any = {
@@ -159,7 +171,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   canScrollRightTopPicks = signal<boolean>(true);
   canScrollLeftTopPicks = signal<boolean>(false);
 
-  
+
 
   // ─── HOVER PANEL STATE ───────────────────────────────────────────────────────
   /** The movie currently displayed in the hover panel (kept even during exit animation) */
@@ -390,7 +402,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   topPicksMovies: any[] = [];
   acclaimedMovies: any[] = [];
 
-  dynamicSliders: { id: string, title: string, genreId: number, movies: any[], canScrollLeft: any, canScrollRight: any, page: number, isLoaded?: boolean, isLoading?: boolean }[] = [];
+  dynamicSliders: { id: string, title: string, genreId: string | number, movies: any[], canScrollLeft: any, canScrollRight: any, page: number, isLoaded?: boolean, isLoading?: boolean }[] = [];
 
   // Detailed Spotlight Movies
   spotlightMovies: any[] = [];
@@ -408,6 +420,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     effect(() => {
       const cat = this.categoryService.activeCategory();
       const fetchStartTime = Date.now();
+
+      // Trigger global loader
+      this.loaderService.startNavigation();
+
       if (this.isBrowser) {
         window.scrollTo({ top: 0, behavior: 'auto' });
       }
@@ -416,13 +432,22 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       Object.keys(this.pages).forEach((k) => (this.pages as any)[k] = 1);
 
       // We intentionally do not clear arrays here so the old content remains visible while fading out.
-      
+
 
       this.tmdbService.getGenreList(cat).subscribe(genres => {
-      this.dynamicSliders = genres
-        .filter(g => g.id !== 28 && g.id !== 9648 && g.id !== 14)
-        .sort(() => Math.random() - 0.5)
-        .map(g => ({
+        let filtered = genres.filter(g => g.id !== 28 && g.id !== 9648 && g.id !== 14);
+
+        if (cat === 'Animazione' || cat === 'Anime') {
+          filtered = filtered.filter(g => g.id !== 16); // Rimuove slider 'Animazione' ridondante
+        }
+
+        if (cat === 'Anime') {
+          // Generi più ricchi di anime (Azione, Commedia, Dramma, Sci-Fi/Fantasy, Kids, Family)
+          const animeAllowed = [10759, 35, 18, 10765, 10762, 10751];
+          filtered = filtered.filter(g => animeAllowed.includes(g.id));
+        }
+
+        const standardSliders = filtered.map(g => ({
           id: `genre-${g.id}`,
           title: g.name,
           genreId: g.id,
@@ -433,10 +458,52 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           isLoaded: false,
           isLoading: false
         }));
-      setTimeout(() => this.checkVerticalSliders(), 500);
-    });
 
-    this.tmdbService.getHomeData(cat, '1').subscribe(data1 => {
+        // Aggiunta dei temi personalizzati basati su keywords
+        let customThemes: any[] = [];
+        if (cat === 'Anime') {
+          customThemes = [
+            { id: 'theme-mecha', title: 'Mecha & Robot', listName: 'keyword_6965' },
+            { id: 'theme-isekai', title: 'Mondi Paralleli (Isekai)', listName: 'keyword_280016' },
+            { id: 'theme-magic', title: 'Magia', listName: 'keyword_2343' },
+            { id: 'theme-martialarts', title: 'Arti Marziali', listName: 'keyword_779' },
+            { id: 'theme-cyberpunk', title: 'Cyberpunk', listName: 'keyword_10526' }
+          ];
+        } else if (cat === 'Animazione' || cat === 'Kids') {
+          customThemes = [
+            { id: 'theme-magic', title: 'Magia', listName: 'keyword_2343' },
+            { id: 'theme-talkinganimals', title: 'Animali Parlanti', listName: 'keyword_10016' },
+            { id: 'theme-superheroes', title: 'Supereroi', listName: 'keyword_9715' },
+            { id: 'theme-space', title: 'Spazio Profondo', listName: 'keyword_9882' }
+          ];
+        } else {
+          customThemes = [
+            { id: 'theme-superheroes', title: 'Supereroi', listName: 'keyword_9715' },
+            { id: 'theme-cyberpunk', title: 'Cyberpunk', listName: 'keyword_10526' },
+            { id: 'theme-space', title: 'Spazio Profondo', listName: 'keyword_9882' },
+            { id: 'theme-vampires', title: 'Vampiri', listName: 'keyword_3133' },
+            { id: 'theme-zombies', title: 'Zombie', listName: 'keyword_12377' },
+            { id: 'theme-postapocalyptic', title: 'Post-Apocalittico', listName: 'keyword_4565' }
+          ];
+        }
+
+        const thematicSliders = customThemes.map(t => ({
+          id: t.id,
+          title: t.title,
+          genreId: t.listName,
+          movies: [],
+          canScrollLeft: signal(false),
+          canScrollRight: signal(true),
+          page: 1,
+          isLoaded: false,
+          isLoading: false
+        }));
+
+        this.dynamicSliders = [...standardSliders, ...thematicSliders].sort(() => Math.random() - 0.5);
+        setTimeout(() => this.checkVerticalSliders(), 500);
+      });
+
+      this.tmdbService.getHomeData(cat, '1').subscribe(data1 => {
         const finishPhase1 = () => {
           if (data1.heroMovies) this.heroMovies = data1.heroMovies;
           if (data1.trendingMovies) this.trendingMovies = data1.trendingMovies;
@@ -457,8 +524,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           }
 
           setTimeout(() => {
-            this.pageLoaded.set(true);
-          }, 50);
+            this.loaderService.setRouteReady();
+          }, 50); // slight delay to allow angular to render imgs
         };
 
         const executePhase1 = () => {
@@ -494,8 +561,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
         if (data2.classicsMovies) this.classicsMovies = data2.classicsMovies;
         if (data2.hiddenGemsMovies) this.hiddenGemsMovies = data2.hiddenGemsMovies;
-          if (data2.topPicksMovies) this.topPicksMovies = data2.topPicksMovies;
-          if (data2.acclaimedMovies) this.acclaimedMovies = data2.acclaimedMovies;
+        if (data2.topPicksMovies) this.topPicksMovies = data2.topPicksMovies;
+        if (data2.acclaimedMovies) this.acclaimedMovies = data2.acclaimedMovies;
       });
     }, { injector: this.injector });
   }
@@ -952,7 +1019,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     const el = document.getElementById(containerId);
     if (el) {
       let scrollAmount = direction === 'left' ? -460 : 460;
-      
+
       // Calculate exact stride based on the first card to align perfectly with scroll-snap
       const card = el.firstElementChild as HTMLElement;
       if (card) {
@@ -963,12 +1030,12 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         const visibleCards = Math.max(1, Math.floor(el.clientWidth / stride));
         scrollAmount = direction === 'left' ? -(stride * visibleCards) : (stride * visibleCards);
       }
-      
+
       // Disabilita temporaneamente lo snap per evitare conflitti e "scatti" visivi
       el.style.scrollSnapType = 'none';
-      
+
       el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-      
+
       // Riabilita lo snap dopo che l'animazione è finita
       setTimeout(() => {
         el.style.scrollSnapType = '';
@@ -1033,7 +1100,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  goToMovie(item: any) {
+  goToMovie(item: any, overrideColor?: string) {
     const movieDetail = {
       id: item.id,
       title: item.title || item.showTitle || item.episodeTitle || 'Titolo Sconosciuto',
@@ -1044,7 +1111,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       synopsis: item.synopsis || 'Nessuna sinossi disponibile.',
       backdropUrl: (item.backdropUrl || item.thumbnailUrl || item.posterUrl || '').replace(/w=\d+/, 'w=1600'),
       posterUrl: item.posterUrl || item.thumbnailUrl || item.backdropUrl || '',
-      accentColor: item.accentColor || item.primaryColor || '#ff0000',
+      accentColor: overrideColor || item.accentColor || item.primaryColor || '#ff0000',
       director: item.director || 'Joseph Kosinski',
       producer: item.producer || 'Brad Pitt, Joseph Kosinski, Lewis Hamilton, Jerry Bruckheimer, Chad Oman, Dede Gardner, Jeremy Kleiner',
       releaseDate: item.releaseDate || 'June 26, 2025 (Germany)',

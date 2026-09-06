@@ -5,6 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FooterComponent } from '../footer/footer';
 import { ResponsiveService } from '../../services/responsive';
 import { MovieDetailMobile } from './movie-detail-mobile/movie-detail-mobile';
+import { LoaderService } from '../../services/loader.service';
+import { TmdbService } from '../../services/tmdb.service';
 
 export interface CastMember {
   name: string;
@@ -48,8 +50,15 @@ export interface MovieDetail {
   cast: CastMember[];
   screenshots: string[];
   reviews: Review[];
+  suggested?: any[];
   isBookmarked: boolean;
   secondaryColor?: string;
+  omdbRatings?: {
+    imdb?: string;
+    rottenTomatoes?: string;
+    metacritic?: string;
+    tmdb?: string;
+  } | null;
 }
 
 @Component({
@@ -61,6 +70,8 @@ export interface MovieDetail {
 })
 export class MovieDetailComponent implements OnInit {
   public responsiveService = inject(ResponsiveService);
+  private loaderService = inject(LoaderService);
+  private tmdbService = inject(TmdbService);
   movieId = signal<number | null>(null);
   movie = signal<MovieDetail | null>(null);
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
@@ -76,17 +87,10 @@ export class MovieDetailComponent implements OnInit {
   newReviewText = signal<string>('');
   showAllReviews = signal<boolean>(false);
 
-  // Mock data for suggested movies
-  suggestedMovies: any[] = [
-    { id: '10', title: 'Drive', posterUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400&q=80', year: 2011, duration: '1h 40m', genres: ['Action', 'Crime'], synopsis: 'A Hollywood stunt driver who moonlights as a getaway driver is lured into a dangerous heist.' },
-    { id: '11', title: 'Rush', posterUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&q=80', year: 2013, duration: '2h 3m', genres: ['Biography', 'Drama', 'Sport'], synopsis: 'The merciless 1970s rivalry between Formula One rivals James Hunt and Niki Lauda.' },
-    { id: '12', title: 'Le Mans 66', posterUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=400&q=80', year: 2019, duration: '2h 32m', genres: ['Action', 'Drama'], synopsis: 'American car designer Carroll Shelby and driver Ken Miles battle corporate interference to build a revolutionary race car for Ford.' },
-    { id: '13', title: 'Top Gun', posterUrl: 'https://images.unsplash.com/photo-1585951237318-9ea5e175b891?w=400&q=80', year: 1986, duration: '1h 50m', genres: ['Action', 'Drama'], synopsis: 'As students at the United States Navy\'s elite fighter weapons school compete to be best in the class, one daring young pilot learns a few things from a civilian instructor.' },
-    { id: '14', title: 'Days of Thunder', posterUrl: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&q=80', year: 1990, duration: '1h 47m', genres: ['Action', 'Drama'], synopsis: 'A young hot-shot stock car driver gets his chance to compete at the top level.' },
-    { id: '15', title: 'Grand Prix', posterUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&q=80', year: 1966, duration: '2h 56m', genres: ['Drama', 'Sport'], synopsis: 'American Grand Prix driver Pete Aron is fired by his Jordan-BRM racing team after a crash at Monaco that injures his British teammate, Scott Stoddard.' },
-    { id: '16', title: 'Baby Driver', posterUrl: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&q=80', year: 2017, duration: '1h 53m', genres: ['Action', 'Crime'], synopsis: 'After being coerced into working for a crime boss, a young getaway driver finds himself taking part in a heist doomed to fail.' },
-    { id: '17', title: 'Need for Speed', posterUrl: 'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=400&q=80', year: 2014, duration: '2h 10m', genres: ['Action', 'Crime'], synopsis: 'Fresh from prison, a street racer who was framed by a wealthy business associate joins a cross country race with revenge in mind.' }
-  ];
+  // Suggested pagination
+  suggestedPage = 1;
+  isLoadingSuggested = false;
+
 
   // HOVER PANEL STATE
   panelMovie = signal<any | null>(null);
@@ -101,6 +105,7 @@ export class MovieDetailComponent implements OnInit {
   private globalScrollCleanup: (() => void) | null = null;
   private panelWheelCleanup: (() => void) | null = null;
   private activeSliderId: string | null = null;
+  private dataTimeout: any = null;
   private readonly PANEL_W = 500;
   private readonly PANEL_H = 350;
 
@@ -116,6 +121,14 @@ export class MovieDetailComponent implements OnInit {
     private router: Router,
     private location: Location
   ) {
+    effect(() => {
+      if (!this.loaderService.isPageLoading()) {
+        setTimeout(() => this.pageLoaded.set(true), 50);
+      } else {
+        this.pageLoaded.set(false);
+      }
+    });
+
     // Scroll to top on load for that fresh page feel
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0);
@@ -136,64 +149,62 @@ export class MovieDetailComponent implements OnInit {
             if (!stateData.reviews) {
               stateData.reviews = this.getMockReviews();
             }
+            stateData.accentColor = '#141414';
             this.movie.set(stateData);
-            this.updateMovieAccentColor(stateData.backdropUrl);
-            return;
+            this.updateMovieAccentColor(stateData.backdropUrl || stateData.posterUrl);
           }
         }
+        // Always fetch the full details to populate the 'Più informazioni' section
         this.loadMovieDetails(Number(id));
       }
     });
 
-    // Trigger entrance animations after a slight delay
-    setTimeout(() => {
-      this.pageLoaded.set(true);
-      // Initialize cast scroll state after rendering
-      if (this.isBrowser) {
-        setTimeout(() => {
-          this.checkScrollState();
+    // Initialize cast scroll state after rendering
+    if (this.isBrowser) {
+      setTimeout(() => {
+        this.checkScrollState();
 
-          const handleGlobalScroll = (e: Event) => {
-            const target = e.target as HTMLElement | Document;
-            const isInsideSynopsis = target && 'closest' in target && !!(target as HTMLElement).closest('.ghp-synopsis');
-            const isInsidePanel = target && 'closest' in target && !!(target as HTMLElement).closest('.global-hover-panel');
+        const handleGlobalScroll = (e: Event) => {
+          const target = e.target as HTMLElement | Document;
+          const isInsideSynopsis = target && 'closest' in target && !!(target as HTMLElement).closest('.ghp-synopsis');
+          const isInsidePanel = target && 'closest' in target && !!(target as HTMLElement).closest('.global-hover-panel');
 
-            let isHorizontalWheel = false;
-            let deltaX = 0;
+          let isHorizontalWheel = false;
+          let deltaX = 0;
 
-            if (e.type === 'wheel') {
-              const wheelEvent = e as WheelEvent;
-              if (Math.abs(wheelEvent.deltaX) > Math.abs(wheelEvent.deltaY)) {
-                isHorizontalWheel = true;
-                deltaX = wheelEvent.deltaX;
-              }
+          if (e.type === 'wheel') {
+            const wheelEvent = e as WheelEvent;
+            if (Math.abs(wheelEvent.deltaX) > Math.abs(wheelEvent.deltaY)) {
+              isHorizontalWheel = true;
+              deltaX = wheelEvent.deltaX;
             }
+          }
 
-            if (isInsideSynopsis && !isHorizontalWheel) {
-              return;
-            }
+          if (isInsideSynopsis && !isHorizontalWheel) {
+            return;
+          }
 
-            if (isHorizontalWheel && isInsidePanel && this.activeSliderId) {
-              const slider = document.getElementById(this.activeSliderId);
-              if (slider) slider.scrollBy({ left: deltaX, behavior: 'auto' });
-            }
+          if (isHorizontalWheel && isInsidePanel && this.activeSliderId) {
+            const slider = document.getElementById(this.activeSliderId);
+            if (slider) slider.scrollBy({ left: deltaX, behavior: 'auto' });
+          }
 
-            this.dismissHoverPanel();
-          };
-          document.addEventListener('scroll', handleGlobalScroll, { capture: true, passive: true });
-          document.addEventListener('wheel', handleGlobalScroll, { capture: true, passive: true });
-          document.addEventListener('touchmove', handleGlobalScroll, { capture: true, passive: true });
-          this.globalScrollCleanup = () => {
-            document.removeEventListener('scroll', handleGlobalScroll, { capture: true });
-            document.removeEventListener('wheel', handleGlobalScroll, { capture: true });
-            document.removeEventListener('touchmove', handleGlobalScroll, { capture: true });
-          };
-        }, 300);
-      }
-    }, 100);
+          this.dismissHoverPanel();
+        };
+        document.addEventListener('scroll', handleGlobalScroll, { capture: true, passive: true });
+        document.addEventListener('wheel', handleGlobalScroll, { capture: true, passive: true });
+        document.addEventListener('touchmove', handleGlobalScroll, { capture: true, passive: true });
+        this.globalScrollCleanup = () => {
+          document.removeEventListener('scroll', handleGlobalScroll, { capture: true });
+          document.removeEventListener('wheel', handleGlobalScroll, { capture: true });
+          document.removeEventListener('touchmove', handleGlobalScroll, { capture: true });
+        };
+      }, 300);
+    }
   }
 
   ngOnDestroy() {
+    if (this.dataTimeout) clearTimeout(this.dataTimeout);
     if (this.hideTimer) clearTimeout(this.hideTimer);
     if (this.showTimer) clearTimeout(this.showTimer);
     if (this.switchTimer) clearTimeout(this.switchTimer);
@@ -213,13 +224,38 @@ export class MovieDetailComponent implements OnInit {
       this.canScrollLeftCast.set(canLeft);
     }
 
-    // Check Suggested slider
-    const elSug = document.getElementById('suggested-slider');
-    if (elSug) {
-      const canRight = elSug.scrollLeft + elSug.clientWidth < elSug.scrollWidth - 10;
-      const canLeft = elSug.scrollLeft > 10;
-      this.canScrollRightSuggested.set(canRight);
-      this.canScrollLeftSuggested.set(canLeft);
+    // Update suggested scroll arrows & infinite scroll
+    const suggestedSlider = document.getElementById('suggested-slider');
+    if (suggestedSlider) {
+      this.canScrollLeftSuggested.set(suggestedSlider.scrollLeft > 0);
+      this.canScrollRightSuggested.set(
+        suggestedSlider.scrollLeft + suggestedSlider.clientWidth < suggestedSlider.scrollWidth - 10
+      );
+
+      const shouldLoadMore = suggestedSlider.scrollLeft + suggestedSlider.clientWidth > suggestedSlider.scrollWidth - 1000;
+      if (shouldLoadMore && !this.isLoadingSuggested) {
+        this.isLoadingSuggested = true;
+        this.suggestedPage++;
+        const id = this.movieId();
+        if (id) {
+          this.tmdbService.getRecommendations('movie', id, this.suggestedPage).subscribe({
+            next: (data: any[]) => {
+              if (data && data.length > 0) {
+                this.movie.update(m => {
+                  if (!m) return m;
+                  const existingIds = new Set(m.suggested?.map((i: any) => i.id) || []);
+                  const newItems = data.filter((i: any) => !existingIds.has(i.id));
+                  return { ...m, suggested: [...(m.suggested || []), ...newItems] };
+                });
+              }
+              this.isLoadingSuggested = false;
+            },
+            error: () => {
+              this.isLoadingSuggested = false;
+            }
+          });
+        }
+      }
     }
   }
 
@@ -402,7 +438,8 @@ export class MovieDetailComponent implements OnInit {
         } catch (e) { resolve(defaultColors); }
       };
       img.onerror = () => resolve(defaultColors);
-      img.src = imageUrl;
+      // Append a cache-buster query param to bypass TMDB CDN cached CORS issues
+      img.src = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 'cb=' + Date.now();
     });
   }
 
@@ -425,60 +462,24 @@ export class MovieDetailComponent implements OnInit {
   }
 
   loadMovieDetails(id: number) {
-    // Generate dummy data based on ID to simulate a real fetch
-    this.movie.set({
-      id: id,
-      title: 'THE GORGE (Demo)',
-      year: 2026,
-      duration: '2h 01min',
-      matchScore: '95% Match',
-      genres: ['Action', 'Mystery', 'Thriller'],
-      synopsis: 'Two highly trained elite snipers are assigned to guard opposite sides of a mysterious, lethal canyon, protecting the world from an unspeakable danger lurking within. As days turn into weeks, they must survive not only the harsh conditions but also the psychological toll of isolation and paranoia.',
-      backdropUrl: 'https://images.unsplash.com/photo-1509281373149-e957c6296406?w=1600&auto=format&fit=crop&q=80',
-      posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80',
-      accentColor: '#ff5e00',
-      director: 'Joseph Kosinski',
-      producer: 'Brad Pitt, Joseph Kosinski, Lewis Hamilton, Jerry Bruckheimer, Chad Oman, Dede Gardner, Jeremy Kleiner',
-      music: 'Hans Zimmer',
-      productionCompanies: 'Dawn Apollo Films, Apple Original Films',
-      distributedBy: 'Apple TV+, Warner Bros. Pictures',
-      editedBy: 'Stephen Mirrione',
-      writers: 'Ehren Kruger, Eric Warren Singer, Christopher McQuarrie',
-      cinematography: 'Claudio Miranda',
-      budget: '$130,000,000',
-      boxOffice: '$1.496 Billion',
-      languages: 'English, Spanish',
-      releaseDate: 'June 26, 2025 (Germany)',
-      cast: [
-        { name: 'Brad Pitt', character: 'Sonny Hayes', imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80' },
-        { name: 'Damson Idris', character: 'Joshua Pearce', imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80' },
-        { name: 'Javier Bardem', character: 'Team Owner', imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80' },
-        { name: 'Kerry Condon', character: 'Engineer', imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80' },
-        { name: 'Tobias Menzies', character: 'Rival Driver', imageUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80' },
-        { name: 'Sarah Niles', character: 'Team Boss', imageUrl: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150&auto=format&fit=crop&q=80' },
-        { name: 'Shea Whigham', character: 'Mechanic', imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80' },
-        { name: 'Joseph Kosinski', character: 'Director (Cameo)', imageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80' },
-        { name: 'Lewis Hamilton', character: 'Himself', imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80' },
-        { name: 'Dede Gardner', character: 'Producer', imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80' },
-        { name: 'Tom Cruise', character: 'Guest Star', imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80' },
-        { name: 'Matt Damon', character: 'Rival Boss', imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80' },
-        { name: 'Emily Blunt', character: 'CEO', imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80' },
-        { name: 'John Krasinski', character: 'Analyst', imageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80' },
-        { name: 'Zendaya', character: 'Reporter', imageUrl: 'https://images.unsplash.com/photo-1531123897727-8f129e1bf98c?w=150&auto=format&fit=crop&q=80' }
-      ],
-      screenshots: [
-        'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1585951237318-9ea5e175b891?w=400&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=800&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=800&auto=format&fit=crop&q=80'
-      ],
-      reviews: this.getMockReviews(),
-      isBookmarked: false
+    this.tmdbService.getMovieDetails(id).subscribe({
+      next: (data: any) => {
+        data.reviews = this.getMockReviews();
+        data.isBookmarked = false;
+        data.accentColor = '#141414';
+        this.movie.set(data);
+        this.suggestedPage = 1;
+        this.isLoadingSuggested = false;
+        // Always extract vivid color from the large backdrop image
+        this.updateMovieAccentColor(data.backdropUrl || data.posterUrl);
+        // Important: tell the loader the data is ready so it waits for images and hides
+        this.loaderService.setRouteReady();
+      },
+      error: (err: any) => {
+        console.error('Failed to load movie details', err);
+        this.loaderService.setRouteReady();
+      }
     });
-    this.updateMovieAccentColor('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1920&auto=format&fit=crop&q=80');
   }
 
   private getMockReviews(): Review[] {
@@ -567,6 +568,43 @@ export class MovieDetailComponent implements OnInit {
     if (current) {
       this.movie.update(m => ({ ...m!, isBookmarked: !m!.isBookmarked }));
     }
+  }
+
+  goToMovie(movie: any, overrideColor?: string) {
+    this.dismissHoverPanel();
+    this.loaderService.startNavigation();
+
+    // Normalize data to prevent UI crashes if some fields are missing (e.g. from TMDB recommendations)
+    const normalizedData = {
+      ...movie,
+      title: movie.title || movie.name || 'Titolo Sconosciuto',
+      year: movie.year || (movie.release_date ? movie.release_date.substring(0, 4) : (movie.first_air_date ? movie.first_air_date.substring(0, 4) : 2024)),
+      duration: movie.duration || '2h 00m',
+      matchScore: movie.matchScore || '90% Match',
+      genres: movie.genres || ['Azione', 'Drammatico'],
+      synopsis: movie.synopsis || movie.overview || 'Nessuna sinossi disponibile.',
+      backdropUrl: movie.backdropUrl || (movie.backdrop_path ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}` : ''),
+      posterUrl: movie.posterUrl || (movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : ''),
+      accentColor: overrideColor || movie.accentColor || movie.primaryColor || '#ff0000',
+      screenshots: movie.screenshots || [
+        'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1585951237318-9ea5e175b891?w=400&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=800&auto=format&fit=crop&q=80'
+      ],
+      cast: movie.cast || []
+    };
+
+    setTimeout(() => {
+      if (movie.isSeries) {
+        this.router.navigate(['/series', movie.id], { state: { data: normalizedData } });
+      } else {
+        this.router.navigate(['/movie', movie.id], { state: { data: normalizedData } });
+      }
+    }, 400);
   }
 
   onThemeChange(theme: 'dark' | 'light' | 'dynamic') {

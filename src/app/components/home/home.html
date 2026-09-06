@@ -26,7 +26,7 @@
 
           <!-- Hero Action Buttons -->
           <div class="hero-actions">
-            <button class="btn-watch-now" (click)="goToMovie(movie)" [style.background]="heroButtonColor()"
+            <button class="btn-watch-now" (click)="goToMovie(movie, heroButtonColor())" [style.background]="heroButtonColor()"
               [style.box-shadow]="'0 4px 24px ' + toRgba(heroButtonColor(), 0.5)">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <polygon points="5 3 19 12 5 21 5 3"></polygon>
@@ -80,6 +80,7 @@
     <main class="main-content">
 
       <!-- SECTION 1: CONTINUE WATCHING -->
+      @if (continueWatchingList && continueWatchingList.length > 0) {
       <section class="content-section">
         <div class="section-header">
           <h2 class="section-title">Continua a guardare</h2>
@@ -164,8 +165,10 @@
           </div>
         </div>
       </section>
+      }
 
       <!-- SECTION 2: TRENDING NOW -->
+      @if (trendingMovies && trendingMovies.length > 0) {
       <section class="content-section">
         <div class="section-header">
           <h2 class="section-title">In tendenza</h2>
@@ -200,8 +203,10 @@
           </div>
         </div>
       </section>
+      }
 
       <!-- SECTION 3: LATEST EPISODES AVAILABLE -->
+      @if (latestEpisodes && latestEpisodes.length > 0) {
       <section class="content-section">
         <div class="section-header">
           <h2 class="section-title">{{ getUpcomingTitle() }}</h2>
@@ -264,8 +269,10 @@
           </div>
         </div>
       </section>
+      }
 
       <!-- SECTION 4: NEW RELEASES -->
+      @if (newReleasesMovies && newReleasesMovies.length > 0) {
       <section class="content-section">
         <div class="section-header">
           <h2 class="section-title">Nuove uscite</h2>
@@ -300,13 +307,14 @@
           </div>
         </div>
       </section>
+      }
 
       <!-- SECTION 5: MOST WATCHED CHART -->
+      @if (topWatchedMovies && topWatchedMovies.length > 0) {
       <section class="content-section most-watched-section">
         <div class="section-header">
           <div class="chart-heading">
-            <h2 class="section-title">I più visti</h2>
-            <span class="chart-badge">Questa settimana</span>
+            <h2 class="section-title">Classifica</h2>
           </div>
         </div>
 
@@ -314,7 +322,6 @@
         <div class="chart-podium">
           @for (film of topWatchedMovies.slice(0, 3); track film.id; let i = $index) {
           <div class="podium-card glass-card" [style.--card-accent]="film.accentColor">
-            <span class="podium-rank-bg">{{ (i + 1).toString().padStart(2, '0') }}</span>
             <div class="podium-poster-wrap">
               <img [src]="film.posterUrl" [alt]="film.title" class="podium-img" />
               <div class="podium-img-overlay"></div>
@@ -325,10 +332,6 @@
               </div>
               <h3 class="podium-title">{{ film.title }}</h3>
               <p class="podium-genre">{{ film.genres[0] }} · {{ film.year }}</p>
-              <div class="podium-bar-wrap">
-                <div class="podium-bar" [style.width]="film.watchPercent + '%'"></div>
-              </div>
-              <span class="podium-views">{{ film.watchCount }} views</span>
             </div>
           </div>
           }
@@ -344,16 +347,14 @@
               <p class="chart-item-title">{{ film.title }}</p>
               <p class="chart-item-meta">{{ film.genres[0] }} · {{ film.year }}</p>
             </div>
-            <div class="chart-item-bar-wrap">
-              <div class="chart-item-bar" [style.width]="film.watchPercent + '%'"></div>
-              <span class="chart-item-count">{{ film.watchCount }}</span>
-            </div>
           </div>
           }
         </div>
       </section>
+      }
 
       <!-- SECTION 6: CRITICALLY ACCLAIMED (Duplicated from Trending) -->
+      @if (acclaimedMovies && acclaimedMovies.length > 0) {
       <section class="content-section">
         <div class="section-header">
           <h2 class="section-title">Acclamati dalla critica</h2>
@@ -388,8 +389,10 @@
           </div>
         </div>
       </section>
+      }
 
       <!-- SECTION 7: SPOTLIGHT -->
+      @if (spotlightMovies && spotlightMovies.length > 0) {
       <section class="content-section">
         <div class="section-header">
           <h2 class="section-title">In primo piano</h2>
@@ -459,8 +462,10 @@
           </div>
         </div>
       </section>
+      }
 
       <!-- SECTION 8: COMING SOON -->
+      @if (classicsMovies && classicsMovies.length > 0) {
       <section class="content-section">
         <div class="section-header">
           <h2 class="section-title">Grandi Classici</h2>
@@ -495,8 +500,10 @@
           </div>
         </div>
       </section>
+      }
 
       <!-- SECTION 9: HIDDEN GEMS -->
+      @if (hiddenGemsMovies && hiddenGemsMovies.length > 0) {
       <section class="content-section">
         <div class="section-header">
           <h2 class="section-title">Perle nascoste</h2>
@@ -531,8 +538,10 @@
           </div>
         </div>
       </section>
+      }
 
       <!-- SECTION 10: TOP PICKS FOR YOU -->
+      @if (topPicksMovies && topPicksMovies.length > 0) {
       <section class="content-section">
         <div class="section-header">
           <h2 class="section-title">Scelti per te</h2>
@@ -567,9 +576,11 @@
           </div>
         </div>
       </section>
+      }
 
       <!-- DYNAMIC GENRE SLIDERS (INFINITE SCROLL) -->
       @for (slider of dynamicSliders; track slider.id) {
+      @if (!slider.isLoaded || (slider.movies && slider.movies.length > 0)) {
       <section class="content-section">
         <div class="section-header">
           <h2 class="section-title">{{ slider.title }}</h2>
@@ -612,6 +623,7 @@
           </div>
         </div>
       </section>
+      }
       }
 
 

@@ -291,7 +291,9 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
       });
 
       // Extract hero button color for first slide
-      this.extractDominantColor(this.heroMovies[0].backdropUrl).then(c => this.heroButtonColor.set(c));
+      if (this.heroMovies && this.heroMovies.length > 0) {
+        this.extractDominantColor(this.heroMovies[0].backdropUrl).then(c => this.heroButtonColor.set(c));
+      }
 
       // Global capture-phase scroll listener:
       // This catches ANY scroll event on the page (horizontal or vertical,
@@ -664,7 +666,7 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  goToMovie(item: any) {
+  goToMovie(item: any, overrideColor?: string) {
     const movieDetail = {
       id: item.id,
       title: item.title || item.showTitle || item.episodeTitle || 'Titolo Sconosciuto',
@@ -675,7 +677,7 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
       synopsis: item.synopsis || 'Nessuna sinossi disponibile.',
       backdropUrl: (item.backdropUrl || item.thumbnailUrl || item.posterUrl || '').replace(/w=\d+/, 'w=1600'),
       posterUrl: item.posterUrl || item.thumbnailUrl || item.backdropUrl || '',
-      accentColor: item.accentColor || item.primaryColor || '#ff0000',
+      accentColor: overrideColor || item.accentColor || item.primaryColor || '#ff0000',
       director: item.director || 'Joseph Kosinski',
       producer: item.producer || 'Brad Pitt, Joseph Kosinski, Lewis Hamilton, Jerry Bruckheimer, Chad Oman, Dede Gardner, Jeremy Kleiner',
       releaseDate: item.releaseDate || 'June 26, 2025 (Germany)',

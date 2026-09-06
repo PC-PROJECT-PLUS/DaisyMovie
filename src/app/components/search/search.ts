@@ -1,9 +1,11 @@
-import { Component, OnInit, signal, computed, inject, PLATFORM_ID, effect } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, PLATFORM_ID, effect, HostListener } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ThemeService } from '../../services/theme.service';
+import { TmdbService } from '../../services/tmdb.service';
+import { LoaderService } from '../../services/loader.service';
 import { SearchMobileComponent } from './search-mobile/search-mobile';
 
 interface MovieItem {
@@ -31,16 +33,18 @@ interface MovieItem {
 export class SearchComponent implements OnInit {
   platformId = inject(PLATFORM_ID);
   themeService = inject(ThemeService);
+  tmdbService = inject(TmdbService);
+  loaderService = inject(LoaderService);
   router = inject(Router);
   route = inject(ActivatedRoute);
   titleService = inject(Title);
-  
+
   isMobile = signal(false);
   pageLoaded = signal(false);
-  
+
   searchQuery = signal('');
   hoveredItemId = signal<number | null>(null);
-  
+
   heroTitle = signal('Ricerca');
 
   heroImage = computed(() => {
@@ -51,66 +55,47 @@ export class SearchComponent implements OnInit {
     return '';
   });
 
-  // Mock Database
-  mockDatabase: MovieItem[] = [
-    { id: 401, title: 'Your Name', year: 2016, matchScore: '99% Match', genres: ['Anime', 'Romance'], synopsis: 'Due sconosciuti scoprono di essere legati in un modo bizzarro.', posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80', backdropUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1920&q=80', accentColor: '#3b82f6', duration: '1h 52m' },
-    { id: 701, title: 'Stranger Things', year: 2016, matchScore: '99% Match', genres: ['Sci-Fi', 'Thriller'], synopsis: 'Quando un ragazzino scompare, i suoi amici e la famiglia si trovano a scoprire forze occulte.', posterUrl: 'https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8b2AOjG09.jpg', backdropUrl: 'https://image.tmdb.org/t/p/w1280/56v2KjBlU4aT8U23zRhlgY0jWGV.jpg', accentColor: '#ef4444', duration: '4 Seasons', isSeries: true },
-    { id: 702, title: 'Oppenheimer', year: 2023, matchScore: '98% Match', genres: ['Biography', 'Drama'], synopsis: 'La storia del fisico J. Robert Oppenheimer e la creazione della bomba atomica.', posterUrl: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', backdropUrl: 'https://image.tmdb.org/t/p/w1280/fm6KqXpk3M2HVveHwCrBSSBaO0V.jpg', accentColor: '#f59e0b', duration: '3h 0m' },
-    { id: 612, title: 'Severance', year: 2022, matchScore: '96% Match', genres: ['Sci-Fi', 'Thriller'], synopsis: 'Mark guida un team i cui ricordi sono stati divisi chirurgicamente.', accentColor: '#3b82f6', posterUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&q=80', backdropUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1920&q=80', duration: '1 Season', isSeries: true },
-    { id: 404, title: 'Akira', year: 1988, matchScore: '95% Match', genres: ['Anime', 'Sci-Fi'], synopsis: 'Un progetto militare segreto mette in pericolo Neo-Tokyo.', posterUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80', accentColor: '#ef4444', duration: '2h 4m' },
-    { id: 101, title: 'Interstellar', year: 2014, matchScore: '97% Match', genres: ['Sci-Fi', 'Adventure'], synopsis: 'Un gruppo di esploratori viaggia attraverso un wormhole nello spazio.', posterUrl: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=500&q=80', accentColor: '#3b82f6', duration: '2h 49m' },
-    { id: 102, title: 'The Matrix', year: 1999, matchScore: '98% Match', genres: ['Sci-Fi', 'Action'], synopsis: 'Un hacker scopre la vera natura della sua realta.', posterUrl: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=500&q=80', accentColor: '#10b981', duration: '2h 16m' },
-    { id: 105, title: 'Parasite', year: 2019, matchScore: '99% Match', genres: ['Thriller', 'Drama'], synopsis: 'La famiglia Kim si insinua nella vita della ricca famiglia Park.', posterUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&q=80', accentColor: '#10b981', duration: '2h 12m' },
-    { id: 109, title: 'The Dark Knight', year: 2008, matchScore: '98% Match', genres: ['Action', 'Crime'], synopsis: 'Quando la minaccia nota come il Joker emerge, Batman deve accettare una grande sfida.', posterUrl: 'https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=500&q=80', accentColor: '#111827', duration: '2h 32m' },
-    { id: 112, title: 'Pulp Fiction', year: 1994, matchScore: '95% Match', genres: ['Crime', 'Drama'], synopsis: 'Le vite di due sicari, un pugile e una coppia di rapinatori si intrecciano.', posterUrl: 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?w=500&q=80', accentColor: '#f59e0b', duration: '2h 34m' }
-  ];
-
-  filteredItems = computed(() => {
-    const q = this.searchQuery().toLowerCase().trim();
-    if (!q) return [];
-    
-    const results = this.mockDatabase.filter(item => {
-      const matchTitle = item.title.toLowerCase().includes(q);
-      const matchGenre = item.genres.some(g => g.toLowerCase().includes(q));
-      return matchTitle || matchGenre;
-    });
-
-    return results.sort((a, b) => {
-      const aExact = a.title.toLowerCase() === q ? 1 : 0;
-      const bExact = b.title.toLowerCase() === q ? 1 : 0;
-      if (aExact !== bExact) return bExact - aExact;
-      
-      const aStart = a.title.toLowerCase().startsWith(q) ? 1 : 0;
-      const bStart = b.title.toLowerCase().startsWith(q) ? 1 : 0;
-      if (aStart !== bStart) return bStart - aStart;
-
-      return 0;
-    });
-  });
+  filteredItems = signal<any[]>([]);
+  currentPage = signal(1);
+  hasMore = signal(true);
+  isLoading = signal(false);
 
   constructor() {
     effect(() => {
       const title = this.searchQuery() ? `Risultati per "${this.searchQuery()}"` : 'Cerca';
       this.heroTitle.set(title);
       this.titleService.setTitle(title);
-    }, { allowSignalWrites: true });
+    });
+
+    effect(() => {
+      if (!this.loaderService.isPageLoading()) {
+        setTimeout(() => this.pageLoaded.set(true), 50);
+      } else {
+        this.pageLoaded.set(false);
+      }
+    });
   }
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       if (params['q']) {
-        this.searchQuery.set(params['q']);
+        const q = params['q'].trim();
+        if (q !== this.searchQuery()) {
+          this.searchQuery.set(q);
+          this.performSearch(true);
+        } else {
+          this.loaderService.setRouteReady();
+        }
+      } else {
+        this.searchQuery.set('');
+        this.filteredItems.set([]);
+        this.loaderService.setRouteReady();
       }
     });
 
     if (isPlatformBrowser(this.platformId)) {
       this.checkScreenSize();
       window.addEventListener('resize', this.checkScreenSize.bind(this));
-
-      // Entrance animation
-      setTimeout(() => {
-        this.pageLoaded.set(true);
-      }, 150);
     }
   }
 
@@ -120,16 +105,109 @@ export class SearchComponent implements OnInit {
     }
   }
 
-  goToDetail(movie: MovieItem) {
-    if (movie.isSeries) {
-      this.router.navigate(['/series', movie.id]);
-    } else {
-      this.router.navigate(['/movie', movie.id]);
-    }
+  goToDetail(movie: any) {
+    this.loaderService.startNavigation();
+    
+    const movieDetail: any = {
+      id: movie.id,
+      title: movie.title,
+      backdropUrl: movie.backdropUrl,
+      posterUrl: movie.posterUrl,
+      year: movie.year,
+      duration: movie.duration,
+      genres: movie.genres,
+      matchScore: movie.matchScore || '95% Match',
+      synopsis: movie.overview || movie.synopsis || 'Nessuna sinossi disponibile.',
+      isSeries: movie.isSeries,
+      ratingPercent: movie.ratingPercent || 0,
+      watchCount: movie.watchCount || '0',
+      isBookmarked: movie.isBookmarked || false,
+      screenshots: [
+        'https://via.placeholder.com/1280x720?text=Screenshot+1',
+        'https://via.placeholder.com/1280x720?text=Screenshot+2',
+        'https://via.placeholder.com/1280x720?text=Screenshot+3',
+        'https://via.placeholder.com/1280x720?text=Screenshot+4',
+        'https://via.placeholder.com/1280x720?text=Screenshot+5'
+      ]
+    };
+
+    // Delay the navigation slightly so the loader has time to fade in
+    // This hides the background image loading process since search doesn't cache backdrops
+    setTimeout(() => {
+      if (movie.isSeries) {
+        this.router.navigate(['/series', movie.id], { state: { data: movieDetail } });
+      } else {
+        this.router.navigate(['/movie', movie.id], { state: { data: movieDetail } });
+      }
+    }, 150);
   }
 
   toggleBookmark(movie: MovieItem, event: Event) {
     event.stopPropagation();
     movie.isBookmarked = !movie.isBookmarked;
+  }
+
+  performSearch(reset: boolean = false) {
+    const q = this.searchQuery();
+    if (!q) return;
+
+    if (reset) {
+      this.currentPage.set(1);
+      this.hasMore.set(true);
+      this.filteredItems.set([]);
+    }
+
+    if (this.isLoading() || !this.hasMore()) return;
+
+    this.isLoading.set(true);
+    this.tmdbService.search(q, this.currentPage()).subscribe({
+      next: (results: any[]) => {
+        // Discard old results if query has changed
+        if (q !== this.searchQuery()) {
+          this.isLoading.set(false);
+          return;
+        }
+
+        if (results.length === 0) {
+          this.hasMore.set(false);
+        } else {
+          this.filteredItems.update(prev => {
+            // Deduplicate by ID
+            const existingIds = new Set(prev.map(item => item.id));
+            const newItems = results.filter(item => !existingIds.has(item.id));
+            return [...prev, ...newItems];
+          });
+          const current = this.currentPage();
+          this.currentPage.update(p => p + 1);
+
+          // Automatically fetch the second page if we just loaded the first page
+          // This ensures the grid is full on the first render
+          if (current === 1) {
+            setTimeout(() => this.performSearch(), 50);
+          }
+        }
+        this.isLoading.set(false);
+        this.loaderService.setRouteReady();
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.hasMore.set(false);
+        this.loaderService.setRouteReady();
+      }
+    });
+  }
+
+  @HostListener('window:scroll', [])
+  onScroll(): void {
+    if (this.isLoading() || !this.hasMore() || !isPlatformBrowser(this.platformId)) return;
+
+    // Add a threshold of 1200px before the bottom to load early
+    const threshold = 1200;
+    const position = window.innerHeight + window.scrollY;
+    const height = document.body.offsetHeight;
+
+    if (position >= height - threshold) {
+      this.performSearch();
+    }
   }
 }

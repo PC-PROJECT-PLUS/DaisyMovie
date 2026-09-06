@@ -25,7 +25,12 @@ const GENRE_MAP = {
 // Helper function to map TMDB response to our frontend format
 function mapMovieItem(res, isSeries) {
   const accentColor = res.backdrop_path ? '#141414' : '#141414';
-  const genres = res.genre_ids ? res.genre_ids.map(id => GENRE_MAP[id] || id.toString()) : [];
+  let genres = [];
+  if (res.genres && Array.isArray(res.genres)) {
+    genres = res.genres.map(g => g.name || GENRE_MAP[g.id] || g.id.toString());
+  } else if (res.genre_ids && Array.isArray(res.genre_ids)) {
+    genres = res.genre_ids.map(id => GENRE_MAP[id] || id.toString());
+  }
 
   return {
     id: res.id,
@@ -73,8 +78,11 @@ router.get('/trending-top10', async (req, res) => {
 
     const combinedResults = [...(page1.data.results || []), ...(page2.data.results || [])];
 
+    const foreignRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\u0400-\u04FF\u0E00-\u0E7F\u0600-\u06FF\u0900-\u097F]/;
+    
     const items = combinedResults
       .filter(i => i.poster_path && i.backdrop_path && i.overview && i.overview.trim().length > 10)
+      .filter(i => !foreignRegex.test(i.title || i.name || ''))
       .slice(0, 10)
       .map(item => mapMovieItem(item, isSeries));
 
@@ -139,14 +147,21 @@ router.get('/home', async (req, res) => {
 
     let strictUpcomingUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'first_air_date.gte' : 'primary_release_date.gte'}=${today}&${isSeries ? 'first_air_date.lte' : 'primary_release_date.lte'}=${futureDate}${genreFilterStr}`;
     let strictUpcomingMovieUrl = `${TMDB_BASE_URL}/discover/movie?${lang}${langFilter}&sort_by=popularity.desc&primary_release_date.gte=${today}&primary_release_date.lte=${futureDate}${genreFilterStr}`;
-    let classicsUrl = `${discoverBase}&sort_by=vote_average.desc&vote_count.gte=3000&${isSeries ? 'first_air_date.lte' : 'primary_release_date.lte'}=2005-01-01${genreFilterStr}`;
+    
+    let voteCountThreshold = category === 'Anime' ? 200 : 3000;
+    let classicsUrl = `${discoverBase}&sort_by=vote_average.desc&vote_count.gte=${voteCountThreshold}&${isSeries ? 'first_air_date.lte' : 'primary_release_date.lte'}=2005-01-01${genreFilterStr}`;
     let recentReleasesUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${pastThreeMonthsDate}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${today}${genreFilterStr}`;
 
-    let spotlightUrl = `${discoverBase}&with_genres=${genreFilter ? genreFilter + ',18' : '18'}`;
-    let hiddenGemsUrl = `${discoverBase}&with_genres=${genreFilter ? genreFilter + ',9648' : '9648'}`;
-    let topPicksUrl = `${discoverBase}&with_genres=${genreFilter ? genreFilter + ',14' : '14'}`;
-    let actionUrl = `${discoverBase}&with_genres=${genreFilter ? genreFilter + ',28' : '28'}`;
-    let acclaimedUrl = `${discoverBase}&sort_by=vote_average.desc&vote_count.gte=3000${genreFilterStr}`;
+    let dramaGenre = 18;
+    let mysteryGenre = 9648;
+    let fantasyGenre = isSeries ? 10765 : 14; // TV uses 10765 for Sci-Fi & Fantasy
+    let actionGenre = isSeries ? 10759 : 28; // TV uses 10759 for Action & Adventure
+
+    let spotlightUrl = `${discoverBase}&with_genres=${genreFilter ? genreFilter + ',' + dramaGenre : dramaGenre}`;
+    let hiddenGemsUrl = `${discoverBase}&with_genres=${genreFilter ? genreFilter + ',' + mysteryGenre : mysteryGenre}`;
+    let topPicksUrl = `${discoverBase}&with_genres=${genreFilter ? genreFilter + ',' + fantasyGenre : fantasyGenre}`;
+    let actionUrl = `${discoverBase}&with_genres=${genreFilter ? genreFilter + ',' + actionGenre : actionGenre}`;
+    let acclaimedUrl = `${discoverBase}&sort_by=vote_average.desc&vote_count.gte=${voteCountThreshold}${genreFilterStr}`;
 
     if (phase === '1') {
       requests = [
@@ -202,12 +217,14 @@ router.get('/home', async (req, res) => {
     const isAnimeCategory = category === 'Anime';
     const isAnimazioneCategory = category === 'Animazione';
 
+    const foreignRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\u0400-\u04FF\u0E00-\u0E7F\u0600-\u06FF\u0900-\u097F]/;
     // Mappiamo i risultati
     const mapItems = (arr, requireOverview = true) => arr
       .filter(i => i.poster_path && i.backdrop_path && (!requireOverview || (i.overview && i.overview.trim().length > 10)))
       .filter(i => !(excludeAnimation && i.genre_ids && i.genre_ids.includes(16)))
       .filter(i => !isAnimeCategory || i.original_language === 'ja')
       .filter(i => !isAnimazioneCategory || i.original_language !== 'ja')
+      .filter(i => !foreignRegex.test(i.title || i.name || ''))
       .slice(0, 15)
       .map(item => mapMovieItem(item, isSeries));
 
@@ -278,16 +295,25 @@ router.get('/page', async (req, res) => {
     // Check if listName is a number (a specific Genre ID dynamically generated)
     if (!isNaN(Number(listName))) {
       url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + listName : listName}`;
+    } else if (typeof listName === 'string' && listName.startsWith('keyword_')) {
+      const keywordId = listName.split('_')[1];
+      url = `${discoverBase}&page=${page}&with_keywords=${keywordId}${genreFilterStr}`;
     } else {
+      let voteCountThreshold = category === 'Anime' ? 200 : 3000;
+      let dramaGenre = 18;
+      let mysteryGenre = 9648;
+      let fantasyGenre = isSeries ? 10765 : 14;
+      let actionGenre = isSeries ? 10759 : 28;
+
       if (listName === 'trending') url = genreFilter || langFilter ? `${discoverBase}&sort_by=popularity.desc${genreFilterStr}&page=${page}` : `${TMDB_BASE_URL}/trending/${contentType}/week?${lang}&page=${page}`;
       else if (listName === 'topWatched') url = genreFilter || langFilter ? `${discoverBase}&sort_by=vote_average.desc&vote_count.gte=500${genreFilterStr}&page=${page}` : `${TMDB_BASE_URL}/${contentType}/top_rated?${lang}&page=${page}`;
-      else if (listName === 'classics') url = `${discoverBase}&page=${page}&sort_by=vote_average.desc&vote_count.gte=3000&${isSeries ? 'first_air_date.lte' : 'primary_release_date.lte'}=2005-01-01${genreFilterStr}`;
+      else if (listName === 'classics') url = `${discoverBase}&page=${page}&sort_by=vote_average.desc&vote_count.gte=${voteCountThreshold}&${isSeries ? 'first_air_date.lte' : 'primary_release_date.lte'}=2005-01-01${genreFilterStr}`;
       else if (listName === 'newReleases') url = `${recentReleasesUrl}&page=${page}`;
-      else if (listName === 'spotlight') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',18' : '18'}`;
-      else if (listName === 'hiddenGems') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',9648' : '9648'}`;
-      else if (listName === 'topPicks') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',14' : '14'}`;
-      else if (listName === 'action') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',28' : '28'}`;
-      else if (listName === 'acclaimed') url = `${discoverBase}&page=${page}&sort_by=vote_average.desc&vote_count.gte=3000${genreFilterStr}`;
+      else if (listName === 'spotlight') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + dramaGenre : dramaGenre}`;
+      else if (listName === 'hiddenGems') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + mysteryGenre : mysteryGenre}`;
+      else if (listName === 'topPicks') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + fantasyGenre : fantasyGenre}`;
+      else if (listName === 'action') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + actionGenre : actionGenre}`;
+      else if (listName === 'acclaimed') url = `${discoverBase}&page=${page}&sort_by=vote_average.desc&vote_count.gte=${voteCountThreshold}${genreFilterStr}`;
       else url = `${discoverBase}&page=${page}${genreFilterStr}`;
     }
 
@@ -298,11 +324,14 @@ router.get('/page', async (req, res) => {
     const isAnimazioneCategory = category === 'Animazione';
 
     // Map items
+    const foreignRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\u0400-\u04FF\u0E00-\u0E7F\u0600-\u06FF\u0900-\u097F]/;
+
     const items = response.data.results
-      .filter(i => i.poster_path && i.backdrop_path)
+      .filter(i => i.poster_path && i.backdrop_path && i.overview && i.overview.trim().length > 10)
       .filter(i => !(excludeAnimation && i.genre_ids && i.genre_ids.includes(16)))
       .filter(i => !isAnimeCategory || i.original_language === 'ja')
       .filter(i => !isAnimazioneCategory || i.original_language !== 'ja')
+      .filter(i => !foreignRegex.test(i.title || i.name || ''))
       .map(item => mapMovieItem(item, isSeries));
     if (listName === 'classics') {
       items.forEach(x => { x.bannerUrl = x.backdropUrl; x.seriesTitle = x.title; });
@@ -344,6 +373,204 @@ router.get('/genre-list', async (req, res) => {
   } catch (error) {
     console.error('Error fetching genre list:', error.response?.data || error.message);
     res.status(500).json({ error: 'Failed to fetch genres' });
+  }
+});
+
+router.get('/search', async (req, res) => {
+  try {
+    const query = req.query.q;
+    const page = req.query.page || '1';
+    
+    if (!query) {
+      return res.json([]);
+    }
+
+    const searchUrl = `${TMDB_BASE_URL}/search/multi?query=${encodeURIComponent(query)}&page=${page}&language=it-IT`;
+    const response = await axios.get(searchUrl, { headers: HEADERS });
+    
+    const foreignRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\u0400-\u04FF\u0E00-\u0E7F\u0600-\u06FF\u0900-\u097F]/;
+
+    const results = response.data.results
+      .filter(item => item.media_type === 'movie' || item.media_type === 'tv')
+      .filter(item => item.poster_path) // Require at least a poster
+      .filter(item => {
+        const title = item.title || item.name || '';
+        return !foreignRegex.test(title);
+      })
+      .map(item => mapMovieItem(item, item.media_type === 'tv'));
+      
+    res.json(results);
+  } catch (error) {
+    console.error('Error in /search:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to search TMDB' });
+  }
+});
+
+router.get('/detail/:type/:id', async (req, res) => {
+  try {
+    const { type, id } = req.params;
+    if (type !== 'movie' && type !== 'tv') {
+      return res.status(400).json({ error: 'Invalid type' });
+    }
+
+    const detailUrl = `${TMDB_BASE_URL}/${type}/${id}?append_to_response=credits,videos,images,recommendations,external_ids&include_image_language=it,en,null&language=it-IT`;
+    const response = await axios.get(detailUrl, { headers: HEADERS });
+    const data = response.data;
+    const isSeries = type === 'tv';
+
+    // Format money
+    const formatMoney = (amount) => {
+      if (!amount || amount === 0) return 'N/A';
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    };
+
+    // Format duration
+    const formatDuration = (mins) => {
+      if (!mins) return 'N/A';
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return h > 0 ? `${h}h ${m}min` : `${m}min`;
+    };
+
+    const duration = isSeries
+      ? (data.episode_run_time && data.episode_run_time.length > 0 ? formatDuration(data.episode_run_time[0]) : 'Varie')
+      : formatDuration(data.runtime);
+
+    const crew = data.credits && data.credits.crew ? data.credits.crew : [];
+    const director = crew.find(c => c.job === 'Director')?.name || 'N/A';
+    const music = crew.find(c => c.job === 'Original Music Composer' || c.job === 'Music')?.name || 'N/A';
+    const producer = crew.filter(c => c.job === 'Producer').slice(0, 3).map(c => c.name).join(', ') || 'N/A';
+    const writers = crew.filter(c => c.department === 'Writing').slice(0, 3).map(c => c.name).join(', ') || 'N/A';
+    
+    const cast = data.credits && data.credits.cast ? data.credits.cast.slice(0, 15).map(c => ({
+      name: c.name,
+      character: c.character,
+      imageUrl: c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : 'https://via.placeholder.com/150x225?text=No+Image'
+    })) : [];
+
+    const productionCompanies = data.production_companies ? data.production_companies.map(c => c.name).join(', ') || 'N/A' : 'N/A';
+    const releaseDate = isSeries ? data.first_air_date : data.release_date;
+
+    let screenshots = data.images && data.images.backdrops ? data.images.backdrops.map(img => `https://image.tmdb.org/t/p/w1280${img.file_path}`) : [];
+    if (screenshots.length > 0) {
+      while (screenshots.length < 7) {
+        screenshots.push(screenshots[screenshots.length % screenshots.length]); // Pad with existing ones
+      }
+    } else {
+      screenshots = Array(7).fill('https://via.placeholder.com/1280x720?text=No+Screenshot');
+    }
+
+    const suggested = data.recommendations && data.recommendations.results 
+      ? data.recommendations.results.slice(0, 10).map(item => mapMovieItem(item, isSeries))
+      : [];
+
+    let omdbRatings = null;
+    const imdbId = data.imdb_id || (data.external_ids ? data.external_ids.imdb_id : null);
+    if (imdbId && process.env.OMDB_API_KEY) {
+      try {
+        const omdbUrl = `http://www.omdbapi.com/?i=${imdbId}&apikey=${process.env.OMDB_API_KEY}`;
+        const omdbResponse = await axios.get(omdbUrl);
+        if (omdbResponse.data && omdbResponse.data.Ratings) {
+          omdbRatings = {};
+          omdbResponse.data.Ratings.forEach(r => {
+            if (r.Source === 'Internet Movie Database') omdbRatings.imdb = r.Value.split('/')[0];
+            if (r.Source === 'Rotten Tomatoes') omdbRatings.rottenTomatoes = r.Value;
+            if (r.Source === 'Metacritic') omdbRatings.metacritic = r.Value.split('/')[0] + '%';
+          });
+        } else if (omdbResponse.data && omdbResponse.data.imdbRating && omdbResponse.data.imdbRating !== 'N/A') {
+          omdbRatings = { imdb: omdbResponse.data.imdbRating };
+        }
+      } catch (err) {
+        console.error('Error fetching OMDb ratings:', err.message);
+      }
+    }
+    // Add TMDB score as fallback for missing RT or Metacritic
+    if (data.vote_average && data.vote_average > 0) {
+      if (!omdbRatings) omdbRatings = {};
+      omdbRatings.tmdb = (Math.round(data.vote_average * 10) / 10).toFixed(1);
+    }
+
+    const mappedData = {
+      ...mapMovieItem(data, isSeries), // gets id, title, backdropUrl, etc.
+      duration: duration,
+      director: director,
+      producer: producer,
+      music: music,
+      writers: writers,
+      productionCompanies: productionCompanies,
+      budget: formatMoney(data.budget),
+      boxOffice: formatMoney(data.revenue),
+      releaseDate: releaseDate || 'N/A',
+      cast: cast,
+      screenshots: screenshots,
+      suggested: suggested,
+      omdbRatings: omdbRatings,
+      number_of_seasons: data.number_of_seasons,
+      number_of_episodes: data.number_of_episodes,
+      status: data.status
+    };
+
+    res.json(mappedData);
+  } catch (error) {
+    console.error('Error fetching details:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to fetch details' });
+  }
+});
+
+router.get('/recommendations/:type/:id', async (req, res) => {
+  try {
+    const { type, id } = req.params;
+    const page = req.query.page || 1;
+    if (type !== 'movie' && type !== 'tv') {
+      return res.status(400).json({ error: 'Invalid type' });
+    }
+
+    const detailUrl = `${TMDB_BASE_URL}/${type}/${id}/recommendations?language=it-IT&page=${page}`;
+    const response = await axios.get(detailUrl, { headers: HEADERS });
+    const isSeries = type === 'tv';
+    
+    const items = response.data.results
+      .filter(item => item.poster_path) // Require at least a poster
+      .map(item => mapMovieItem(item, isSeries));
+
+    res.json(items);
+  } catch (error) {
+    console.error('Error fetching recommendations:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to fetch recommendations' });
+  }
+});
+
+router.get('/season/:id/:seasonNumber', async (req, res) => {
+  try {
+    const { id, seasonNumber } = req.params;
+    const cacheKey = `season_${id}_${seasonNumber}`;
+    if (cache.has(cacheKey)) {
+      const cached = cache.get(cacheKey);
+      if (Date.now() - cached.timestamp < CACHE_TTL) {
+        return res.json(cached.data);
+      }
+    }
+
+    const url = `${TMDB_BASE_URL}/tv/${id}/season/${seasonNumber}?language=it-IT`;
+    const response = await axios.get(url, { headers: HEADERS });
+    const episodes = (response.data.episodes || []).map(ep => ({
+      id: ep.id,
+      episodeNumber: ep.episode_number,
+      title: ep.name || `Episodio ${ep.episode_number}`,
+      duration: ep.runtime ? (ep.runtime >= 60 ? `${Math.floor(ep.runtime / 60)}h ${ep.runtime % 60}min` : `${ep.runtime}min`) : 'N/A',
+      thumbnailUrl: ep.still_path
+        ? `https://image.tmdb.org/t/p/w500${ep.still_path}`
+        : 'https://via.placeholder.com/500x281?text=No+Preview',
+      synopsis: ep.overview || 'Nessuna descrizione disponibile.',
+      airDate: ep.air_date || null,
+      seasonNumber: ep.season_number
+    }));
+
+    cache.set(cacheKey, { timestamp: Date.now(), data: episodes });
+    res.json(episodes);
+  } catch (error) {
+    console.error('Error fetching season episodes:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to fetch season episodes' });
   }
 });
 

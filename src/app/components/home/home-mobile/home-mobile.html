@@ -12,7 +12,7 @@
           <h2 class="hero-title">{{ movie.title }}</h2>
           <p class="hero-synopsis">{{ movie.synopsis }}</p>
           <div class="hero-actions">
-            <button class="btn-play" [style.background]="heroButtonColor()" (click)="goToMovie(movie)">
+            <button class="btn-play" [style.background]="heroButtonColor()" (click)="goToMovie(movie, heroButtonColor())">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <polygon points="5 3 19 12 5 21 5 3"></polygon>
               </svg>
@@ -127,8 +127,7 @@
   <section class="mobile-section">
     <div class="top-charts">
       <div class="chart-heading">
-        <h2>Top 10 in Italia</h2>
-        <span class="badge">Oggi</span>
+        <h2>Classifica</h2>
       </div>
       <div class="chart-list">
         @for (item of topWatchedMovies.slice(0, showAllCharts() ? 10 : 3); track item.id; let i = $index) {
@@ -138,10 +137,6 @@
           <div class="item-info">
             <h3>{{ item.title }}</h3>
             <p>{{ item.genres[0] }} · {{ item.year }}</p>
-            <div class="bar-wrap">
-              <div class="bar" [style.width.%]="item.watchPercent"></div>
-            </div>
-            <span class="views">{{ item.watchCount }} visualizzazioni</span>
           </div>
         </div>
         }

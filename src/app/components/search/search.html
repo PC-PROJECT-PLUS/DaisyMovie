@@ -3,13 +3,13 @@
 } @else {
   <div class="search-page" [attr.data-theme]="themeService.currentTheme()">
 
-    <div class="ambient-glow" [class.loaded]="pageLoaded()"></div>
-
     <!-- HERO SECTION -->
     @if (filteredItems().length > 0) {
       <section class="hero-section" [class.loaded]="pageLoaded()">
         <div class="hero-backdrop-wrapper">
-          <img [src]="heroImage()" alt="Search Hero" class="hero-backdrop-img" loading="lazy" />
+          @for (imgSrc of [heroImage()]; track imgSrc) {
+            <img [src]="imgSrc" alt="Search Hero" class="hero-backdrop-img" fetchpriority="high" />
+          }
           <div class="hero-gradient-overlay"></div>
         </div>
       </section>
@@ -36,7 +36,7 @@
                  (mouseenter)="hoveredItemId.set(movie.id)" 
                  (mouseleave)="hoveredItemId.set(null)"
                  [class.hovered]="hoveredItemId() === movie.id"
-                 [style.animation-delay]="(idx * 0.05) + 's'"
+                 [style.animation-delay]="((idx % 20) * 0.05) + 's'"
                  [class.fade-in]="pageLoaded()">
               
               <img [src]="movie.posterUrl" [alt]="movie.title" class="movie-poster" loading="lazy" />
@@ -64,7 +64,7 @@
             </div>
           }
         </div>
-      } @else {
+      } @else if (!isLoading()) {
         <div class="empty-state">
           <div class="empty-icon-wrapper">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
