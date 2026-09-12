@@ -321,7 +321,7 @@
         <!-- TOP 3 PODIUM -->
         <div class="chart-podium">
           @for (film of topWatchedMovies.slice(0, 3); track film.id; let i = $index) {
-          <div class="podium-card glass-card" [style.--card-accent]="film.accentColor">
+          <div class="podium-card glass-card" [style.--card-accent]="film.accentColor" (click)="goToMovie(film)" style="cursor: pointer;">
             <div class="podium-poster-wrap">
               <img [src]="film.posterUrl" [alt]="film.title" class="podium-img" />
               <div class="podium-img-overlay"></div>
@@ -340,7 +340,7 @@
         <!-- RANKS 4–10 LIST -->
         <div class="chart-list">
           @for (film of topWatchedMovies.slice(3); track film.id; let i = $index) {
-          <div class="chart-item glass-card" [style.--card-accent]="film.accentColor">
+          <div class="chart-item glass-card" [style.--card-accent]="film.accentColor" (click)="goToMovie(film)" style="cursor: pointer;">
             <div class="chart-item-rank">{{ (i + 4).toString().padStart(2, '0') }}</div>
             <img [src]="film.posterUrl" [alt]="film.title" class="chart-item-thumb" />
             <div class="chart-item-info">

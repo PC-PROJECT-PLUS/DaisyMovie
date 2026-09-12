@@ -68,7 +68,7 @@
         </div>
 
         <div class="action-buttons">
-          <button class="play-btn" [style.background]="movie()!.accentColor">
+          <button class="play-btn" [style.background]="movie()!.accentColor" (click)="openPlayer()">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
             </svg>
@@ -420,3 +420,10 @@
   </div>
   }
 </div>
+
+<!-- VIDEO PLAYER OVERLAY -->
+<app-video-player
+  [config]="playerConfig()"
+  [visible]="playerVisible()"
+  (closed)="playerVisible.set(false)">
+</app-video-player>

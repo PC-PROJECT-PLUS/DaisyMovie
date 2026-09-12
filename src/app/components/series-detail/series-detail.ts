@@ -7,6 +7,7 @@ import { ResponsiveService } from '../../services/responsive';
 import { SeriesDetailMobile } from './series-detail-mobile/series-detail-mobile';
 import { LoaderService } from '../../services/loader.service';
 import { TmdbService } from '../../services/tmdb.service';
+import { VideoPlayerComponent, PlayerConfig } from '../video-player/video-player';
 
 export interface CastMember {
   name: string;
@@ -56,6 +57,10 @@ export interface SeriesDetail {
   budget?: string;
   boxOffice?: string;
   languages?: string;
+  original_language?: string;
+  originalLanguage?: string;
+  origin_country?: string[];
+  originCountry?: string[];
   releaseDate: string;
   cast: CastMember[];
   screenshots: string[];
@@ -75,7 +80,7 @@ export interface SeriesDetail {
 @Component({
   selector: 'app-series-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, FooterComponent, SeriesDetailMobile],
+  imports: [CommonModule, FormsModule, FooterComponent, SeriesDetailMobile, VideoPlayerComponent],
   templateUrl: './series-detail.html',
   styleUrl: './series-detail.scss'
 })
@@ -114,6 +119,118 @@ export class SeriesDetailComponent implements OnInit {
   activeEpisodes = signal<any[]>([]);
   isLoadingEpisodes = signal<boolean>(false);
   episodesAnimState = signal<'idle' | 'out' | 'in'>('idle');
+
+  // VIDEO PLAYER STATE
+  playerVisible = signal(false);
+  playerConfig = signal<PlayerConfig | null>(null);
+
+  async openPlayer() {
+    const s = this.series();
+    if (!s) return;
+
+    let accentColor = '#E50914';
+    try {
+      const imageUrl = s.backdropUrl || s.posterUrl;
+      if (imageUrl && isPlatformBrowser(this.platformId)) {
+        const colors = await this.extractDominantColors(imageUrl);
+        if (colors.primary.startsWith('hsl')) accentColor = colors.primary;
+      }
+    } catch (e) { }
+
+    let startAt = 0;
+    if (isPlatformBrowser(this.platformId)) {
+      const savedTime = localStorage.getItem(`daisy-progress-tv-${s.id}-${this.activeSeason()}-1`);
+      if (savedTime) startAt = parseInt(savedTime, 10);
+    }
+
+    const genresStr = JSON.stringify(s.genres || []).toLowerCase();
+    const isAnimation = genresStr.includes('anim');
+
+    const prodStr = JSON.stringify(s.productionCompanies || '').toLowerCase();
+    const countryStr = JSON.stringify(s.origin_country || s.originCountry || '').toLowerCase();
+    const origLangStr = JSON.stringify(s.original_language || s.originalLanguage || '').toLowerCase();
+
+    const isJapanese = 
+      origLangStr.includes('"ja"') || 
+      origLangStr === '"ja"' ||
+      countryStr.includes('"jp"') || 
+      prodStr.includes('toei') ||
+      prodStr.includes('mappa') ||
+      prodStr.includes('ufotable') ||
+      prodStr.includes('ghibli') ||
+      prodStr.includes('kyoto animation') ||
+      prodStr.includes('madhouse') ||
+      prodStr.includes('bones') ||
+      prodStr.includes('wit studio') ||
+      prodStr.includes('cloverworks');
+
+    const isAnime = isAnimation && isJapanese;
+
+    this.playerConfig.set({
+      id: s.id,
+      type: 'tv',
+      accentColor,
+      season: this.activeSeason(),
+      episode: 1,
+      startAt: startAt > 0 ? startAt : undefined,
+      isAnime
+    });
+    this.playerVisible.set(true);
+  }
+
+  async openEpisodePlayer(episodeNumber: number) {
+    const s = this.series();
+    if (!s) return;
+
+    let accentColor = '#E50914';
+    try {
+      const imageUrl = s.backdropUrl || s.posterUrl;
+      if (imageUrl && isPlatformBrowser(this.platformId)) {
+        const colors = await this.extractDominantColors(imageUrl);
+        if (colors.primary.startsWith('hsl')) accentColor = colors.primary;
+      }
+    } catch (e) { }
+
+    let startAt = 0;
+    if (isPlatformBrowser(this.platformId)) {
+      const savedTime = localStorage.getItem(`daisy-progress-tv-${s.id}-${this.activeSeason()}-${episodeNumber}`);
+      if (savedTime) startAt = parseInt(savedTime, 10);
+    }
+
+    const genresStr = JSON.stringify(s.genres || []).toLowerCase();
+    const isAnimation = genresStr.includes('anim');
+
+    const prodStr = JSON.stringify(s.productionCompanies || '').toLowerCase();
+    const countryStr = JSON.stringify(s.origin_country || s.originCountry || '').toLowerCase();
+    const origLangStr = JSON.stringify(s.original_language || s.originalLanguage || '').toLowerCase();
+
+    const isJapanese = 
+      origLangStr.includes('"ja"') || 
+      origLangStr === '"ja"' ||
+      countryStr.includes('"jp"') || 
+      prodStr.includes('toei') ||
+      prodStr.includes('mappa') ||
+      prodStr.includes('ufotable') ||
+      prodStr.includes('ghibli') ||
+      prodStr.includes('kyoto animation') ||
+      prodStr.includes('madhouse') ||
+      prodStr.includes('bones') ||
+      prodStr.includes('wit studio') ||
+      prodStr.includes('cloverworks');
+
+    const isAnime = isAnimation && isJapanese;
+
+    this.playerConfig.set({
+      id: s.id,
+      type: 'tv',
+      accentColor,
+      season: this.activeSeason(),
+      episode: episodeNumber,
+      startAt: startAt > 0 ? startAt : undefined,
+      isAnime
+    });
+    this.playerVisible.set(true);
+  }
 
   // HOVER PANEL STATE
   panelSeries = signal<any | null>(null);
@@ -168,25 +285,9 @@ export class SeriesDetailComponent implements OnInit {
               // Ensure we have episodes and duration fields
               stateData.episodeDuration = '45m / ep';
               stateData.totalDuration = '10h 30m';
-              stateData.episodes = [
-                { id: 101, episodeNumber: 1, title: 'Episode 1', duration: '45m', thumbnailUrl: 'https://images.unsplash.com/photo-1614749219355-6b43d6c14175?w=400&auto=format&fit=crop&q=80', synopsis: 'Pilot episode.' },
-                { id: 102, episodeNumber: 2, title: 'Episode 2', duration: '43m', thumbnailUrl: 'https://images.unsplash.com/photo-1574676451642-171b3e8a4a58?w=400&auto=format&fit=crop&q=80', synopsis: 'Second episode.' },
-                { id: 103, episodeNumber: 3, title: 'Episode 3', duration: '46m', thumbnailUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&auto=format&fit=crop&q=80', synopsis: 'The plot thickens.' },
-                { id: 104, episodeNumber: 4, title: 'Episode 4', duration: '44m', thumbnailUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400&auto=format&fit=crop&q=80', synopsis: 'A surprising turn of events.' },
-                { id: 105, episodeNumber: 5, title: 'Episode 5', duration: '42m', thumbnailUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=400&auto=format&fit=crop&q=80', synopsis: 'Characters face their fears.' },
-                { id: 106, episodeNumber: 6, title: 'Episode 6', duration: '48m', thumbnailUrl: 'https://images.unsplash.com/photo-1585951237318-9ea5e175b891?w=400&auto=format&fit=crop&q=80', synopsis: 'The climax approaches.' },
-                { id: 107, episodeNumber: 7, title: 'Episode 7', duration: '41m', thumbnailUrl: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&auto=format&fit=crop&q=80', synopsis: 'Final preparations.' },
-                { id: 108, episodeNumber: 8, title: 'Episode 8', duration: '50m', thumbnailUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&auto=format&fit=crop&q=80', synopsis: 'Season finale.' },
-                { id: 109, episodeNumber: 9, title: 'Episode 9', duration: '45m', thumbnailUrl: 'https://images.unsplash.com/photo-1608889476518-738c9b1dcb40?w=400&auto=format&fit=crop&q=80', synopsis: 'New beginnings.' },
-                { id: 110, episodeNumber: 10, title: 'Episode 10', duration: '47m', thumbnailUrl: 'https://images.unsplash.com/photo-1574676451642-171b3e8a4a58?w=400&auto=format&fit=crop&q=80', synopsis: 'Unexpected allies.' },
-                { id: 111, episodeNumber: 11, title: 'Episode 11', duration: '49m', thumbnailUrl: 'https://images.unsplash.com/photo-1614749219355-6b43d6c14175?w=400&auto=format&fit=crop&q=80', synopsis: 'A hidden truth.' },
-                { id: 112, episodeNumber: 12, title: 'Episode 12', duration: '44m', thumbnailUrl: 'https://images.unsplash.com/photo-1506744626753-1fa30fd20055?w=400&auto=format&fit=crop&q=80', synopsis: 'The final confrontation.' },
-                { id: 113, episodeNumber: 13, title: 'Episode 13', duration: '45m', thumbnailUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400&auto=format&fit=crop&q=80', synopsis: 'Unveiling the past.' },
-                { id: 114, episodeNumber: 14, title: 'Episode 14', duration: '43m', thumbnailUrl: 'https://images.unsplash.com/photo-1585951237318-9ea5e175b891?w=400&auto=format&fit=crop&q=80', synopsis: 'A risky plan.' },
-                { id: 115, episodeNumber: 15, title: 'Episode 15', duration: '46m', thumbnailUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=400&auto=format&fit=crop&q=80', synopsis: 'The ultimate truth revealed.' }
-              ];
+              stateData.episodes = [];
             }
-            stateData.accentColor = '#141414';
+            stateData.accentColor = stateData.accentColor || '#141414';
             this.series.set(stateData);
             this.updateMovieAccentColor(stateData.backdropUrl || stateData.posterUrl);
           }
@@ -538,7 +639,8 @@ export class SeriesDetailComponent implements OnInit {
         this.activeSeason.set(1);
         this.episodesBySeason.set(new Map());
 
-        data.accentColor = '#141414';
+        // Preserve existing accentColor if we have it, else fallback to dark
+        data.accentColor = this.series()?.accentColor || '#141414';
         this.series.set(data);
         this.suggestedPage = 1;
         this.isLoadingSuggested = false;
@@ -569,11 +671,17 @@ export class SeriesDetailComponent implements OnInit {
     this.isLoadingEpisodes.set(true);
     this.tmdbService.getSeasonEpisodes(seriesId, seasonNumber).subscribe({
       next: (episodes: any[]) => {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const airedEpisodes = episodes.filter(ep => {
+          if (!ep.airDate) return false;
+          return ep.airDate <= todayStr;
+        });
+
         const updated = new Map(this.episodesBySeason());
-        updated.set(seasonNumber, episodes);
+        updated.set(seasonNumber, airedEpisodes);
         this.episodesBySeason.set(updated);
         this.isLoadingEpisodes.set(false);
-        this.showEpisodesWithAnimation(episodes);
+        this.showEpisodesWithAnimation(airedEpisodes);
       },
       error: () => {
         this.isLoadingEpisodes.set(false);

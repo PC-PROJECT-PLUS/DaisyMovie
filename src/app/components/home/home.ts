@@ -426,6 +426,12 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
       if (this.isBrowser) {
         window.scrollTo({ top: 0, behavior: 'auto' });
+        setTimeout(() => {
+          document.querySelectorAll('.trending-slider, .chart-list').forEach(el => {
+            el.scrollLeft = 0;
+            if (el.id) this.checkScrollState(el.id);
+          });
+        }, 50);
       }
       this.pageLoaded.set(false);
       this.currentHeroIndex.set(0);
@@ -1155,7 +1161,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     console.log('goToMovie clicked! Navigating with state:', movieDetail);
 
     // Check if it's a TV series or episode
-    const route = (item.isSeries || item.seasonEpisode) ? '/series' : '/movie';
+    const route = item.isSeries ? '/series' : '/movie';
 
     this.router.navigate([route, item.id], { state: { data: movieDetail } }).then(success => {
       console.log('Navigation success:', success);

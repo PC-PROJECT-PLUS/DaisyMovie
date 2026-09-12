@@ -45,6 +45,9 @@ function mapMovieItem(res, isSeries) {
     posterUrl: res.poster_path ? `https://image.tmdb.org/t/p/w500${res.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Poster',
     accentColor: accentColor,
     isSeries: isSeries,
+    original_language: res.original_language,
+    origin_country: res.origin_country || [],
+    releaseDate: res.release_date || res.first_air_date || '1970-01-01',
     ratingPercent: Math.round((res.vote_average || 0) * 10),
     watchCount: Math.floor((res.popularity || 0) * 100).toLocaleString('it-IT') + ' visualizzazioni'
   };
@@ -79,7 +82,7 @@ router.get('/trending-top10', async (req, res) => {
     const combinedResults = [...(page1.data.results || []), ...(page2.data.results || [])];
 
     const foreignRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\u0400-\u04FF\u0E00-\u0E7F\u0600-\u06FF\u0900-\u097F]/;
-    
+
     const items = combinedResults
       .filter(i => i.poster_path && i.backdrop_path && i.overview && i.overview.trim().length > 10)
       .filter(i => !foreignRegex.test(i.title || i.name || ''))
@@ -124,7 +127,7 @@ router.get('/home', async (req, res) => {
     pastThreeMonths.setMonth(pastThreeMonths.getMonth() - 3);
     let pastThreeMonthsDate = pastThreeMonths.toISOString().split('T')[0];
     let future = new Date();
-    future.setMonth(future.getMonth() + 6);
+    future.setFullYear(future.getFullYear() + 5);
     let futureDate = future.toISOString().split('T')[0];
 
     let langFilter = '';
@@ -133,9 +136,13 @@ router.get('/home', async (req, res) => {
     let genreFilterStr = genreFilter ? `&with_genres=${genreFilter}` : '';
     let discoverBase = `${TMDB_BASE_URL}/discover/${contentType}?${lang}${langFilter}`;
 
-    let nowPlayingUrl = genreFilter || langFilter ?
-      `${discoverBase}&sort_by=popularity.desc${genreFilterStr}&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${pastThreeMonthsDate}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${today}` :
-      `${TMDB_BASE_URL}/${contentType}/${isSeries ? 'on_the_air' : 'now_playing'}?${lang}`;
+    let tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    let tomorrowDate = tomorrow.toISOString().split('T')[0];
+
+    let nowPlayingUrl = `${discoverBase}&sort_by=popularity.desc${genreFilterStr}&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${pastThreeMonthsDate}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${today}`;
+
+    let nowPlayingTvUrl = `${TMDB_BASE_URL}/discover/tv?${lang}&sort_by=popularity.desc&air_date.gte=${pastThreeMonthsDate}&air_date.lte=${today}`;
 
     let trendingUrl = genreFilter || langFilter ?
       `${discoverBase}&sort_by=popularity.desc${genreFilterStr}` :
@@ -145,12 +152,16 @@ router.get('/home', async (req, res) => {
       `${discoverBase}&sort_by=vote_average.desc&vote_count.gte=500${genreFilterStr}` :
       `${TMDB_BASE_URL}/${contentType}/top_rated?${lang}`;
 
-    let strictUpcomingUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'first_air_date.gte' : 'primary_release_date.gte'}=${today}&${isSeries ? 'first_air_date.lte' : 'primary_release_date.lte'}=${futureDate}${genreFilterStr}`;
-    let strictUpcomingMovieUrl = `${TMDB_BASE_URL}/discover/movie?${lang}${langFilter}&sort_by=popularity.desc&primary_release_date.gte=${today}&primary_release_date.lte=${futureDate}${genreFilterStr}`;
-    
+    let twoMonths = new Date();
+    twoMonths.setMonth(twoMonths.getMonth() + 2);
+    let twoMonthsDate = twoMonths.toISOString().split('T')[0];
+
+    let strictUpcomingUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${today}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${twoMonthsDate}${genreFilterStr}`;
+    let strictUpcomingMovieUrl = `${TMDB_BASE_URL}/discover/movie?${lang}${langFilter}&sort_by=popularity.desc&primary_release_date.gte=${today}&primary_release_date.lte=${twoMonthsDate}${genreFilterStr}`;
+
     let voteCountThreshold = category === 'Anime' ? 200 : 3000;
     let classicsUrl = `${discoverBase}&sort_by=vote_average.desc&vote_count.gte=${voteCountThreshold}&${isSeries ? 'first_air_date.lte' : 'primary_release_date.lte'}=2005-01-01${genreFilterStr}`;
-    let recentReleasesUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${pastThreeMonthsDate}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${today}${genreFilterStr}`;
+    let recentReleasesUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${twoMonthsDate}${genreFilterStr}`;
 
     let dramaGenre = 18;
     let mysteryGenre = 9648;
@@ -174,6 +185,10 @@ router.get('/home', async (req, res) => {
         mapIndices = { hero: 0, trending: 1, episodes: 2, episodesAnimeMovie: 3 };
       } else {
         mapIndices = { hero: 0, trending: 1, episodes: 2 };
+        if (category === '') {
+          requests.push(axios.get(nowPlayingTvUrl + '&page=1', { headers: HEADERS }));
+          mapIndices.heroTv = requests.length - 1;
+        }
       }
     } else if (phase === '2') {
       requests = [
@@ -206,6 +221,10 @@ router.get('/home', async (req, res) => {
         mapIndices = { hero: 0, trending: 1, episodes: 2, newReleases: 3, topWatched: 4, spotlight: 5, classics: 6, hiddenGems: 7, topPicks: 8, action: 9, acclaimed: 10, episodesAnimeMovie: 11 };
       } else {
         mapIndices = { hero: 0, trending: 1, episodes: 2, newReleases: 3, topWatched: 4, spotlight: 5, classics: 6, hiddenGems: 7, topPicks: 8, action: 9, acclaimed: 10 };
+        if (category === '') {
+          requests.push(axios.get(nowPlayingTvUrl + '&page=1', { headers: HEADERS }));
+          mapIndices.heroTv = requests.length - 1;
+        }
       }
     }
 
@@ -219,17 +238,24 @@ router.get('/home', async (req, res) => {
 
     const foreignRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\u0400-\u04FF\u0E00-\u0E7F\u0600-\u06FF\u0900-\u097F]/;
     // Mappiamo i risultati
-    const mapItems = (arr, requireOverview = true) => arr
+    const mapItems = (arr, requireOverview = true, overrideIsSeries = isSeries) => arr
       .filter(i => i.poster_path && i.backdrop_path && (!requireOverview || (i.overview && i.overview.trim().length > 10)))
       .filter(i => !(excludeAnimation && i.genre_ids && i.genre_ids.includes(16)))
       .filter(i => !isAnimeCategory || i.original_language === 'ja')
       .filter(i => !isAnimazioneCategory || i.original_language !== 'ja')
       .filter(i => !foreignRegex.test(i.title || i.name || ''))
-      .slice(0, 15)
-      .map(item => mapMovieItem(item, isSeries));
+      .map(item => mapMovieItem(item, overrideIsSeries));
 
     const responseData = {};
-    if (mapIndices.hero !== undefined) responseData.heroMovies = mapItems(data[mapIndices.hero]);
+    if (mapIndices.hero !== undefined) {
+      let heroMoviesList = mapItems(data[mapIndices.hero]);
+      if (mapIndices.heroTv !== undefined) {
+        let heroTvList = mapItems(data[mapIndices.heroTv], false, true);
+        heroMoviesList = [...heroMoviesList, ...heroTvList];
+      }
+      heroMoviesList.sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime());
+      responseData.heroMovies = heroMoviesList;
+    }
     if (mapIndices.trending !== undefined) responseData.trendingMovies = mapItems(data[mapIndices.trending]);
     if (mapIndices.episodes !== undefined) {
       let eps = mapItems(data[mapIndices.episodes], false);
@@ -237,7 +263,7 @@ router.get('/home', async (req, res) => {
         let movieEps = mapItems(data[mapIndices.episodesAnimeMovie], false);
         eps = [...eps, ...movieEps];
       }
-      responseData.latestEpisodes = eps.slice(0, 15).map(x => ({ ...x, bannerUrl: x.backdropUrl, seriesTitle: x.title, seasonEpisode: 'Novit\u00E0' }));
+      responseData.latestEpisodes = eps.map(x => ({ ...x, bannerUrl: x.backdropUrl, seriesTitle: x.title, seasonEpisode: 'Novit\u00E0' }));
     }
     if (mapIndices.newReleases !== undefined) responseData.newReleasesMovies = mapItems(data[mapIndices.newReleases], false);
     if (mapIndices.topWatched !== undefined) responseData.topWatchedMovies = mapItems(data[mapIndices.topWatched]);
@@ -282,13 +308,20 @@ router.get('/page', async (req, res) => {
     pastThreeMonths.setMonth(pastThreeMonths.getMonth() - 3);
     let pastThreeMonthsDate = pastThreeMonths.toISOString().split('T')[0];
 
+    let twoMonths = new Date();
+    twoMonths.setMonth(twoMonths.getMonth() + 2);
+    let twoMonthsDate = twoMonths.toISOString().split('T')[0];
+
+    let future = new Date();
+    future.setFullYear(future.getFullYear() + 5);
+    let futureDate = future.toISOString().split('T')[0];
+
     let langFilter = '';
     if (category === 'Animazione') langFilter = '&without_original_language=ja';
     if (category === 'Anime') langFilter = '&with_original_language=ja';
     let genreFilterStr = genreFilter ? `&with_genres=${genreFilter}` : '';
     let discoverBase = `${TMDB_BASE_URL}/discover/${contentType}?${lang}${langFilter}`;
-
-    let recentReleasesUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${pastThreeMonthsDate}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${today}${genreFilterStr}`;
+    let recentReleasesUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${twoMonthsDate}${genreFilterStr}`;
 
     let url = '';
 
@@ -309,6 +342,10 @@ router.get('/page', async (req, res) => {
       else if (listName === 'topWatched') url = genreFilter || langFilter ? `${discoverBase}&sort_by=vote_average.desc&vote_count.gte=500${genreFilterStr}&page=${page}` : `${TMDB_BASE_URL}/${contentType}/top_rated?${lang}&page=${page}`;
       else if (listName === 'classics') url = `${discoverBase}&page=${page}&sort_by=vote_average.desc&vote_count.gte=${voteCountThreshold}&${isSeries ? 'first_air_date.lte' : 'primary_release_date.lte'}=2005-01-01${genreFilterStr}`;
       else if (listName === 'newReleases') url = `${recentReleasesUrl}&page=${page}`;
+      else if (listName === 'episodes') {
+        let strictUpcomingUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${today}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${twoMonthsDate}${genreFilterStr}`;
+        url = `${strictUpcomingUrl}&page=${page}`;
+      }
       else if (listName === 'spotlight') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + dramaGenre : dramaGenre}`;
       else if (listName === 'hiddenGems') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + mysteryGenre : mysteryGenre}`;
       else if (listName === 'topPicks') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + fantasyGenre : fantasyGenre}`;
@@ -327,12 +364,16 @@ router.get('/page', async (req, res) => {
     const foreignRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\u0400-\u04FF\u0E00-\u0E7F\u0600-\u06FF\u0900-\u097F]/;
 
     const items = response.data.results
-      .filter(i => i.poster_path && i.backdrop_path && i.overview && i.overview.trim().length > 10)
+      .filter(i => i.poster_path && i.backdrop_path && (listName === 'episodes' || listName === 'newReleases' || (i.overview && i.overview.trim().length > 10)))
       .filter(i => !(excludeAnimation && i.genre_ids && i.genre_ids.includes(16)))
       .filter(i => !isAnimeCategory || i.original_language === 'ja')
       .filter(i => !isAnimazioneCategory || i.original_language !== 'ja')
       .filter(i => !foreignRegex.test(i.title || i.name || ''))
       .map(item => mapMovieItem(item, isSeries));
+    
+    if (listName === 'episodes') {
+      items.forEach(x => { x.bannerUrl = x.backdropUrl; x.seriesTitle = x.title; x.seasonEpisode = 'Novit\u00E0'; });
+    }
     if (listName === 'classics') {
       items.forEach(x => { x.bannerUrl = x.backdropUrl; x.seriesTitle = x.title; });
     }
@@ -380,14 +421,14 @@ router.get('/search', async (req, res) => {
   try {
     const query = req.query.q;
     const page = req.query.page || '1';
-    
+
     if (!query) {
       return res.json([]);
     }
 
     const searchUrl = `${TMDB_BASE_URL}/search/multi?query=${encodeURIComponent(query)}&page=${page}&language=it-IT`;
     const response = await axios.get(searchUrl, { headers: HEADERS });
-    
+
     const foreignRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\u0400-\u04FF\u0E00-\u0E7F\u0600-\u06FF\u0900-\u097F]/;
 
     const results = response.data.results
@@ -398,7 +439,7 @@ router.get('/search', async (req, res) => {
         return !foreignRegex.test(title);
       })
       .map(item => mapMovieItem(item, item.media_type === 'tv'));
-      
+
     res.json(results);
   } catch (error) {
     console.error('Error in /search:', error.response?.data || error.message);
@@ -441,7 +482,7 @@ router.get('/detail/:type/:id', async (req, res) => {
     const music = crew.find(c => c.job === 'Original Music Composer' || c.job === 'Music')?.name || 'N/A';
     const producer = crew.filter(c => c.job === 'Producer').slice(0, 3).map(c => c.name).join(', ') || 'N/A';
     const writers = crew.filter(c => c.department === 'Writing').slice(0, 3).map(c => c.name).join(', ') || 'N/A';
-    
+
     const cast = data.credits && data.credits.cast ? data.credits.cast.slice(0, 15).map(c => ({
       name: c.name,
       character: c.character,
@@ -460,7 +501,7 @@ router.get('/detail/:type/:id', async (req, res) => {
       screenshots = Array(7).fill('https://via.placeholder.com/1280x720?text=No+Screenshot');
     }
 
-    const suggested = data.recommendations && data.recommendations.results 
+    const suggested = data.recommendations && data.recommendations.results
       ? data.recommendations.results.slice(0, 10).map(item => mapMovieItem(item, isSeries))
       : [];
 
@@ -498,6 +539,8 @@ router.get('/detail/:type/:id', async (req, res) => {
       music: music,
       writers: writers,
       productionCompanies: productionCompanies,
+      original_language: data.original_language,
+      origin_country: data.origin_country || [],
       budget: formatMoney(data.budget),
       boxOffice: formatMoney(data.revenue),
       releaseDate: releaseDate || 'N/A',
@@ -528,7 +571,7 @@ router.get('/recommendations/:type/:id', async (req, res) => {
     const detailUrl = `${TMDB_BASE_URL}/${type}/${id}/recommendations?language=it-IT&page=${page}`;
     const response = await axios.get(detailUrl, { headers: HEADERS });
     const isSeries = type === 'tv';
-    
+
     const items = response.data.results
       .filter(item => item.poster_path) // Require at least a poster
       .map(item => mapMovieItem(item, isSeries));

@@ -7,6 +7,7 @@ import { ResponsiveService } from '../../services/responsive';
 import { MovieDetailMobile } from './movie-detail-mobile/movie-detail-mobile';
 import { LoaderService } from '../../services/loader.service';
 import { TmdbService } from '../../services/tmdb.service';
+import { VideoPlayerComponent, PlayerConfig } from '../video-player/video-player';
 
 export interface CastMember {
   name: string;
@@ -46,6 +47,10 @@ export interface MovieDetail {
   budget?: string;
   boxOffice?: string;
   languages?: string;
+  original_language?: string;
+  originalLanguage?: string;
+  origin_country?: string[];
+  originCountry?: string[];
   releaseDate: string;
   cast: CastMember[];
   screenshots: string[];
@@ -64,7 +69,7 @@ export interface MovieDetail {
 @Component({
   selector: 'app-movie-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, FooterComponent, MovieDetailMobile],
+  imports: [CommonModule, FormsModule, FooterComponent, MovieDetailMobile, VideoPlayerComponent],
   templateUrl: './movie-detail.html',
   styleUrl: './movie-detail.scss'
 })
@@ -91,7 +96,71 @@ export class MovieDetailComponent implements OnInit {
   suggestedPage = 1;
   isLoadingSuggested = false;
 
+  // VIDEO PLAYER STATE
+  playerVisible = signal(false);
+  playerConfig = signal<PlayerConfig | null>(null);
 
+  async openPlayer() {
+    const m = this.movie();
+    if (!m) return;
+
+    // Estraiamo sempre il colore fresco al momento del click,
+    // così è garantito identico al colore del pulsante "Guarda ora"
+    let accentColor = '#E50914';
+    try {
+      const imageUrl = m.backdropUrl || m.posterUrl;
+      if (imageUrl && isPlatformBrowser(this.platformId)) {
+        const colors = await this.extractDominantColors(imageUrl);
+        // Usiamo il colore estratto solo se è HSL (significa che l'estrazione è riuscita)
+        // altrimenti il fallback è già impostato a E50914 sopra
+        if (colors.primary.startsWith('hsl')) {
+          accentColor = colors.primary;
+        }
+      }
+    } catch (e) { /* usa il fallback */ }
+
+    let startAt = 0;
+    if (isPlatformBrowser(this.platformId)) {
+      const savedTime = localStorage.getItem(`daisy-progress-movie-${m.id}`);
+      if (savedTime) {
+        startAt = parseInt(savedTime, 10);
+      }
+    }
+
+    const genresStr = JSON.stringify(m.genres || []).toLowerCase();
+    const isAnimation = genresStr.includes('anim');
+
+    // Controllo sicuro che restringe la ricerca solo ai campi rilevanti per evitare falsi positivi (es. "Giappone" nella sinossi o "ja" nell'ID)
+    const prodStr = JSON.stringify(m.productionCompanies || '').toLowerCase();
+    const countryStr = JSON.stringify(m.origin_country || m.originCountry || '').toLowerCase();
+    const origLangStr = JSON.stringify(m.original_language || m.originalLanguage || '').toLowerCase();
+
+    // Check strict anime identifiers. Exclude spoken languages as western movies are dubbed in Japanese.
+    const isJapanese = 
+      origLangStr.includes('"ja"') || 
+      origLangStr === '"ja"' ||
+      countryStr.includes('"jp"') || 
+      prodStr.includes('toei') ||
+      prodStr.includes('mappa') ||
+      prodStr.includes('ufotable') ||
+      prodStr.includes('ghibli') ||
+      prodStr.includes('kyoto animation') ||
+      prodStr.includes('madhouse') ||
+      prodStr.includes('bones') ||
+      prodStr.includes('wit studio') ||
+      prodStr.includes('cloverworks');
+
+    const isAnime = isAnimation && isJapanese;
+
+    this.playerConfig.set({
+      id: m.id,
+      type: 'movie',
+      accentColor,
+      startAt: startAt > 0 ? startAt : undefined,
+      isAnime
+    });
+    this.playerVisible.set(true);
+  }
   // HOVER PANEL STATE
   panelMovie = signal<any | null>(null);
   panelAccentColor = signal<string>('#0075ff');
@@ -149,7 +218,7 @@ export class MovieDetailComponent implements OnInit {
             if (!stateData.reviews) {
               stateData.reviews = this.getMockReviews();
             }
-            stateData.accentColor = '#141414';
+            stateData.accentColor = stateData.accentColor || '#141414';
             this.movie.set(stateData);
             this.updateMovieAccentColor(stateData.backdropUrl || stateData.posterUrl);
           }
@@ -466,7 +535,8 @@ export class MovieDetailComponent implements OnInit {
       next: (data: any) => {
         data.reviews = this.getMockReviews();
         data.isBookmarked = false;
-        data.accentColor = '#141414';
+        // Preserve existing accentColor if we have it, else fallback to dark
+        data.accentColor = this.movie()?.accentColor || '#141414';
         this.movie.set(data);
         this.suggestedPage = 1;
         this.isLoadingSuggested = false;

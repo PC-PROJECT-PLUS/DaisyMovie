@@ -68,7 +68,7 @@
         </div>
 
         <div class="action-buttons">
-          <button class="play-btn" [style.background]="series()!.accentColor">
+          <button class="play-btn" [style.background]="series()!.accentColor" (click)="openPlayer()">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
             </svg>
@@ -215,7 +215,7 @@
                [class.ep-fade-out]="episodesAnimState() === 'out'"
                [class.ep-fade-in]="episodesAnimState() === 'in'">
             @for (episode of activeEpisodes(); track episode.id) {
-            <div class="episode-card">
+            <div class="episode-card" (click)="openEpisodePlayer(episode.episodeNumber)">
               <div class="episode-thumbnail-container">
                 <img [src]="episode.thumbnailUrl" [alt]="episode.title" class="episode-thumbnail" loading="lazy">
                 <div class="play-overlay">
@@ -481,4 +481,12 @@
     </div>
   </div>
   }
+
 </div>
+
+<!-- VIDEO PLAYER OVERLAY -->
+<app-video-player
+  [config]="playerConfig()"
+  [visible]="playerVisible()"
+  (closed)="playerVisible.set(false)">
+</app-video-player>
