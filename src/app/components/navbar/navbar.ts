@@ -1,4 +1,4 @@
-import { Component, signal, inject, AfterViewInit, effect } from '@angular/core';
+import { Component, signal, inject, AfterViewInit, effect, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
 import { CommonModule } from '@angular/common';
@@ -23,7 +23,8 @@ export class Navbar implements AfterViewInit {
   public themeService = inject(ThemeService);
   public categoryService = inject(CategoryService);
   private titleService = inject(Title);
-  private authService = inject(AuthService);
+  public authService = inject(AuthService);
+  activeProfile = computed(() => this.authService.selectedProfile());
 
   isSearchExpanded = signal<boolean>(false);
   searchQuery = signal<string>('');

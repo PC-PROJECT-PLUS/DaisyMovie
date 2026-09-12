@@ -1,5 +1,5 @@
 import {
-  Component, signal, computed, inject, HostListener, PLATFORM_ID, OnDestroy, ViewChild, ElementRef
+  Component, signal, computed, inject, HostListener, PLATFORM_ID, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -32,12 +32,25 @@ export class ProfileSelectComponent implements OnDestroy {
   private titleService = inject(Title);
   private categoryService = inject(CategoryService);
   private platformId = inject(PLATFORM_ID);
+  private cdr = inject(ChangeDetectorRef);
 
   profiles = computed(() => this.authService.getProfiles());
   activeIndex = signal(0);
   isEntering = signal(false);
   isMobile = signal(false);
   pinValue = signal('');
+
+  showNewProfilePopup = signal(false);
+  newProfileName = signal('');
+  newProfileIsKids = signal(false);
+  newProfileAvatar = signal('');
+  availableAvatars = [
+    'assets/avatar/avatar1.jpg',
+    'assets/avatar/avatar2.jpg',
+    'assets/avatar/avatar3.jpg',
+    'assets/avatar/avatar4.jpg',
+    'assets/avatar/avatar5.jpg'
+  ];
 
   @ViewChild('pinInputDesktop') pinInputDesktop?: ElementRef<HTMLInputElement>;
   @ViewChild('pinInputMobile') pinInputMobile?: ElementRef<HTMLInputElement>;
@@ -101,8 +114,18 @@ export class ProfileSelectComponent implements OnDestroy {
 
   selectIndex(index: number) {
     if (index === this.activeIndex()) return;
-    this.activeIndex.set(index);
-    this.pinValue.set('');
+    
+    const update = () => {
+      this.activeIndex.set(index);
+      this.pinValue.set('');
+      this.cdr.detectChanges();
+    };
+
+    if ((document as any).startViewTransition) {
+      (document as any).startViewTransition(() => update());
+    } else {
+      update();
+    }
   }
 
   onPinChange(val: string) {
@@ -177,11 +200,60 @@ export class ProfileSelectComponent implements OnDestroy {
   nudge(dir: 1 | -1) {
     const next = this.activeIndex() + dir;
     const len = this.profiles().length;
-    if (next >= 0 && next < len) this.activeIndex.set(next);
+    const maxIndex = len < 5 ? len : len - 1;
+    if (next >= 0 && next <= maxIndex) this.activeIndex.set(next);
+  }
+
+  createNewProfile() {
+    if (this.isEntering()) return;
+    this.newProfileName.set('');
+    this.newProfileIsKids.set(false);
+    const randomAvatarNum = Math.floor(Math.random() * 5) + 1;
+    this.newProfileAvatar.set(`assets/avatar/avatar${randomAvatarNum}.jpg`);
+    this.showNewProfilePopup.set(true);
+  }
+
+  closeNewProfilePopup() {
+    this.showNewProfilePopup.set(false);
+  }
+
+  async confirmNewProfileCreation() {
+    if (this.isEntering()) return;
+    const name = this.newProfileName().trim();
+    if (!name) return;
+    
+    this.isEntering.set(true);
+    try {
+      await this.authService.createProfile(name, this.newProfileAvatar(), this.newProfileIsKids());
+      
+      const update = () => {
+        this.closeNewProfilePopup();
+        const len = this.profiles().length;
+        if (len > 0) {
+          this.activeIndex.set(len - 1);
+        }
+        this.cdr.detectChanges();
+      };
+
+      if ((document as any).startViewTransition) {
+        (document as any).startViewTransition(() => update());
+      } else {
+        update();
+      }
+    } catch (e: any) {
+      alert(e.error?.error || 'Errore nella creazione del profilo');
+    } finally {
+      this.isEntering.set(false);
+    }
   }
 
   confirmProfile() {
     if (this.isEntering()) return;
+
+    if (this.activeIndex() === this.profiles().length) {
+      this.createNewProfile();
+      return;
+    }
 
     const profile = this.activeProfile;
 
@@ -206,6 +278,9 @@ export class ProfileSelectComponent implements OnDestroy {
   }
 
   get activeProfile(): UserProfile {
+    if (this.activeIndex() === this.profiles().length) {
+      return { id: 'new', name: 'Nuovo Profilo', avatar: '' };
+    }
     return this.profiles()[this.activeIndex()];
   }
 }

@@ -41,12 +41,6 @@
               </svg>
               <span>Google</span>
             </button>
-            <button class="social-btn" (click)="loginWithProvider('apple')">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-              </svg>
-              <span>Apple</span>
-            </button>
           </div>
           <p class="terms">Continuando accetti i <a href="#">Termini di Servizio</a> e la <a href="#">Privacy Policy</a>.</p>
         </div>
@@ -71,9 +65,6 @@
               <button class="social-pill" (click)="loginWithProvider('google')">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>Google
               </button>
-              <button class="social-pill" (click)="loginWithProvider('apple')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" /></svg>Apple
-              </button>
             </div>
             <div class="form-divider"><span>oppure con email</span></div>
             <div class="fields">
@@ -88,7 +79,20 @@
                 <label>Password</label>
                 <div class="input-wrap">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                  <input type="password" placeholder="••••••••" [ngModel]="password()" (ngModelChange)="password.set($event)" (keydown.enter)="submit()" />
+                  <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="password()" (ngModelChange)="password.set($event)" (keydown.enter)="submit()" />
+                  <button tabindex="-1" class="pwd-toggle" (click)="togglePassword()">
+                    @if (!passwordVisible()) {
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    } @else {
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    }
+                  </button>
                 </div>
               </div>
             </div>
@@ -120,9 +124,6 @@
               <button class="social-pill" (click)="loginWithProvider('google')">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>Google
               </button>
-              <button class="social-pill" (click)="loginWithProvider('apple')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" /></svg>Apple
-              </button>
             </div>
             <div class="form-divider"><span>oppure con email</span></div>
             <div class="fields">
@@ -137,14 +138,27 @@
                 <label>Password</label>
                 <div class="input-wrap">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                  <input type="password" placeholder="••••••••" [ngModel]="password()" (ngModelChange)="password.set($event)" />
+                  <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="password()" (ngModelChange)="password.set($event)" />
+                  <button tabindex="-1" class="pwd-toggle" (click)="togglePassword()">
+                    @if (!passwordVisible()) {
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    } @else {
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    }
+                  </button>
                 </div>
               </div>
               <div class="field">
                 <label>Conferma Password</label>
                 <div class="input-wrap">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  <input type="password" placeholder="••••••••" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" (keydown.enter)="submit()" />
+                  <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" (keydown.enter)="submit()" />
                 </div>
               </div>
             </div>
@@ -158,6 +172,56 @@
       </div>
       }
 
+      @if (view() === 'verify') {
+      <div class="dsk-form-fade-wrap">
+        <button class="back-btn" (click)="openView('register')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <div class="dsk-split-form-container">
+          <div class="dsk-split-form">
+            <div class="form-header">
+              <img src="assets/Logo_cropped.png" alt="Daisy Logo" class="form-logo" />
+              <h1>Controlla la tua Email</h1>
+              <p>Abbiamo inviato un codice a 6 cifre a <strong>{{ email() }}</strong></p>
+            </div>
+
+            <div class="fields" style="margin-top: 2rem;">
+              <div class="field">
+                <label>Codice di Verifica</label>
+                <div class="input-wrap">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                  <input type="text" placeholder="123456" [ngModel]="verifyCode()" (ngModelChange)="verifyCode.set($event)" (keydown.enter)="submitVerify()" style="letter-spacing: 4px; font-weight: bold; text-align: center;" />
+                </div>
+              </div>
+            </div>
+
+            <div class="msg-collapse" [class.show]="errorMsg() || successMsg()">
+              <div class="msg-collapse-inner">
+                @if (errorMsg()) { <p class="error-msg">{{ errorMsg() }}</p> }
+                @if (successMsg()) { <p class="success-msg">{{ successMsg() }}</p> }
+              </div>
+            </div>
+
+            <button class="btn-submit" [class.loading]="isLoading()" (click)="submitVerify()">
+              @if (isLoading()) { <span class="spinner"></span> } @else { Verifica }
+            </button>
+
+            <button class="resend-btn" [disabled]="resendCountdown() > 0 || isLoading()" (click)="resendCode()">
+              @if (resendCountdown() > 0) {
+              Attendi {{ resendCountdown() }}s per reinviare
+              } @else {
+              Reinvia Codice
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+
     </div>
 
     <!-- RIGHT SIDE (VISUAL) -->
@@ -165,86 +229,22 @@
       <!-- Animated poster grid in background (Shared desktop/mobile logic in SCSS) -->
       <div class="poster-grid-shared">
         <div class="mob-poster-inner">
+          @for (col of desktopPosterCols; track $index) {
           <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
+            <!-- Render original 9 items -->
+            @for (poster of col; track $index) {
+            <div class="mob-poster-card">
+              <img [src]="BASE_POSTER_URL + poster" loading="eager" alt="" />
+            </div>
+            }
+            <!-- Duplicate the 9 items for seamless infinite scroll -->
+            @for (poster of col; track $index + '_clone') {
+            <div class="mob-poster-card">
+              <img [src]="BASE_POSTER_URL + poster" loading="eager" alt="" />
+            </div>
+            }
           </div>
-          <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-          </div>
-          <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-          </div>
-          <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-          </div>
-          <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-          </div>
-          <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-          </div>
-          <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-          </div>
-          <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-          </div>
-          <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-          </div>
-          <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-          </div>
+          }
         </div>
       </div>
       <!-- Dark gradient overlay -->
@@ -261,42 +261,22 @@
       <!-- Animated poster grid in background -->
       <div class="poster-grid-shared">
         <div class="mob-poster-inner">
+          @for (col of mobilePosterCols; track $index) {
           <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
+            <!-- Render original 9 items -->
+            @for (poster of col; track $index) {
+            <div class="mob-poster-card">
+              <img [src]="BASE_POSTER_URL + poster" loading="eager" alt="" />
+            </div>
+            }
+            <!-- Duplicate the 9 items for seamless infinite scroll -->
+            @for (poster of col; track $index + '_clone') {
+            <div class="mob-poster-card">
+              <img [src]="BASE_POSTER_URL + poster" loading="eager" alt="" />
+            </div>
+            }
           </div>
-          <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-          </div>
-          <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-          </div>
-          <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-          </div>
-          <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-          </div>
-          <div class="mob-poster-col">
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-            <div class="mob-poster-card"></div><div class="mob-poster-card"></div><div class="mob-poster-card"></div>
-          </div>
+          }
         </div>
       </div>
       <!-- Dark gradient overlay -->
@@ -325,9 +305,6 @@
           <button class="mob-social-btn" (click)="loginWithProvider('google')">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>Google
           </button>
-          <button class="mob-social-btn" (click)="loginWithProvider('apple')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" /></svg>Apple
-          </button>
         </div>
         <p class="mob-terms">Continuando accetti i <a href="#">Termini</a> e la <a href="#">Privacy Policy</a>.</p>
       </div>
@@ -351,9 +328,6 @@
           <button class="mob-form-social-btn" (click)="loginWithProvider('google')">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>Google
           </button>
-          <button class="mob-form-social-btn" (click)="loginWithProvider('apple')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" /></svg>Apple
-          </button>
         </div>
         <div class="mob-form-divider"><span>oppure con email</span></div>
         <div class="mob-form-fields">
@@ -368,7 +342,20 @@
             <label>Password</label>
             <div class="mob-input-wrap">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-              <input type="password" placeholder="••••••••" [ngModel]="password()" (ngModelChange)="password.set($event)" (keydown.enter)="submit()" />
+              <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="password()" (ngModelChange)="password.set($event)" (keydown.enter)="submit()" />
+              <button tabindex="-1" class="pwd-toggle" (click)="togglePassword()">
+                @if (!passwordVisible()) {
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                } @else {
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                }
+              </button>
             </div>
           </div>
         </div>
@@ -400,9 +387,6 @@
           <button class="mob-form-social-btn" (click)="loginWithProvider('google')">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>Google
           </button>
-          <button class="mob-form-social-btn" (click)="loginWithProvider('apple')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" /></svg>Apple
-          </button>
         </div>
         <div class="mob-form-divider"><span>oppure con email</span></div>
         <div class="mob-form-fields">
@@ -417,14 +401,27 @@
             <label>Password</label>
             <div class="mob-input-wrap">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-              <input type="password" placeholder="••••••••" [ngModel]="password()" (ngModelChange)="password.set($event)" />
+              <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="password()" (ngModelChange)="password.set($event)" />
+              <button tabindex="-1" class="pwd-toggle" (click)="togglePassword()">
+                @if (!passwordVisible()) {
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                } @else {
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                }
+              </button>
             </div>
           </div>
           <div class="mob-form-field">
             <label>Conferma Password</label>
             <div class="mob-input-wrap">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              <input type="password" placeholder="••••••••" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" (keydown.enter)="submit()" />
+              <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" (keydown.enter)="submit()" />
             </div>
           </div>
         </div>
@@ -438,5 +435,56 @@
       </div>
     </div>
     }
+
+    @if (view() === 'verify') {
+    <div class="mob-form-page-wrap">
+      <button class="mob-back-btn" (click)="openView('register')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <div class="mob-form">
+        <div class="mob-form-top">
+          <img src="assets/Logo_cropped.png" alt="Logo" class="mob-form-logo" />
+          <h1 class="mob-form-title">Controlla l'Email</h1>
+          <p class="mob-form-sub">Codice a 6 cifre inviato a {{ email() }}</p>
+        </div>
+
+        <div class="mob-form-fields" style="margin-top: 2rem;">
+          <div class="mob-form-field">
+            <label>Codice di Verifica</label>
+            <div class="mob-input-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <input type="text" placeholder="123456" [ngModel]="verifyCode()" (ngModelChange)="verifyCode.set($event)" (keydown.enter)="submitVerify()" style="letter-spacing: 4px; font-weight: bold; text-align: center;" />
+            </div>
+          </div>
+        </div>
+
+        <div class="msg-collapse" [class.show]="errorMsg() || successMsg()">
+          <div class="msg-collapse-inner">
+            @if (errorMsg()) { <p class="mob-error-msg">{{ errorMsg() }}</p> }
+            @if (successMsg()) { <p class="success-msg">{{ successMsg() }}</p> }
+          </div>
+        </div>
+
+        <div class="mob-form-bottom">
+          <button class="mob-form-submit" [class.loading]="isLoading()" (click)="submitVerify()">
+            @if (isLoading()) { <span class="mob-form-spinner"></span> } @else { Verifica }
+          </button>
+
+          <button class="resend-btn" [disabled]="resendCountdown() > 0 || isLoading()" (click)="resendCode()" style="margin-top: 10px;">
+            @if (resendCountdown() > 0) {
+            Attendi {{ resendCountdown() }}s per reinviare
+            } @else {
+            Reinvia Codice
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+
   </div>
 </div>

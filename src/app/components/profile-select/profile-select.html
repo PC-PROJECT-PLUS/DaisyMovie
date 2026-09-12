@@ -21,10 +21,10 @@
     <!-- Hero: active profile avatar + name -->
     <div class="dsk-hero">
       <div class="dsk-hero-glow"></div>
-      <div class="dsk-hero-ring">
+      <div class="dsk-hero-ring" style="view-transition-name: hero-ring;">
         <img [src]="activeProfile.avatar" [alt]="activeProfile.name" class="dsk-hero-avatar" />
       </div>
-      <h1 class="dsk-hero-name">{{ activeProfile.name }}</h1>
+      <h1 class="dsk-hero-name" style="view-transition-name: hero-name;">{{ activeProfile.name }}</h1>
       <div class="smooth-collapse" [class.show]="activeProfile.isKids">
         <div class="smooth-collapse-inner" style="display: flex; justify-content: center;">
           <span class="kids-badge">Kids</span>
@@ -35,7 +35,8 @@
     <!-- Profile strip: horizontal row of all profiles -->
     <div class="dsk-strip">
       @for (profile of profiles(); track profile.id; let i = $index) {
-      <div class="dsk-strip-item" [class.dsk-active]="isActive(i)" (click)="selectIndex(i)">
+      <div class="dsk-strip-item" [class.dsk-active]="isActive(i)" (click)="selectIndex(i)"
+           [style.view-transition-name]="'profile-' + profile.id">
         <div class="dsk-strip-ring" [class.lit]="isActive(i)">
           <img [src]="profile.avatar" [alt]="profile.name" class="dsk-strip-avatar" />
         </div>
@@ -43,6 +44,17 @@
         @if (profile.isKids) {
         <span class="kids-badge" style="font-size:0.5rem">Kids</span>
         }
+      </div>
+      }
+      @if (profiles().length < 5) {
+      <div class="dsk-strip-item" (click)="createNewProfile()" style="view-transition-name: profile-new;">
+        <div class="dsk-strip-ring" style="display:flex; align-items:center; justify-content:center; border: 2px dashed rgba(255,255,255,0.4);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: rgba(255,255,255,0.7);">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </div>
+        <span class="dsk-strip-name" style="color: rgba(255,255,255,0.7);">Nuovo</span>
       </div>
       }
     </div>
@@ -104,10 +116,23 @@
       @for (profile of profiles(); track profile.id; let i = $index) {
       <div class="mob-card" [class.mob-active]="isActive(i)" [class.mob-prev]="i === activeIndex() - 1"
         [class.mob-next]="i === activeIndex() + 1" [class.mob-far]="i < activeIndex() - 1 || i > activeIndex() + 1"
-        (click)="selectIndex(i)">
+        (click)="selectIndex(i)" [style.view-transition-name]="'profile-' + profile.id">
         <div class="mob-card-glow" [class.visible]="isActive(i)"></div>
         <div class="mob-avatar-ring" [class.lit]="isActive(i)">
           <img [src]="profile.avatar" [alt]="profile.name" class="mob-avatar" />
+        </div>
+      </div>
+      }
+      @if (profiles().length < 5) {
+      <div class="mob-card" [class.mob-active]="isActive(profiles().length)" [class.mob-prev]="profiles().length === activeIndex() - 1"
+        [class.mob-next]="profiles().length === activeIndex() + 1" [class.mob-far]="profiles().length < activeIndex() - 1 || profiles().length > activeIndex() + 1"
+        (click)="selectIndex(profiles().length)" style="view-transition-name: profile-new;">
+        <div class="mob-card-glow" [class.visible]="isActive(profiles().length)"></div>
+        <div class="mob-avatar-ring" [class.lit]="isActive(profiles().length)" style="display:flex; align-items:center; justify-content:center; border: 2px dashed rgba(255,255,255,0.4); background: rgba(255,255,255,0.05);">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: rgba(255,255,255,0.7);">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
         </div>
       </div>
       }
@@ -120,16 +145,28 @@
       @for (profile of profiles(); track profile.id; let i = $index) {
       <span class="mob-dot" [class.active]="isActive(i)" (click)="selectIndex(i)"></span>
       }
+      @if (profiles().length < 5) {
+      <span class="mob-dot" [class.active]="isActive(profiles().length)" (click)="selectIndex(profiles().length)" style="background: none; border: 1px solid rgba(255,255,255,0.4); box-sizing: border-box;"></span>
+      }
     </div>
 
     <!-- Active profile info + CTA -->
     <div class="mob-info">
-      <h2 class="mob-name">{{ activeProfile.name }}</h2>
-      <div class="smooth-collapse" [class.show]="activeProfile.isKids">
-        <div class="smooth-collapse-inner">
-          <p class="mob-sub">Profilo bambini – contenuti sicuri</p>
+      @if (isActive(profiles().length)) {
+        <h2 class="mob-name" style="view-transition-name: mob-hero-name;">Nuovo Profilo</h2>
+        <div class="smooth-collapse show">
+          <div class="smooth-collapse-inner">
+            <p class="mob-sub" style="color: rgba(255,255,255,0.7);">Tocca '+' per aggiungere</p>
+          </div>
         </div>
-      </div>
+      } @else {
+        <h2 class="mob-name" style="view-transition-name: mob-hero-name;">{{ activeProfile.name }}</h2>
+        <div class="smooth-collapse" [class.show]="activeProfile.isKids">
+          <div class="smooth-collapse-inner">
+            <p class="mob-sub">Profilo bambini – contenuti sicuri</p>
+          </div>
+        </div>
+      }
 
       <div class="smooth-collapse pin-collapse" [class.show]="activeProfile.requiresPin">
         <div class="smooth-collapse-inner">
@@ -156,17 +193,73 @@
       </div>
     </div>
 
-    <button class="mob-enter-btn" (click)="confirmProfile()" [class.loading]="isEntering()">
+    <button class="mob-enter-btn" (click)="isActive(profiles().length) ? createNewProfile() : confirmProfile()" [class.loading]="isEntering()">
       @if (isEntering()) { <span class="mob-spinner"></span> }
       @else {
-      Entra
+        {{ isActive(profiles().length) ? 'Crea' : 'Entra' }}
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-        <polyline points="12 5 19 12 12 19"></polyline>
+        @if (isActive(profiles().length)) {
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        } @else {
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        }
       </svg>
       }
     </button>
 
+  </div>
+  }
+
+  <!-- Modal for New Profile -->
+  @if (showNewProfilePopup()) {
+  <div class="new-profile-modal-overlay" (click)="closeNewProfilePopup()">
+    <div class="new-profile-modal" (click)="$event.stopPropagation()">
+      <button class="close-modal-btn" (click)="closeNewProfilePopup()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <h2>Nuovo Profilo</h2>
+      <p class="modal-sub">Personalizza il tuo nuovo profilo.</p>
+      
+      <div class="avatar-selector">
+        @for (avatar of availableAvatars; track avatar) {
+          <div class="avatar-option-wrap" [class.selected]="newProfileAvatar() === avatar" (click)="newProfileAvatar.set(avatar)">
+            <img [src]="avatar" class="avatar-option" alt="Avatar" />
+            <div class="avatar-check">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="input-group">
+        <label>NOME PROFILO</label>
+        <div class="input-wrap">
+          <input type="text" placeholder="Es. Luca" [ngModel]="newProfileName()" (ngModelChange)="newProfileName.set($event)" />
+        </div>
+      </div>
+
+      <div class="toggle-group" (click)="newProfileIsKids.set(!newProfileIsKids())">
+        <div class="toggle-info">
+          <span class="toggle-label">Profilo per bambini</span>
+          <span class="toggle-desc">Limita l'accesso ai contenuti per un pubblico più maturo</span>
+        </div>
+        <div class="toggle-switch" [class.on]="newProfileIsKids()">
+          <div class="toggle-knob"></div>
+        </div>
+      </div>
+
+      <button class="create-btn" [disabled]="!newProfileName().trim() || isEntering()" (click)="confirmNewProfileCreation()">
+        @if (isEntering()) { <span class="mob-spinner" style="margin-left: 0;"></span> }
+        @else { Crea Profilo }
+      </button>
+    </div>
   </div>
   }
 

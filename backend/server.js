@@ -7,6 +7,8 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const moviesRouter = require('./src/routes/movies');
+const authRouter = require('./src/routes/auth');
+const profilesRouter = require('./src/routes/profiles');
 
 // Middleware
 app.use(cors());
@@ -14,16 +16,11 @@ app.use(express.json());
 
 // Routes
 app.use('/api/movies', moviesRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/profiles', profilesRouter);
 
 // Configurazione Database PostgreSQL
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT || 5432,
-});
-
+const pool = require('./src/db');
 // Endpoint di test per verificare che il server funzioni
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Il server backend di DaisyMovie è in esecuzione!' });

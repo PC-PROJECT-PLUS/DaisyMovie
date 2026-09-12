@@ -424,6 +424,7 @@
         white-space: nowrap;
         flex-shrink: 0;
         height: 36px;
+        width: 160px;
         position: relative;
         z-index: 2;
 
@@ -440,7 +441,10 @@
           font-weight: 500;
           color: #fff;
           white-space: nowrap;
-          /* Single line for Alex Terrible */
+          overflow: hidden;
+          text-overflow: ellipsis;
+          flex: 1;
+          text-align: left;
         }
 
         .chevron-icon {
@@ -574,6 +578,11 @@
     }
 
     .user-wrapper {
+      .user-pill {
+        width: auto;
+        padding-right: 4px;
+      }
+
       .user-name {
         display: none;
       }
