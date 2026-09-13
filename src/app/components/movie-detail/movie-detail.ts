@@ -2,12 +2,14 @@ import { Component, OnInit, signal, effect, PLATFORM_ID, inject } from '@angular
 import { CommonModule, Location, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { FooterComponent } from '../footer/footer';
 import { ResponsiveService } from '../../services/responsive';
 import { MovieDetailMobile } from './movie-detail-mobile/movie-detail-mobile';
 import { LoaderService } from '../../services/loader.service';
 import { TmdbService } from '../../services/tmdb.service';
 import { FavoritesService } from '../../services/favorites.service';
+import { HistoryService } from '../../services/history.service';
 import { VideoPlayerComponent, PlayerConfig } from '../video-player/video-player';
 
 export interface CastMember {
@@ -76,6 +78,7 @@ export interface MovieDetail {
 })
 export class MovieDetailComponent implements OnInit {
   public responsiveService = inject(ResponsiveService);
+  private historyService = inject(HistoryService);
   private loaderService = inject(LoaderService);
   private tmdbService = inject(TmdbService);
   favoritesService = inject(FavoritesService);
@@ -163,6 +166,24 @@ export class MovieDetailComponent implements OnInit {
     });
     this.playerVisible.set(true);
   }
+
+  onPlayerClosed() {
+    this.playerVisible.set(false);
+    
+    // Read the saved time (in seconds) from local storage
+    let watchedSeconds = 0;
+    const m = this.movie();
+    if (m && isPlatformBrowser(this.platformId)) {
+      const savedTimeStr = localStorage.getItem(`daisy-progress-movie-${m.id}`);
+      if (savedTimeStr) {
+        watchedSeconds = parseInt(savedTimeStr, 10);
+      }
+      
+      // Save to watch history (progress in seconds)
+      this.historyService.addToHistory(m, watchedSeconds, false);
+    }
+  }
+
   // HOVER PANEL STATE
   panelMovie = signal<any | null>(null);
   panelAccentColor = signal<string>('#0075ff');

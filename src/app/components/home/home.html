@@ -255,9 +255,9 @@
                     </svg>
                   </button>
 
-                  <button class="action-circle-btn" [class.active]="favoritesService.isBookmarked(ep.id, true)"
+                  <button class="action-circle-btn" [class.active]="favoritesService.isBookmarked(ep.id, ep.isSeries)"
                     (click)="toggleBookmark(ep, $event)" aria-label="Bookmark Episode">
-                    <svg width="16" height="16" viewBox="0 0 24 24" [style.fill]="favoritesService.isBookmarked(ep.id, true) ? '#ffffff' : 'none'" stroke="currentColor" stroke-width="2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" [style.fill]="favoritesService.isBookmarked(ep.id, ep.isSeries) ? '#ffffff' : 'none'" stroke="currentColor" stroke-width="2">
                       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                     </svg>
                   </button>

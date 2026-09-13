@@ -28,6 +28,7 @@
   &.visible {
     opacity: 1;
     visibility: visible;
+    transition: none; /* Appare istantaneamente, ma sfuma lentamente quando scompare */
   }
 }
 

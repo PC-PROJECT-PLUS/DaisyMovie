@@ -487,5 +487,5 @@
 <app-video-player
   [config]="playerConfig()"
   [visible]="playerVisible()"
-  (closed)="playerVisible.set(false)">
+  (closed)="onPlayerClosed()">
 </app-video-player>

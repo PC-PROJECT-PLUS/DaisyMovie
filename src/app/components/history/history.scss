@@ -123,11 +123,11 @@
   z-index: 0;
   opacity: 0;
   transition: opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1);
-  
+
   &.loaded {
     opacity: 1;
   }
-  
+
   .hero-backdrop-wrapper {
     position: absolute;
     inset: 0;
@@ -135,23 +135,69 @@
     height: 100%;
     overflow: hidden;
     z-index: 1;
-    
+
     .hero-backdrop-img {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center 20%;
+      opacity: 0;
+      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1;
+      
+      &.active {
+        opacity: 0.6;
+        z-index: 2;
+      }
+
+      // Blurred background layer for poster mode
+      &.hero-blur-bg {
+        object-fit: cover;
+        filter: blur(32px) brightness(0.4) saturate(1.4);
+        transform: scale(1.1); // avoids blur edge artifacts
+        z-index: 1;
+
+        &.active {
+          opacity: 0.85;
+          z-index: 1;
+        }
+      }
+
+      // Centered contained poster, no zoom
+      &.hero-poster-img {
+        object-fit: contain;
+        object-position: center 20%;
+        z-index: 2;
+        filter: drop-shadow(0 8px 40px rgba(0, 0, 0, 0.8));
+
+        &.active {
+          opacity: 0.95;
+          z-index: 3;
+        }
+      }
     }
 
     .hero-gradient-overlay {
       position: absolute;
       inset: 0;
       background: linear-gradient(to bottom,
-        rgba(5, 5, 5, 0.0) 0%,
-        rgba(5, 5, 5, 0.2) 30%,
-        rgba(5, 5, 5, 0.8) 70%,
-        #050505 100%);
-      z-index: 2;
+          rgba(5, 5, 5, 0.0) 0%,
+          rgba(5, 5, 5, 0.2) 30%,
+          rgba(5, 5, 5, 0.8) 70%,
+          #050505 100%);
+      z-index: 4;
+    }
+  }
+
+  // In poster mode the gradient is slightly different (less opaque top)
+  &.poster-mode {
+    .hero-gradient-overlay {
+      background: linear-gradient(to bottom,
+          rgba(5, 5, 5, 0.3) 0%,
+          rgba(5, 5, 5, 0.1) 20%,
+          rgba(5, 5, 5, 0.5) 65%,
+          #050505 100%);
     }
   }
 }
@@ -165,11 +211,35 @@
 
   opacity: 0;
   transform: translateY(20px);
-  transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: opacity 0.4s ease, transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
 
   &.loaded {
     opacity: 1;
     transform: translateY(0);
+  }
+
+  &.no-hero {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    pointer-events: none;
+    /* Let clicks pass through if needed (except buttons) */
+
+    .empty-state {
+      padding: 0;
+      margin: 0;
+      pointer-events: auto;
+      /* Enable clicks on the empty state buttons */
+    }
   }
 }
 
@@ -198,17 +268,20 @@
 
 /* CUSTOM SEARCH BAR */
 .custom-search-container {
-    display: flex;
-    &:hover {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-    &.focused {
-      background: rgba(0, 0, 0, 0.4);
-      border-color: rgba(255, 255, 255, 0.4);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-      width: 260px;
-    }
+  display: flex;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  &.focused {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    width: 260px;
+  }
+
   align-items: center;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -371,31 +444,72 @@
 
 
 /* GRID */
-.history-grid {
+.favorites-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 30px;
 }
 
 /* CLEAN POSTER CARD (NETFLIX STYLE) */
-  .movie-card.clean-card {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 2 / 3;
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    cursor: pointer;
-    background: #111;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease;
-    
-    opacity: 0;
-    transform: translateY(40px) scale(0.95);
-    
-    &.fade-in {
-      opacity: 1;
-      transform: translateY(0) scale(1);
+.movie-card.clean-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  background: #111;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease, box-shadow 0.3s ease;
+
+  opacity: 0;
+  transform: translateY(30px) scale(0.95);
+  animation: fadeScaleIn 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+
+  @keyframes fadeScaleIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.95) translateY(10px);
     }
+
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: scale(1.05);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes heroFadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 0.6;
+    }
+  }
+
+  &.removing {
+    transform: scale(0.8) !important;
+    opacity: 0 !important;
+    pointer-events: none;
+  }
+
+  &.fade-in {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 
   .remove-favorite-btn {
     position: absolute;
@@ -413,16 +527,17 @@
     cursor: pointer;
     z-index: 5;
     opacity: 0;
-    outline: none;
-    -webkit-tap-highlight-color: transparent;
     transform: scale(0.8);
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, border-color 0.2s ease, opacity 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
     backdrop-filter: blur(8px);
 
     svg {
       width: 18px;
       height: 18px;
-      transition: fill 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.3s ease;
+      fill: none;
+      &.filled {
+        fill: currentColor !important;
+      }
     }
 
     &:hover {
@@ -432,12 +547,8 @@
       transform: scale(1.1);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     }
-    
-    &:active {
-      transform: scale(0.85);
-    }
   }
-  
+
   .movie-poster {
     width: 100%;
     height: 100%;
@@ -457,7 +568,7 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
     opacity: 0;
     transform: translateY(20px);
     transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -480,7 +591,8 @@
       svg {
         width: 20px;
         height: 20px;
-        margin-left: 3px; /* visual center for play icon */
+        margin-left: 3px;
+        /* visual center for play icon */
       }
     }
 
@@ -492,7 +604,7 @@
       margin: 0;
       line-height: 1.2;
     }
-    
+
     .hover-meta {
       font-size: 0.85rem;
       color: rgba(255, 255, 255, 0.7);
@@ -505,7 +617,7 @@
   &:hover,
   &.hovered {
     transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255,255,255,0.1) inset;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
     z-index: 10;
 
     .movie-poster {
@@ -1099,6 +1211,7 @@
     }
   }
 }
+
 /* RESPONSIVE DESIGN (Tablets / Laptops) */
 @media (max-width: 1200px) {
   .history-desktop-container {
@@ -1131,12 +1244,8 @@
     }
   }
 
-  .history-grid {
+  .favorites-grid {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 16px;
   }
 }
-
-
-
-

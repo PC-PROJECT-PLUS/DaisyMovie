@@ -10,6 +10,7 @@ const moviesRouter = require('./src/routes/movies');
 const authRouter = require('./src/routes/auth');
 const profilesRouter = require('./src/routes/profiles');
 const favoritesRouter = require('./src/routes/favorites');
+const historyRouter = require('./src/routes/history');
 
 // Middleware
 app.use(cors());
@@ -20,6 +21,7 @@ app.use('/api/movies', moviesRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/profiles', profilesRouter);
 app.use('/api/favorites', favoritesRouter);
+app.use('/api/history', historyRouter);
 
 // Configurazione Database PostgreSQL
 const pool = require('./src/db');

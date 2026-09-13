@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { Navbar } from '../navbar/navbar';
 import { ThemeService } from '../../services/theme.service';
 import { PreferencesService } from '../../services/preferences.service';
+import { LoaderService } from '../../services/loader.service';
 import { FavoritesMobile } from './favorites-mobile/favorites-mobile';
 
 import { FavoritesService } from '../../services/favorites.service';
@@ -39,6 +40,7 @@ export class Favorites implements OnInit {
   router = inject(Router);
   titleService = inject(Title);
   preferencesService = inject(PreferencesService);
+  loaderService = inject(LoaderService);
 
   favoritesService = inject(FavoritesService);
 
@@ -180,10 +182,12 @@ export class Favorites implements OnInit {
       this.checkScreenSize();
       window.addEventListener('resize', this.checkScreenSize.bind(this));
 
-      // Staggered animation trigger
+      this.loaderService.setRouteReady();
+
+      // Attendi che il loader svanisca (400ms) prima di far partire le animazioni
       setTimeout(() => {
         this.pageLoaded.set(true);
-      }, 50);
+      }, 350);
     }
   }
 

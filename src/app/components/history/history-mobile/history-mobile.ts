@@ -1,25 +1,15 @@
-import { Component, OnInit, signal, computed, inject, input, output } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, input, output, effect, viewChild, ElementRef } from '@angular/core';
+import autoAnimate from '@formkit/auto-animate';
+import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { FavoritesService } from '../../../services/favorites.service';
 import { FormsModule } from '@angular/forms';
+import { NavbarMobile } from '../../navbar/navbar-mobile/navbar-mobile';
 import { ThemeService } from '../../../services/theme.service';
 import { PreferencesService } from '../../../services/preferences.service';
-
-interface HistoryItem {
-  id: number;
-  title: string;
-  year: number;
-  matchScore: string;
-  genres: string[];
-  synopsis: string;
-  posterUrl: string;
-  backdropUrl?: string;
-  accentColor: string;
-  duration: string;
-  isSeries?: boolean;
-  isBookmarked?: boolean;
-}
+import { FavoritesService } from '../../../services/favorites.service';
+import { HistoryViewItem } from '../history';
 
 @Component({
   selector: 'app-history-mobile',
@@ -29,45 +19,98 @@ interface HistoryItem {
   styleUrl: './history-mobile.scss'
 })
 export class HistoryMobile implements OnInit {
-  historyItems = input<HistoryItem[]>([]);
-  onBookmarkToggle = output<HistoryItem>();
+  platformId = inject(PLATFORM_ID);
+  historyItems = input<HistoryViewItem[]>([]);
+  onRemove = output<HistoryViewItem>();
   themeService = inject(ThemeService);
-  preferencesService = inject(PreferencesService);
-  router = inject(Router);
   favoritesService = inject(FavoritesService);
+  router = inject(Router);
+  preferencesService = inject(PreferencesService);
   pageLoaded = signal(false);
 
   // Search and Sort State
-  searchQuery = signal('');
   sortOption = signal<'az' | 'recent' | 'match'>('recent');
-  isSortDropdownOpen = signal(false);
-  isSearchFocused = signal(false);
+  isSortDropdownOpen = signal<boolean>(false);
+  searchQuery = signal<string>('');
+  isSearchFocused = signal<boolean>(false);
 
-    heroItem = computed(() => {
-    const id = this.preferencesService.historyHeroMovieId();
-    if (id) {
-      const item = this.historyItems().find(i => i.id === id);
-      if (item) return item;
-    }
-    return this.historyItems().length > 0 ? this.historyItems()[0] : null;
+  heroImage = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1920px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg';
+  heroTitle = 'La tua Cronologia';
+
+  // Flawless A/B Crossfade
+  heroImageA = signal<string>('');
+  heroImageB = signal<string>('');
+  activeHero = signal<'a' | 'b'>('a');
+
+  gridContainer = viewChild<ElementRef>('gridContainer');
+
+  constructor() {
+    effect(() => {
+      const el = this.gridContainer();
+      if (el && isPlatformBrowser(this.platformId)) {
+        autoAnimate(el.nativeElement, { duration: 300, easing: 'ease-out' });
+      }
+    });
+
+    effect(() => {
+      const items = this.historyItems();
+      if (items.length === 0) {
+        this.pageLoaded.set(true);
+      }
+    });
+
+    effect(() => {
+      const url = this.currentHeroImage();
+      if (!url) return;
+
+      if (!this.heroImageA()) {
+        this.heroImageA.set(url);
+        return;
+      }
+
+      if (this.heroImageA() === url || this.heroImageB() === url) return;
+
+      if (isPlatformBrowser(this.platformId)) {
+        const img = new Image();
+        img.onload = () => {
+          if (this.activeHero() === 'a') {
+            this.heroImageB.set(url);
+            this.activeHero.set('b');
+          } else {
+            this.heroImageA.set(url);
+            this.activeHero.set('a');
+          }
+        };
+        img.src = url;
+      } else {
+        this.heroImageA.set(url);
+      }
+    });
+  }
+
+  currentHeroImage = computed(() => {
+    const items = this.historyItems();
+    if (items.length === 0) return this.heroImage;
+
+    const heroMovie = items[0];
+
+    const url = heroMovie.backdropUrl || heroMovie.posterUrl;
+    return url ? url.replace('w=500', 'w=1920') : this.heroImage;
   });
-
-  heroImage = computed(() => this.heroItem()?.backdropUrl || this.heroItem()?.posterUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Great_Wave_off_Kanagawa2.jpg/1920px-Great_Wave_off_Kanagawa2.jpg');
-  heroTitle = 'Cronologia';
 
   // Computed state for filtered and sorted items
   filteredItems = computed(() => {
     let items = this.historyItems();
-    
+
     // 1. Search Filter
     const query = this.searchQuery().toLowerCase().trim();
     if (query) {
-      items = items.filter(item => 
-        item.title.toLowerCase().includes(query) || 
+      items = items.filter(item =>
+        item.title.toLowerCase().includes(query) ||
         item.genres.some(g => g.toLowerCase().includes(query))
       );
     }
-    
+
     // 2. Sort Logic
     const sort = this.sortOption();
     items = [...items].sort((a, b) => {
@@ -78,7 +121,7 @@ export class HistoryMobile implements OnInit {
         const scoreB = parseInt(b.matchScore) || 0;
         return scoreB - scoreA;
       } else {
-        return b.year - a.year; 
+        return 0;
       }
     });
 
@@ -86,12 +129,14 @@ export class HistoryMobile implements OnInit {
   });
 
   ngOnInit() {
-    setTimeout(() => {
-      this.pageLoaded.set(true);
-    }, 50);
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => {
+        this.pageLoaded.set(true);
+      }, 50);
+    }
   }
 
-  goToDetail(item: HistoryItem) {
+  goToDetail(item: HistoryViewItem) {
     if (item.isSeries) {
       this.router.navigate(['/series', item.id]);
     } else {
@@ -99,12 +144,17 @@ export class HistoryMobile implements OnInit {
     }
   }
 
-  toggleBookmark(item: HistoryItem, event: Event) {
-    event.stopPropagation();
-    this.favoritesService.toggleFavorite(item, item.isSeries);
+  toggleFavorite(item: HistoryViewItem, event?: Event) {
+    if (event) event.stopPropagation();
+    this.onRemove.emit(item);
   }
+
   toggleSortDropdown() {
     this.isSortDropdownOpen.update(val => !val);
+  }
+
+  onSearchInput(value: string) {
+    this.searchQuery.set(value);
   }
 
   selectSortOption(option: 'az' | 'recent' | 'match') {
@@ -114,14 +164,15 @@ export class HistoryMobile implements OnInit {
 
   get currentSortLabel(): string {
     const map = {
-      'az': 'A-Z',
-      'recent': 'Recenti',
-      'match': 'Match'
+      'az': 'Titolo (A-Z)',
+      'recent': 'Più recenti',
+      'match': 'Miglior Match'
     };
     return map[this.sortOption()];
   }
+
+  // Live check — reads from FavoritesService signal every time Angular re-renders
+  isMovieBookmarked(id: number, isSeries?: boolean): boolean {
+    return this.favoritesService.isBookmarked(id, isSeries);
+  }
 }
-
-
-
-

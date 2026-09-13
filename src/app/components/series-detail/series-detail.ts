@@ -8,6 +8,7 @@ import { SeriesDetailMobile } from './series-detail-mobile/series-detail-mobile'
 import { LoaderService } from '../../services/loader.service';
 import { TmdbService } from '../../services/tmdb.service';
 import { FavoritesService } from '../../services/favorites.service';
+import { HistoryService } from '../../services/history.service';
 import { VideoPlayerComponent, PlayerConfig } from '../video-player/video-player';
 
 export interface CastMember {
@@ -90,6 +91,7 @@ export class SeriesDetailComponent implements OnInit {
   private loaderService = inject(LoaderService);
   private tmdbService = inject(TmdbService);
   favoritesService = inject(FavoritesService);
+  private historyService = inject(HistoryService);
   seriesId = signal<number | null>(null);
   series = signal<SeriesDetail | null>(null);
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
@@ -178,6 +180,25 @@ export class SeriesDetailComponent implements OnInit {
       isAnime
     });
     this.playerVisible.set(true);
+  }
+
+  onPlayerClosed() {
+    this.playerVisible.set(false);
+    
+    // Read the saved time (in seconds) from local storage
+    let watchedSeconds = 0;
+    const s = this.series();
+    const config = this.playerConfig();
+    
+    if (s && config && isPlatformBrowser(this.platformId)) {
+      const savedTimeStr = localStorage.getItem(`daisy-progress-tv-${config.id}-${config.season}-${config.episode}`);
+      if (savedTimeStr) {
+        watchedSeconds = parseInt(savedTimeStr, 10);
+      }
+      
+      // Save to watch history (progress in seconds)
+      this.historyService.addToHistory(s, watchedSeconds, true);
+    }
   }
 
   async openEpisodePlayer(episodeNumber: number) {
