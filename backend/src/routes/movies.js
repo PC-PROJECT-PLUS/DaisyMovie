@@ -53,6 +53,39 @@ function mapMovieItem(res, isSeries) {
   };
 }
 
+async function enrichWithDetails(items) {
+  const promises = items.map(item => {
+    const type = item.isSeries ? 'tv' : 'movie';
+    const url = `${TMDB_BASE_URL}/${type}/${item.id}?append_to_response=credits&language=it-IT`;
+    return axios.get(url, { headers: HEADERS }).catch(() => null);
+  });
+  const results = await Promise.all(promises);
+  
+  return items.map((item, index) => {
+    const res = results[index];
+    if (res && res.data) {
+      const d = res.data;
+      const crew = d.credits?.crew || [];
+      const director = crew.find(c => c.job === 'Director')?.name || 'N/A';
+      const cast = d.credits?.cast ? d.credits.cast.slice(0, 5).map(c => c.name) : [];
+      
+      const formatDuration = (mins) => {
+        if (!mins) return 'N/A';
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        return h > 0 ? `${h}h ${m}m` : `${m}m`;
+      };
+      
+      const duration = item.isSeries 
+          ? (d.episode_run_time && d.episode_run_time.length > 0 ? formatDuration(d.episode_run_time[0]) : 'Varie')
+          : formatDuration(d.runtime);
+          
+      return { ...item, duration, director, stars: cast, matchScore: '95% match' };
+    }
+    return { ...item, duration: '1h 45m', matchScore: '95% match' };
+  });
+}
+
 router.get('/trending-top10', async (req, res) => {
   try {
     const category = req.query.category || '';
@@ -267,7 +300,10 @@ router.get('/home', async (req, res) => {
     }
     if (mapIndices.newReleases !== undefined) responseData.newReleasesMovies = mapItems(data[mapIndices.newReleases], false);
     if (mapIndices.topWatched !== undefined) responseData.topWatchedMovies = mapItems(data[mapIndices.topWatched]);
-    if (mapIndices.spotlight !== undefined) responseData.spotlightMovies = mapItems(data[mapIndices.spotlight]).map(x => ({ ...x, duration: '1h 45m', matchScore: '95% match' }));
+    if (mapIndices.spotlight !== undefined) {
+      const spotlightItems = mapItems(data[mapIndices.spotlight]).slice(0, 10);
+      responseData.spotlightMovies = await enrichWithDetails(spotlightItems);
+    }
     if (mapIndices.classics !== undefined) responseData.classicsMovies = mapItems(data[mapIndices.classics], false);
     if (mapIndices.hiddenGems !== undefined) responseData.hiddenGemsMovies = mapItems(data[mapIndices.hiddenGems]);
     if (mapIndices.topPicks !== undefined) responseData.topPicksMovies = mapItems(data[mapIndices.topPicks]);
@@ -363,7 +399,7 @@ router.get('/page', async (req, res) => {
     // Map items
     const foreignRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\u0400-\u04FF\u0E00-\u0E7F\u0600-\u06FF\u0900-\u097F]/;
 
-    const items = response.data.results
+    let items = response.data.results
       .filter(i => i.poster_path && i.backdrop_path && (listName === 'episodes' || listName === 'newReleases' || (i.overview && i.overview.trim().length > 10)))
       .filter(i => !(excludeAnimation && i.genre_ids && i.genre_ids.includes(16)))
       .filter(i => !isAnimeCategory || i.original_language === 'ja')
@@ -378,7 +414,7 @@ router.get('/page', async (req, res) => {
       items.forEach(x => { x.bannerUrl = x.backdropUrl; x.seriesTitle = x.title; });
     }
     if (listName === 'spotlight') {
-      items.forEach(x => { x.duration = '1h 45m'; x.matchScore = '95% match'; });
+      items = await enrichWithDetails(items);
     }
     cache.set(cacheKey, { timestamp: Date.now(), data: items });
     res.json(items);

@@ -347,9 +347,9 @@
                     </div>
                   </div>
                   
-                  @for (movie of availableFavoritesItems; track movie.id) {
-                    <div class="hero-option" [class.selected]="preferencesService.favoritesHeroMovieId() === movie.id" (click)="selectFavoritesHero(movie.id)">
-                      <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy">
+                  @for (movie of availableFavoritesItems; track movie.media_id) {
+                    <div class="hero-option" [class.selected]="preferencesService.favoritesHeroMovieId() === movie.media_id" (click)="selectFavoritesHero(movie.media_id)">
+                      <img [src]="movie.poster_url" [alt]="movie.title" loading="lazy">
                     </div>
                   }
                 </div>

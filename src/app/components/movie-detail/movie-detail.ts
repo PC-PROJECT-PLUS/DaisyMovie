@@ -7,6 +7,7 @@ import { ResponsiveService } from '../../services/responsive';
 import { MovieDetailMobile } from './movie-detail-mobile/movie-detail-mobile';
 import { LoaderService } from '../../services/loader.service';
 import { TmdbService } from '../../services/tmdb.service';
+import { FavoritesService } from '../../services/favorites.service';
 import { VideoPlayerComponent, PlayerConfig } from '../video-player/video-player';
 
 export interface CastMember {
@@ -77,6 +78,7 @@ export class MovieDetailComponent implements OnInit {
   public responsiveService = inject(ResponsiveService);
   private loaderService = inject(LoaderService);
   private tmdbService = inject(TmdbService);
+  favoritesService = inject(FavoritesService);
   movieId = signal<number | null>(null);
   movie = signal<MovieDetail | null>(null);
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
@@ -634,9 +636,10 @@ export class MovieDetailComponent implements OnInit {
   }
 
   toggleBookmark() {
-    const current = this.movie();
-    if (current) {
-      this.movie.update(m => ({ ...m!, isBookmarked: !m!.isBookmarked }));
+    const m = this.movie();
+    if (m) {
+      this.favoritesService.toggleFavorite(m);
+      this.movie.update(item => item ? { ...item, isBookmarked: !item.isBookmarked } : item);
     }
   }
 

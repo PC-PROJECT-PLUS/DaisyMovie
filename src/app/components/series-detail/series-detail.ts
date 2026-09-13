@@ -7,6 +7,7 @@ import { ResponsiveService } from '../../services/responsive';
 import { SeriesDetailMobile } from './series-detail-mobile/series-detail-mobile';
 import { LoaderService } from '../../services/loader.service';
 import { TmdbService } from '../../services/tmdb.service';
+import { FavoritesService } from '../../services/favorites.service';
 import { VideoPlayerComponent, PlayerConfig } from '../video-player/video-player';
 
 export interface CastMember {
@@ -88,6 +89,7 @@ export class SeriesDetailComponent implements OnInit {
   public responsiveService = inject(ResponsiveService);
   private loaderService = inject(LoaderService);
   private tmdbService = inject(TmdbService);
+  favoritesService = inject(FavoritesService);
   seriesId = signal<number | null>(null);
   series = signal<SeriesDetail | null>(null);
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
@@ -827,9 +829,9 @@ export class SeriesDetailComponent implements OnInit {
   }
 
   toggleBookmark() {
-    const current = this.series();
-    if (current) {
-      this.series.update(m => ({ ...m!, isBookmarked: !m!.isBookmarked }));
+    const s = this.series();
+    if (s) {
+      this.favoritesService.toggleFavorite(s, true);
     }
   }
 

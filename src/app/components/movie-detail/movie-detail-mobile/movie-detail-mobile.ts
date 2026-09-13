@@ -2,6 +2,7 @@ import { Component, OnInit, signal, input, PLATFORM_ID, inject, effect } from '@
 import { CommonModule, Location, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FavoritesService } from '../../../services/favorites.service';
 import { CastMember, Review, MovieDetail } from '../movie-detail';
 
 @Component({
@@ -13,6 +14,7 @@ import { CastMember, Review, MovieDetail } from '../movie-detail';
 })
 export class MovieDetailMobile implements OnInit {
   private location = inject(Location);
+  favoritesService = inject(FavoritesService);
   movie = input<MovieDetail | null>(null);
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
   pageLoaded = signal<boolean>(false);
@@ -40,7 +42,7 @@ export class MovieDetailMobile implements OnInit {
   toggleBookmark() {
     const current = this.movie();
     if (current) {
-      current.isBookmarked = !current.isBookmarked;
+      this.favoritesService.toggleFavorite(current);
     }
   }
 

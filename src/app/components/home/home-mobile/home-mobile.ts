@@ -3,6 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, Title } from '@angular/platform-browser';
 import { Router, RouterModule } from '@angular/router';
 import { CategoryService } from '../../../services/category.service';
+import { FavoritesService } from '../../../services/favorites.service';
 import { HeroMovie, ContinueWatchingItem, MovieItem, LatestEpisodeItem, TopWatchedItem, DetailedMovieItem, globalColorCache } from '../home';
 
 @Component({
@@ -16,6 +17,7 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
   private categoryService = inject(CategoryService);
+  favoritesService = inject(FavoritesService);
   private sanitizer = inject(DomSanitizer);
   private titleService = inject(Title);
   private isBrowser = isPlatformBrowser(this.platformId);
@@ -550,11 +552,7 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
-    if ('isBookmarked' in item) {
-      item.isBookmarked = !item.isBookmarked;
-    } else {
-      item.isBookmarked = true;
-    }
+    this.favoritesService.toggleFavorite(item);
   }
 
   checkScrollState(containerId: string) {

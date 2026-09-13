@@ -115,6 +115,28 @@ img, svg, a {
   border-radius: var(--radius-full);
 }
 
+/* GLOBAL BOOKMARK ACTIVE FILL */
+button.active svg,
+button.active svg path,
+button.btn-circle-action.active svg,
+button.btn-circle-action.active svg path,
+.bookmark-btn.active svg,
+.bookmark-btn.active svg path,
+.btn-action.active svg,
+.btn-action.active svg path,
+.remove-favorite-btn svg,
+.remove-favorite-btn svg path,
+.ghp-btn-bookmark.active svg,
+.ghp-btn-bookmark.active svg path,
+.btn-bookmark.active svg,
+.btn-bookmark.active svg path,
+.btn-bookmark-mini.active svg,
+.btn-bookmark-mini.active svg path,
+.action-circle-btn.active svg,
+.action-circle-btn.active svg path {
+  fill: #ffffff !important;
+}
+
 .hidden {
   display: none !important;
 }

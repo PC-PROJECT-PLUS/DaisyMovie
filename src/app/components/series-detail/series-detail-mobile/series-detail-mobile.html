@@ -49,8 +49,8 @@
           <span>Guarda</span>
         </button>
 
-        <button class="action-circle-btn bookmark-btn" [class.active]="series()!.isBookmarked" (click)="toggleBookmark()" title="Aggiungi alla lista">
-          <svg width="22" height="22" viewBox="0 0 24 24" [style.fill]="series()!.isBookmarked ? '#ffffff' : 'transparent'" stroke="currentColor" stroke-width="2">
+        <button class="action-circle-btn bookmark-btn" [class.active]="favoritesService.isBookmarked(series()!.id, true)" (click)="toggleBookmark()" title="Aggiungi alla lista">
+          <svg width="22" height="22" viewBox="0 0 24 24" [style.fill]="favoritesService.isBookmarked(series()!.id, true) ? '#ffffff' : 'transparent'" stroke="currentColor" stroke-width="2">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
           </svg>
         </button>

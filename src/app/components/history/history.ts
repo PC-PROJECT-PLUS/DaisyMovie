@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { ThemeService } from '../../services/theme.service';
 import { PreferencesService } from '../../services/preferences.service';
 import { HistoryMobile } from './history-mobile/history-mobile';
+import { FavoritesService } from '../../services/favorites.service';
 
 interface HistoryItem {
   id: number;
@@ -33,6 +34,7 @@ export class HistoryComponent implements OnInit {
   platformId = inject(PLATFORM_ID);
   themeService = inject(ThemeService);
   preferencesService = inject(PreferencesService);
+  favoritesService = inject(FavoritesService);
   router = inject(Router);
   titleService = inject(Title);
   isMobile = signal(false);
@@ -143,7 +145,7 @@ export class HistoryComponent implements OnInit {
 
   toggleBookmark(item: HistoryItem, event?: Event) {
     if (event) event.stopPropagation();
-    this.historyItems.update(items => items.map(i => i.id === item.id ? { ...i, isBookmarked: !i.isBookmarked } : i));
+    this.favoritesService.toggleFavorite(item, item.isSeries);
   }
 
   toggleSortDropdown() {

@@ -26,7 +26,8 @@
 
           <!-- Hero Action Buttons -->
           <div class="hero-actions">
-            <button class="btn-watch-now" (click)="goToMovie(movie, heroButtonColor())" [style.background]="heroButtonColor()"
+            <button class="btn-watch-now" (click)="goToMovie(movie, heroButtonColor())"
+              [style.background]="heroButtonColor()"
               [style.box-shadow]="'0 4px 24px ' + toRgba(heroButtonColor(), 0.5)">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <polygon points="5 3 19 12 5 21 5 3"></polygon>
@@ -34,10 +35,9 @@
               <span>Guarda ora</span>
             </button>
 
-            <button class="btn-circle-action" title="Bookmark" [class.active]="movie.isBookmarked"
+            <button class="btn-circle-action" title="Bookmark" [class.active]="favoritesService.isBookmarked(movie.id, movie.isSeries)"
               (click)="toggleBookmark(movie, $event)">
-              <svg width="20" height="20" viewBox="0 0 24 24" [attr.fill]="movie.isBookmarked ? '#ffffff' : 'none'"
-                stroke="currentColor" stroke-width="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" [style.fill]="favoritesService.isBookmarked(movie.id, movie.isSeries) ? '#ffffff' : 'none'" stroke="currentColor" stroke-width="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
               </svg>
             </button>
@@ -255,10 +255,9 @@
                     </svg>
                   </button>
 
-                  <button class="action-circle-btn" [class.active]="ep.isBookmarked"
+                  <button class="action-circle-btn" [class.active]="favoritesService.isBookmarked(ep.id, true)"
                     (click)="toggleBookmark(ep, $event)" aria-label="Bookmark Episode">
-                    <svg width="16" height="16" viewBox="0 0 24 24" [attr.fill]="ep.isBookmarked ? '#ffffff' : 'none'"
-                      stroke="currentColor" stroke-width="2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" [style.fill]="favoritesService.isBookmarked(ep.id, true) ? '#ffffff' : 'none'" stroke="currentColor" stroke-width="2">
                       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                     </svg>
                   </button>
@@ -321,7 +320,8 @@
         <!-- TOP 3 PODIUM -->
         <div class="chart-podium">
           @for (film of topWatchedMovies.slice(0, 3); track film.id; let i = $index) {
-          <div class="podium-card glass-card" [style.--card-accent]="film.accentColor" (click)="goToMovie(film)" style="cursor: pointer;">
+          <div class="podium-card glass-card" [style.--card-accent]="film.accentColor" (click)="goToMovie(film)"
+            style="cursor: pointer;">
             <div class="podium-poster-wrap">
               <img [src]="film.posterUrl" [alt]="film.title" class="podium-img" />
               <div class="podium-img-overlay"></div>
@@ -340,7 +340,8 @@
         <!-- RANKS 4–10 LIST -->
         <div class="chart-list">
           @for (film of topWatchedMovies.slice(3); track film.id; let i = $index) {
-          <div class="chart-item glass-card" [style.--card-accent]="film.accentColor" (click)="goToMovie(film)" style="cursor: pointer;">
+          <div class="chart-item glass-card" [style.--card-accent]="film.accentColor" (click)="goToMovie(film)"
+            style="cursor: pointer;">
             <div class="chart-item-rank">{{ (i + 4).toString().padStart(2, '0') }}</div>
             <img [src]="film.posterUrl" [alt]="film.title" class="chart-item-thumb" />
             <div class="chart-item-info">
@@ -450,7 +451,7 @@
                   <button class="action-btn icon-btn" aria-label="Bookmark" (click)="toggleBookmark(movie)">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                      @if (movie.isBookmarked) {
+                      @if (favoritesService.isBookmarked(movie.id, movie.isSeries)) {
                       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" fill="currentColor"></path>
                       }
                     </svg>
@@ -671,10 +672,10 @@
             </svg>
             Guarda ora
           </button>
-          <button class="ghp-btn-bookmark" [class.active]="panelMovie()!.isBookmarked"
+          <button class="ghp-btn-bookmark" [class.active]="favoritesService.isBookmarked(panelMovie()!.id, panelMovie()!.isSeries)"
             (click)="toggleBookmark(panelMovie()!, $event)">
             <svg width="18" height="18" viewBox="0 0 24 24"
-              [attr.fill]="panelMovie()!.isBookmarked ? '#ffffff' : 'none'" stroke="currentColor" stroke-width="2">
+              [style.fill]="favoritesService.isBookmarked(panelMovie()!.id, panelMovie()!.isSeries) ? '#ffffff' : 'none'" stroke="currentColor" stroke-width="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
           </button>

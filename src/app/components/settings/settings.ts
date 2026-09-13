@@ -6,7 +6,7 @@ import { ResponsiveService } from '../../services/responsive';
 import { SettingsMobile } from './settings-mobile/settings-mobile';
 import { ThemeService } from '../../services/theme.service';
 import { PreferencesService, MOCK_HISTORY_ITEMS } from '../../services/preferences.service';
-import { FAVORITE_ITEMS } from '../favorites/favorites';
+import { FavoritesService } from '../../services/favorites.service';
 
 @Component({
   selector: 'app-settings',
@@ -20,8 +20,12 @@ export class Settings {
   themeService = inject(ThemeService);
   titleService = inject(Title);
   preferencesService = inject(PreferencesService);
+  favoritesService = inject(FavoritesService);
   availableHistoryItems = MOCK_HISTORY_ITEMS;
-  availableFavoritesItems = FAVORITE_ITEMS;
+  
+  get availableFavoritesItems() {
+    return this.favoritesService.items();
+  }
   isHistoryDropdownOpen = signal(false);
 
   get historyHeroLabel(): string {

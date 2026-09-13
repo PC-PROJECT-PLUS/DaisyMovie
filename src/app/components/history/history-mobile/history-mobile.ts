@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, computed, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { FavoritesService } from '../../../services/favorites.service';
 import { FormsModule } from '@angular/forms';
 import { ThemeService } from '../../../services/theme.service';
 import { PreferencesService } from '../../../services/preferences.service';
@@ -33,6 +34,7 @@ export class HistoryMobile implements OnInit {
   themeService = inject(ThemeService);
   preferencesService = inject(PreferencesService);
   router = inject(Router);
+  favoritesService = inject(FavoritesService);
   pageLoaded = signal(false);
 
   // Search and Sort State
@@ -99,7 +101,7 @@ export class HistoryMobile implements OnInit {
 
   toggleBookmark(item: HistoryItem, event: Event) {
     event.stopPropagation();
-    this.onBookmarkToggle.emit(item);
+    this.favoritesService.toggleFavorite(item, item.isSeries);
   }
   toggleSortDropdown() {
     this.isSortDropdownOpen.update(val => !val);

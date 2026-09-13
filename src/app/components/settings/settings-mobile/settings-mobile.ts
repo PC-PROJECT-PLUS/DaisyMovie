@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ThemeService } from '../../../services/theme.service';
 import { PreferencesService, MOCK_HISTORY_ITEMS } from '../../../services/preferences.service';
-import { FAVORITE_ITEMS } from '../../favorites/favorites';
+import { FavoritesService } from '../../../services/favorites.service';
 
 @Component({
   selector: 'app-settings-mobile',
@@ -29,8 +29,12 @@ export class SettingsMobile {
   @Input() themeService!: ThemeService;
 
   preferencesService = inject(PreferencesService);
+  favoritesService = inject(FavoritesService);
   availableHistoryItems = MOCK_HISTORY_ITEMS;
-  availableFavoritesItems = FAVORITE_ITEMS;
+
+  get availableFavoritesItems() {
+    return this.favoritesService.items();
+  }
 
   get historyHeroLabel(): string {
     const id = this.preferencesService.historyHeroMovieId();

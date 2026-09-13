@@ -9,6 +9,7 @@ const port = process.env.PORT || 3000;
 const moviesRouter = require('./src/routes/movies');
 const authRouter = require('./src/routes/auth');
 const profilesRouter = require('./src/routes/profiles');
+const favoritesRouter = require('./src/routes/favorites');
 
 // Middleware
 app.use(cors());
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use('/api/movies', moviesRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/profiles', profilesRouter);
+app.use('/api/favorites', favoritesRouter);
 
 // Configurazione Database PostgreSQL
 const pool = require('./src/db');

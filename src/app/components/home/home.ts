@@ -10,6 +10,7 @@ import { LoaderService } from '../../services/loader.service';
 import { CategoryService } from '../../services/category.service';
 import { HomeMobile } from './home-mobile/home-mobile';
 import { TmdbService } from '../../services/tmdb.service';
+import { FavoritesService } from '../../services/favorites.service';
 
 export const globalColorCache = new Map<string, string>();
 
@@ -100,6 +101,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   loaderService = inject(LoaderService);
   public categoryService = inject(CategoryService);
   public tmdbService = inject(TmdbService);
+  public favoritesService = inject(FavoritesService);
   public ngZone = inject(NgZone);
   private injector = inject(Injector);
   private platformId = inject(PLATFORM_ID);
@@ -893,7 +895,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
-    item.isBookmarked = !item.isBookmarked;
+    this.favoritesService.toggleFavorite(item);
   }
 
   toggleNotification(item: LatestEpisodeItem, event?: Event) {

@@ -90,10 +90,9 @@
             <span>Guarda Trailer</span>
           </button>
 
-          <button class="action-circle-btn bookmark-btn" [class.active]="movie()!.isBookmarked"
+          <button class="action-circle-btn bookmark-btn" [class.active]="favoritesService.isBookmarked(movie()!.id, false)"
             (click)="toggleBookmark()" title="Aggiungi alla lista">
-            <svg width="22" height="22" viewBox="0 0 24 24" [attr.fill]="movie()!.isBookmarked ? '#ffffff' : 'none'"
-              stroke="currentColor" stroke-width="2">
+            <svg width="22" height="22" viewBox="0 0 24 24" [style.fill]="favoritesService.isBookmarked(movie()!.id, false) ? '#ffffff' : 'none'" stroke="currentColor" stroke-width="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
           </button>
@@ -411,7 +410,7 @@
         <span>Guarda ora</span>
       </button>
 
-      <button class="ghp-btn-bookmark" [class.active]="panelMovie()!.isBookmarked" title="Aggiungi alla lista">
+      <button class="ghp-btn-bookmark" [class.active]="favoritesService.isBookmarked(movie()!.id, false)" title="Aggiungi alla lista">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
         </svg>

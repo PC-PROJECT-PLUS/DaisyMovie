@@ -1,0 +1,1 @@
+class A { constructor() { console.log(typeof this.b); } b = () => {}; } new A();

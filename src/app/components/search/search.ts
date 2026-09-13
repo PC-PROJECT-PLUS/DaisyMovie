@@ -5,6 +5,7 @@ import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ThemeService } from '../../services/theme.service';
 import { TmdbService } from '../../services/tmdb.service';
+import { FavoritesService } from '../../services/favorites.service';
 import { LoaderService } from '../../services/loader.service';
 import { SearchMobileComponent } from './search-mobile/search-mobile';
 
@@ -34,6 +35,7 @@ export class SearchComponent implements OnInit {
   platformId = inject(PLATFORM_ID);
   themeService = inject(ThemeService);
   tmdbService = inject(TmdbService);
+  favoritesService = inject(FavoritesService);
   loaderService = inject(LoaderService);
   router = inject(Router);
   route = inject(ActivatedRoute);
@@ -144,7 +146,7 @@ export class SearchComponent implements OnInit {
 
   toggleBookmark(movie: MovieItem, event: Event) {
     event.stopPropagation();
-    movie.isBookmarked = !movie.isBookmarked;
+    this.favoritesService.toggleFavorite(movie);
   }
 
   performSearch(reset: boolean = false) {

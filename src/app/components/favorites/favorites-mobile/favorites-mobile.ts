@@ -1,4 +1,7 @@
-import { Component, OnInit, signal, computed, inject, input, output } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, input, output, effect, viewChild, ElementRef } from '@angular/core';
+import autoAnimate from '@formkit/auto-animate';
+import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -29,6 +32,7 @@ interface FavoriteItem {
   styleUrl: './favorites-mobile.scss'
 })
 export class FavoritesMobile implements OnInit {
+  platformId = inject(PLATFORM_ID);
   favoriteItems = input<FavoriteItem[]>([]);
   onRemove = output<FavoriteItem>();
   themeService = inject(ThemeService);
@@ -37,16 +41,66 @@ export class FavoritesMobile implements OnInit {
   pageLoaded = signal(false);
 
   // Search and Sort State
-  searchQuery = signal('');
   sortOption = signal<'az' | 'recent' | 'match'>('recent');
-  isSortDropdownOpen = signal(false);
-  isSearchFocused = signal(false);
+  isSortDropdownOpen = signal<boolean>(false);
+  searchQuery = signal<string>('');
+  isSearchFocused = signal<boolean>(false);
 
-  // Hero Image Data
-  heroImage = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1920px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg'; 
+  heroImage = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1920px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg';
   heroTitle = 'I tuoi Preferiti';
 
-  get currentHeroImage(): string {
+  // Flawless A/B Crossfade
+  heroImageA = signal<string>('');
+  heroImageB = signal<string>('');
+  activeHero = signal<'a' | 'b'>('a');
+
+  gridContainer = viewChild<ElementRef>('gridContainer');
+
+  constructor() {
+    effect(() => {
+      const el = this.gridContainer();
+      if (el && isPlatformBrowser(this.platformId)) {
+        autoAnimate(el.nativeElement, { duration: 300, easing: 'ease-out' });
+      }
+    });
+
+    effect(() => {
+      const items = this.favoriteItems();
+      if (items.length === 0) {
+        this.pageLoaded.set(true);
+      }
+    });
+
+    effect(() => {
+      const url = this.currentHeroImage();
+      if (!url) return;
+
+      if (!this.heroImageA()) {
+        this.heroImageA.set(url);
+        return;
+      }
+
+      if (this.heroImageA() === url || this.heroImageB() === url) return;
+
+      if (isPlatformBrowser(this.platformId)) {
+        const img = new Image();
+        img.onload = () => {
+          if (this.activeHero() === 'a') {
+            this.heroImageB.set(url);
+            this.activeHero.set('b');
+          } else {
+            this.heroImageA.set(url);
+            this.activeHero.set('a');
+          }
+        };
+        img.src = url;
+      } else {
+        this.heroImageA.set(url);
+      }
+    });
+  }
+
+  currentHeroImage = computed(() => {
     const prefId = this.preferencesService.favoritesHeroMovieId();
     if (prefId) {
       const movie = this.favoriteItems().find(m => m.id === prefId);
@@ -56,21 +110,21 @@ export class FavoritesMobile implements OnInit {
       }
     }
     return this.heroImage;
-  }
+  });
 
   // Computed state for filtered and sorted items
   filteredItems = computed(() => {
     let items = this.favoriteItems();
-    
+
     // 1. Search Filter
     const query = this.searchQuery().toLowerCase().trim();
     if (query) {
-      items = items.filter(item => 
-        item.title.toLowerCase().includes(query) || 
+      items = items.filter(item =>
+        item.title.toLowerCase().includes(query) ||
         item.genres.some(g => g.toLowerCase().includes(query))
       );
     }
-    
+
     // 2. Sort Logic
     const sort = this.sortOption();
     items = [...items].sort((a, b) => {
@@ -81,7 +135,7 @@ export class FavoritesMobile implements OnInit {
         const scoreB = parseInt(b.matchScore) || 0;
         return scoreB - scoreA;
       } else {
-        return b.year - a.year; 
+        return b.year - a.year;
       }
     });
 
@@ -110,6 +164,10 @@ export class FavoritesMobile implements OnInit {
     this.isSortDropdownOpen.update(val => !val);
   }
 
+  onSearchInput(value: string) {
+    this.searchQuery.set(value);
+  }
+
   selectSortOption(option: 'az' | 'recent' | 'match') {
     this.sortOption.set(option);
     this.isSortDropdownOpen.set(false);
@@ -124,3 +182,4 @@ export class FavoritesMobile implements OnInit {
     return map[this.sortOption()];
   }
 }
+

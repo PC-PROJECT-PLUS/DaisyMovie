@@ -1238,6 +1238,7 @@
 
     .detailed-info {
       flex: 1;
+      min-width: 0;
       padding: 24px;
       display: flex;
       flex-direction: column;
@@ -1285,11 +1286,9 @@
         }
 
         .detailed-stars {
-          display: -webkit-box;
-          -webkit-line-clamp: 1;
-          line-clamp: 1;
-          -webkit-box-orient: vertical;
+          white-space: nowrap;
           overflow: hidden;
+          text-overflow: ellipsis;
         }
       }
 
