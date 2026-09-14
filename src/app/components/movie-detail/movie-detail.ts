@@ -95,11 +95,24 @@ export class MovieDetailComponent implements OnInit {
   canScrollLeftSuggested = signal<boolean>(false);
 
   newReviewText = signal<string>('');
+  suggestedMovies = signal<any[]>([]);
   showAllReviews = signal<boolean>(false);
 
   // Suggested pagination
   suggestedPage = 1;
   isLoadingSuggested = false;
+  
+  resumeProgress = signal<number>(0);
+  resumeText = signal<string>('');
+
+  private formatTime(seconds: number): string {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  }
 
   // VIDEO PLAYER STATE
   playerVisible = signal(false);
@@ -126,9 +139,9 @@ export class MovieDetailComponent implements OnInit {
 
     let startAt = 0;
     if (isPlatformBrowser(this.platformId)) {
-      const savedTime = localStorage.getItem(`daisy-progress-movie-${m.id}`);
-      if (savedTime) {
-        startAt = parseInt(savedTime, 10);
+      const historyItem = this.historyService.getResumeProgress(m.id, false);
+      if (historyItem && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
+        startAt = historyItem.progress_seconds;
       }
     }
 
@@ -162,7 +175,10 @@ export class MovieDetailComponent implements OnInit {
       type: 'movie',
       accentColor,
       startAt: startAt > 0 ? startAt : undefined,
-      isAnime
+      isAnime,
+      title: m.title,
+      posterUrl: m.posterUrl,
+      backdropUrl: m.backdropUrl
     });
     this.playerVisible.set(true);
   }
@@ -170,18 +186,7 @@ export class MovieDetailComponent implements OnInit {
   onPlayerClosed() {
     this.playerVisible.set(false);
     
-    // Read the saved time (in seconds) from local storage
-    let watchedSeconds = 0;
-    const m = this.movie();
-    if (m && isPlatformBrowser(this.platformId)) {
-      const savedTimeStr = localStorage.getItem(`daisy-progress-movie-${m.id}`);
-      if (savedTimeStr) {
-        watchedSeconds = parseInt(savedTimeStr, 10);
-      }
-      
-      // Save to watch history (progress in seconds)
-      this.historyService.addToHistory(m, watchedSeconds, false);
-    }
+    // Progress is now saved by VideoPlayerComponent internally via HistoryService
   }
 
   // HOVER PANEL STATE
@@ -220,6 +225,20 @@ export class MovieDetailComponent implements OnInit {
         this.pageLoaded.set(false);
       }
     });
+    
+    effect(() => {
+      const m = this.movie();
+      if (!m || !isPlatformBrowser(this.platformId)) return;
+      
+      const historyItem = this.historyService.getResumeProgress(m.id, false);
+      if (historyItem && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
+        this.resumeProgress.set(historyItem.progress_seconds);
+        this.resumeText.set(`Riprendi da ${this.formatTime(historyItem.progress_seconds)}`);
+      } else {
+        this.resumeProgress.set(0);
+        this.resumeText.set('');
+      }
+    }, { allowSignalWrites: true });
 
     // Scroll to top on load for that fresh page feel
     if (typeof window !== 'undefined') {

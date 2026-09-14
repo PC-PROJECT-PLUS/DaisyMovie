@@ -35,9 +35,12 @@
               <span>Guarda ora</span>
             </button>
 
-            <button class="btn-circle-action" title="Bookmark" [class.active]="favoritesService.isBookmarked(movie.id, movie.isSeries)"
+            <button class="btn-circle-action" title="Bookmark"
+              [class.active]="favoritesService.isBookmarked(movie.id, movie.isSeries)"
               (click)="toggleBookmark(movie, $event)">
-              <svg width="20" height="20" viewBox="0 0 24 24" [style.fill]="favoritesService.isBookmarked(movie.id, movie.isSeries) ? '#ffffff' : 'none'" stroke="currentColor" stroke-width="2">
+              <svg width="20" height="20" viewBox="0 0 24 24"
+                [style.fill]="favoritesService.isBookmarked(movie.id, movie.isSeries) ? '#ffffff' : 'none'"
+                stroke="currentColor" stroke-width="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
               </svg>
             </button>
@@ -80,7 +83,7 @@
     <main class="main-content">
 
       <!-- SECTION 1: CONTINUE WATCHING -->
-      @if (continueWatchingList && continueWatchingList.length > 0) {
+      @if (continueWatchingList() && continueWatchingList().length > 0) {
       <section class="content-section">
         <div class="section-header">
           <h2 class="section-title">Continua a guardare</h2>
@@ -106,61 +109,33 @@
           [class.has-fade-left]="canScrollLeftContinue()">
 
           <div class="continue-watching-slider" id="continue-slider">
-            @for (item of continueWatchingList; track item.id) {
-            <div class="continue-card glass-card">
+            @for (item of continueWatchingList(); track item.id) {
+            <a [routerLink]="item.isSeries ? ['/series', item.id] : ['/movie', item.id]"
+              class="continue-card glass-card fluid-hover-card">
               <div class="card-thumbnail-container">
                 <img [src]="item.thumbnailUrl" [alt]="item.showTitle" class="thumbnail-img" />
-                <div class="thumbnail-overlay"></div>
+                <div class="thumbnail-overlay-gradient"></div>
 
-                <!-- Episode Air Date Overlay Top -->
-                <div class="ep-info-badge">
-                  <span class="ep-title">{{ item.showTitle }}: {{ item.episodeTitle }}</span>
-                  <span class="air-date">In onda il: {{ item.airDate }}</span>
-                </div>
-
-                <!-- Floating Liquid Glass Video Control Bar -->
-                <div class="liquid-player-bar glass-card">
-                  <button class="player-btn play-pause-btn" (click)="togglePlayState(item)">
-                    @if (item.isPlaying) {
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <rect x="6" y="4" width="4" height="16"></rect>
-                      <rect x="14" y="4" width="4" height="16"></rect>
-                    </svg>
-                    } @else {
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <div class="play-icon-overlay">
+                  <div class="glass-play-btn">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
                       <polygon points="5 3 19 12 5 21 5 3"></polygon>
                     </svg>
-                    }
-                  </button>
-
-                  <span class="player-time">{{ item.currentTime }}</span>
-
-                  <!-- Seek Bar Progress -->
-                  <div class="seek-bar-track">
-                    <div class="seek-bar-fill" [style.width.%]="item.progressPercent"></div>
-                    <div class="seek-bar-thumb" [style.left.%]="item.progressPercent"></div>
                   </div>
+                </div>
 
-                  <span class="player-time total">{{ item.totalTime }}</span>
+                <div class="ep-info-badge">
+                  <span class="ep-title">{{ item.showTitle }}{{ item.episodeTitle !== 'Film' ? ' - ' + item.episodeTitle
+                    : '' }}</span>
+                  <span class="air-date">{{ item.airDate }}</span>
+                </div>
 
-                  <button class="player-btn icon-only" title="Audio">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                    </svg>
-                  </button>
-
-                  <button class="player-btn icon-only" title="Fullscreen">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="15 3 21 3 21 9"></polyline>
-                      <polyline points="9 21 3 21 3 15"></polyline>
-                      <line x1="21" y1="3" x2="14" y2="10"></line>
-                      <line x1="3" y1="21" x2="10" y2="14"></line>
-                    </svg>
-                  </button>
+                <div class="progress-bar-container">
+                  <div class="progress-fill" [style.width.%]="item.progressPercent"
+                    [style.background]="item.accentColor" [style.box-shadow]="'0 0 10px ' + item.accentColor"></div>
                 </div>
               </div>
-            </div>
+            </a>
             }
           </div>
         </div>
@@ -257,7 +232,9 @@
 
                   <button class="action-circle-btn" [class.active]="favoritesService.isBookmarked(ep.id, ep.isSeries)"
                     (click)="toggleBookmark(ep, $event)" aria-label="Bookmark Episode">
-                    <svg width="16" height="16" viewBox="0 0 24 24" [style.fill]="favoritesService.isBookmarked(ep.id, ep.isSeries) ? '#ffffff' : 'none'" stroke="currentColor" stroke-width="2">
+                    <svg width="16" height="16" viewBox="0 0 24 24"
+                      [style.fill]="favoritesService.isBookmarked(ep.id, ep.isSeries) ? '#ffffff' : 'none'"
+                      stroke="currentColor" stroke-width="2">
                       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                     </svg>
                   </button>
@@ -323,7 +300,7 @@
           <div class="podium-card glass-card" [style.--card-accent]="film.accentColor" (click)="goToMovie(film)"
             style="cursor: pointer;">
             <div class="podium-poster-wrap">
-              <img [src]="film.posterUrl" [alt]="film.title" class="podium-img" />
+              <img [src]="film.backdropUrl" [alt]="film.title" class="podium-img" />
               <div class="podium-img-overlay"></div>
             </div>
             <div class="podium-body">
@@ -672,10 +649,12 @@
             </svg>
             Guarda ora
           </button>
-          <button class="ghp-btn-bookmark" [class.active]="favoritesService.isBookmarked(panelMovie()!.id, panelMovie()!.isSeries)"
+          <button class="ghp-btn-bookmark"
+            [class.active]="favoritesService.isBookmarked(panelMovie()!.id, panelMovie()!.isSeries)"
             (click)="toggleBookmark(panelMovie()!, $event)">
             <svg width="18" height="18" viewBox="0 0 24 24"
-              [style.fill]="favoritesService.isBookmarked(panelMovie()!.id, panelMovie()!.isSeries) ? '#ffffff' : 'none'" stroke="currentColor" stroke-width="2">
+              [style.fill]="favoritesService.isBookmarked(panelMovie()!.id, panelMovie()!.isSeries) ? '#ffffff' : 'none'"
+              stroke="currentColor" stroke-width="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
           </button>
@@ -688,10 +667,11 @@
 
   <div class="mobile-only">
     <app-home-mobile [isPageLoaded]="pageLoaded()" [heroMovies]="heroMovies"
-      [continueWatchingList]="continueWatchingList" [trendingMovies]="trendingMovies" [latestEpisodes]="latestEpisodes"
-      [newReleasesMovies]="newReleasesMovies" [topWatchedMovies]="topWatchedMovies" [spotlightMovies]="spotlightMovies"
-      [classicsMovies]="classicsMovies" [hiddenGemsMovies]="hiddenGemsMovies" [topPicksMovies]="topPicksMovies"
-      (themeChange)="onThemeChange($event)" [isHidden]="!responsiveService.isMobile()"></app-home-mobile>
+      [continueWatchingList]="continueWatchingList()" [trendingMovies]="trendingMovies"
+      [latestEpisodes]="latestEpisodes" [newReleasesMovies]="newReleasesMovies" [topWatchedMovies]="topWatchedMovies"
+      [spotlightMovies]="spotlightMovies" [classicsMovies]="classicsMovies" [hiddenGemsMovies]="hiddenGemsMovies"
+      [topPicksMovies]="topPicksMovies" (themeChange)="onThemeChange($event)"
+      [isHidden]="!responsiveService.isMobile()"></app-home-mobile>
   </div>
 
   <app-footer></app-footer>

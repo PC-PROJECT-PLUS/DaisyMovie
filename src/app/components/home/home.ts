@@ -1,4 +1,4 @@
-import { Component, signal, OnDestroy, OnInit, AfterViewInit, inject, PLATFORM_ID, effect, Injector, NgZone } from '@angular/core';
+import { Component, signal, OnDestroy, OnInit, AfterViewInit, inject, PLATFORM_ID, effect, Injector, NgZone, computed } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
@@ -11,6 +11,7 @@ import { CategoryService } from '../../services/category.service';
 import { HomeMobile } from './home-mobile/home-mobile';
 import { TmdbService } from '../../services/tmdb.service';
 import { FavoritesService } from '../../services/favorites.service';
+import { HistoryService } from '../../services/history.service';
 
 export const globalColorCache = new Map<string, string>();
 
@@ -35,6 +36,7 @@ export interface ContinueWatchingItem {
   accentColor: string;
   airDate: string;
   isPlaying?: boolean;
+  isSeries?: boolean;
 }
 
 export interface MovieItem {
@@ -91,7 +93,7 @@ export interface DetailedMovieItem {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FooterComponent, HomeMobile],
+  imports: [CommonModule, FooterComponent, HomeMobile, RouterLink],
   templateUrl: './home.html',
   styleUrl: './home.scss'
 })
@@ -102,6 +104,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   public categoryService = inject(CategoryService);
   public tmdbService = inject(TmdbService);
   public favoritesService = inject(FavoritesService);
+  public historyService = inject(HistoryService);
   public ngZone = inject(NgZone);
   private injector = inject(Injector);
   private platformId = inject(PLATFORM_ID);
@@ -143,7 +146,54 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   private originalTrending: MovieItem[] = [];
   private originalTopWatched: TopWatchedItem[] = [];
 
-  // Mock data removed
+  private formatTime(seconds: number): string {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  }
+
+  continueWatchingList = computed(() => {
+    return this.historyService.items()
+      .filter(item => item.progress_seconds && item.progress_seconds > 0)
+      .map(item => {
+        const isSeries = item.media_type === 'tv';
+        let episodeTitle = '';
+        let currentTime = this.formatTime(item.progress_seconds || 0);
+        let airDate = `Riprendi da ${currentTime}`;
+
+        if (isSeries) {
+          episodeTitle = `Stagione ${item.season || 1}, Episodio ${item.episode || 1}`;
+        } else {
+          episodeTitle = 'Film';
+        }
+
+        let progressPercent = 5; // Default minimal visible progress
+        if (item.total_seconds && item.total_seconds > 0 && item.progress_seconds) {
+          progressPercent = (item.progress_seconds / item.total_seconds) * 100;
+          if (progressPercent > 100) progressPercent = 100;
+        }
+
+        let accentColor = item.accent_color || '#3a86ef';
+        // if accentColor is HSL, we can use it directly in CSS. If it's hex, also fine.
+
+        return {
+          id: item.media_id,
+          showTitle: item.title,
+          episodeTitle: episodeTitle,
+          currentTime: currentTime,
+          totalTime: '',
+          progressPercent: progressPercent,
+          thumbnailUrl: item.backdrop_url || item.poster_url,
+          accentColor: accentColor,
+          airDate: airDate,
+          isPlaying: false,
+          isSeries: isSeries
+        } as ContinueWatchingItem;
+      });
+  });
 
   // Dynamic Edge Fade Signals for Slider Scroll State
   canScrollRightContinue = signal<boolean>(true);
@@ -312,58 +362,6 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   // Hero Carousel (6 Movies)
   heroMovies: any[] = [];
 
-  // Continue Watching List
-  continueWatchingList: ContinueWatchingItem[] = [
-    {
-      id: 101,
-      showTitle: 'Solo Leveling',
-      episodeTitle: 'Season 2, Episode 11',
-      airDate: 'August 14, 2026',
-      currentTime: '03:23',
-      totalTime: '00:26:05',
-      progressPercent: 25,
-      thumbnailUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80',
-      accentColor: '#3a86ef',
-      isPlaying: false
-    },
-    {
-      id: 102,
-      showTitle: 'Ted Lasso',
-      episodeTitle: 'Season 3, Episode 12',
-      airDate: 'September 2, 2026',
-      currentTime: '32:47',
-      totalTime: '01:46:12',
-      progressPercent: 60,
-      thumbnailUrl: 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=800&auto=format&fit=crop&q=80',
-      accentColor: '#eab308',
-      isPlaying: false
-    },
-    {
-      id: 103,
-      showTitle: 'The Last of Us',
-      episodeTitle: 'Season 2, Episode 4',
-      airDate: 'October 10, 2026',
-      currentTime: '18:12',
-      totalTime: '00:54:30',
-      progressPercent: 33,
-      thumbnailUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80',
-      accentColor: '#a855f7',
-      isPlaying: false
-    },
-    {
-      id: 104,
-      showTitle: 'Stranger Things',
-      episodeTitle: 'Season 5, Episode 1',
-      airDate: 'November 1, 2026',
-      currentTime: '45:00',
-      totalTime: '01:10:00',
-      progressPercent: 65,
-      thumbnailUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&auto=format&fit=crop&q=80',
-      accentColor: '#ff4d4d',
-      isPlaying: false
-    }
-  ];
-
   // Trending Movies Slider List
   trendingMovies: any[] = [];
 
@@ -512,6 +510,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       });
 
       this.tmdbService.getHomeData(cat, '1').subscribe(data1 => {
+
+        
         const finishPhase1 = () => {
           if (data1.heroMovies) this.heroMovies = data1.heroMovies;
           if (data1.trendingMovies) this.trendingMovies = data1.trendingMovies;
@@ -533,6 +533,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
           setTimeout(() => {
             this.loaderService.setRouteReady();
+            this.checkAllStaticSlidersScroll();
           }, 50); // slight delay to allow angular to render imgs
         };
 
@@ -571,6 +572,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         if (data2.hiddenGemsMovies) this.hiddenGemsMovies = data2.hiddenGemsMovies;
         if (data2.topPicksMovies) this.topPicksMovies = data2.topPicksMovies;
         if (data2.acclaimedMovies) this.acclaimedMovies = data2.acclaimedMovies;
+        
+        setTimeout(() => this.checkAllStaticSlidersScroll(), 300);
       });
     }, { injector: this.injector });
   }
@@ -609,20 +612,24 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  checkAllStaticSlidersScroll() {
+    if (!this.isBrowser) return;
+    this.checkScrollState('continue-slider');
+    this.checkScrollState('trending-slider');
+    this.checkScrollState('episodes-slider');
+    this.checkScrollState('new-releases-slider');
+    this.checkScrollState('acclaimed-slider');
+    this.checkScrollState('spotlight-slider');
+    this.checkScrollState('classics-slider');
+    this.checkScrollState('hidden-gems-slider');
+    this.checkScrollState('top-picks-slider');
+    this.checkScrollState('top-charts-slider');
+  }
+
   ngAfterViewInit() {
     if (!this.isBrowser) return;
     setTimeout(() => {
-      this.checkScrollState('continue-slider');
-      this.checkScrollState('trending-slider');
-      this.checkScrollState('episodes-slider');
-      this.checkScrollState('new-releases-slider');
-      this.checkScrollState('acclaimed-slider');
-      this.checkScrollState('spotlight-slider');
-      this.checkScrollState('classics-slider');
-      this.checkScrollState('hidden-gems-slider');
-      this.checkScrollState('top-picks-slider');
-      this.checkScrollState('acclaimed-slider');
-      this.checkScrollState('top-charts-slider');
+      this.checkAllStaticSlidersScroll();
 
       // Global capture-phase scroll listener:
       // This catches ANY scroll event on the page (horizontal or vertical,

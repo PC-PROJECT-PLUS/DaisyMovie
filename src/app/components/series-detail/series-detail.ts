@@ -110,6 +110,11 @@ export class SeriesDetailComponent implements OnInit {
   // Suggested pagination
   suggestedPage = 1;
   isLoadingSuggested = false;
+  
+  resumeProgress = signal<number>(0);
+  resumeText = signal<string>('');
+  resumeSeason = signal<number>(1);
+  resumeEpisode = signal<number>(1);
 
   // EPISODE SLIDER AND DROPDOWN STATE
   isDropdownOpen = signal<boolean>(false);
@@ -143,8 +148,10 @@ export class SeriesDetailComponent implements OnInit {
 
     let startAt = 0;
     if (isPlatformBrowser(this.platformId)) {
-      const savedTime = localStorage.getItem(`daisy-progress-tv-${s.id}-${this.activeSeason()}-1`);
-      if (savedTime) startAt = parseInt(savedTime, 10);
+      const historyItem = this.historyService.getResumeProgress(s.id, true);
+      if (historyItem && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
+        startAt = historyItem.progress_seconds;
+      }
     }
 
     const genresStr = JSON.stringify(s.genres || []).toLowerCase();
@@ -177,7 +184,10 @@ export class SeriesDetailComponent implements OnInit {
       season: this.activeSeason(),
       episode: 1,
       startAt: startAt > 0 ? startAt : undefined,
-      isAnime
+      isAnime,
+      title: s.title,
+      posterUrl: s.posterUrl,
+      backdropUrl: s.backdropUrl
     });
     this.playerVisible.set(true);
   }
@@ -185,21 +195,10 @@ export class SeriesDetailComponent implements OnInit {
   onPlayerClosed() {
     this.playerVisible.set(false);
     
-    // Read the saved time (in seconds) from local storage
-    let watchedSeconds = 0;
-    const s = this.series();
-    const config = this.playerConfig();
-    
-    if (s && config && isPlatformBrowser(this.platformId)) {
-      const savedTimeStr = localStorage.getItem(`daisy-progress-tv-${config.id}-${config.season}-${config.episode}`);
-      if (savedTimeStr) {
-        watchedSeconds = parseInt(savedTimeStr, 10);
-      }
-      
-      // Save to watch history (progress in seconds)
-      this.historyService.addToHistory(s, watchedSeconds, true);
-    }
+    // Progress is now saved by VideoPlayerComponent internally via HistoryService
   }
+    
+
 
   async openEpisodePlayer(episodeNumber: number) {
     const s = this.series();
@@ -216,8 +215,10 @@ export class SeriesDetailComponent implements OnInit {
 
     let startAt = 0;
     if (isPlatformBrowser(this.platformId)) {
-      const savedTime = localStorage.getItem(`daisy-progress-tv-${s.id}-${this.activeSeason()}-${episodeNumber}`);
-      if (savedTime) startAt = parseInt(savedTime, 10);
+      const historyItem = this.historyService.getResumeProgress(s.id, true);
+      if (historyItem && historyItem.season === this.activeSeason() && historyItem.episode === episodeNumber && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
+        startAt = historyItem.progress_seconds;
+      }
     }
 
     const genresStr = JSON.stringify(s.genres || []).toLowerCase();
@@ -250,7 +251,10 @@ export class SeriesDetailComponent implements OnInit {
       season: this.activeSeason(),
       episode: episodeNumber,
       startAt: startAt > 0 ? startAt : undefined,
-      isAnime
+      isAnime,
+      title: s.title,
+      posterUrl: s.posterUrl,
+      backdropUrl: s.backdropUrl
     });
     this.playerVisible.set(true);
   }
@@ -288,6 +292,24 @@ export class SeriesDetailComponent implements OnInit {
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0);
     }
+    
+    effect(() => {
+      const s = this.series();
+      if (!s || !isPlatformBrowser(this.platformId)) return;
+      
+      const historyItem = this.historyService.getResumeProgress(s.id, true);
+      if (historyItem && historyItem.progress_seconds !== undefined && historyItem.progress_seconds >= 0) {
+        this.resumeProgress.set(historyItem.progress_seconds);
+        this.resumeSeason.set(historyItem.season || 1);
+        this.resumeEpisode.set(historyItem.episode || 1);
+        this.resumeText.set(`Riprendi S${historyItem.season} E${historyItem.episode}`);
+      } else {
+        this.resumeProgress.set(0);
+        this.resumeText.set('');
+        this.resumeSeason.set(1);
+        this.resumeEpisode.set(1);
+      }
+    }, { allowSignalWrites: true });
   }
 
   ngOnInit() {

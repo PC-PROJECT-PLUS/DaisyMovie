@@ -3,6 +3,7 @@ import { CommonModule, Location, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FavoritesService } from '../../../services/favorites.service';
+import { HistoryService } from '../../../services/history.service';
 import { CastMember, Review, SeriesDetail } from '../series-detail';
 
 @Component({
@@ -15,6 +16,9 @@ import { CastMember, Review, SeriesDetail } from '../series-detail';
 export class SeriesDetailMobile implements OnInit {
   private location = inject(Location);
   favoritesService = inject(FavoritesService);
+  private historyService = inject(HistoryService);
+  private platformId = inject(PLATFORM_ID);
+  
   series = input<SeriesDetail | null>(null);
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
   pageLoaded = signal<boolean>(false);
@@ -24,6 +28,11 @@ export class SeriesDetailMobile implements OnInit {
   
   isDropdownOpen = signal<boolean>(false);
   activeSeason = signal<number>(1);
+  
+  resumeProgress = signal<number>(0);
+  resumeText = signal<string>('');
+  resumeSeason = signal<number>(1);
+  resumeEpisode = signal<number>(1);
 
   constructor() {
     effect(() => {
@@ -31,8 +40,24 @@ export class SeriesDetailMobile implements OnInit {
         if (typeof window !== 'undefined') {
           setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }), 10);
         }
+        
+        const s = this.series();
+        if (s && isPlatformBrowser(this.platformId)) {
+          const historyItem = this.historyService.getResumeProgress(s.id, true);
+          if (historyItem && historyItem.progress_seconds !== undefined && historyItem.progress_seconds >= 0) {
+            this.resumeProgress.set(historyItem.progress_seconds);
+            this.resumeSeason.set(historyItem.season || 1);
+            this.resumeEpisode.set(historyItem.episode || 1);
+            this.resumeText.set(`Riprendi S${historyItem.season} E${historyItem.episode}`);
+          } else {
+            this.resumeProgress.set(0);
+            this.resumeText.set('');
+            this.resumeSeason.set(1);
+            this.resumeEpisode.set(1);
+          }
+        }
       }
-    });
+    }, { allowSignalWrites: true });
   }
 
   goBack() {

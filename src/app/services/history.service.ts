@@ -12,8 +12,12 @@ export interface HistoryItem {
   title: string;
   poster_url: string;
   backdrop_url: string;
+  season?: number;
+  episode?: number;
   watched_at?: string;
   progress_seconds?: number;
+  total_seconds?: number;
+  accent_color?: string;
 
   // These fields are mapped dynamically for UI usage if needed
   year?: number;
@@ -53,7 +57,7 @@ export class HistoryService {
     }
   }
 
-  async addToHistory(movie: any, progressSeconds: number = 0, forceIsSeries?: boolean) {
+  async addToHistory(movie: any, progressSeconds: number = 0, forceIsSeries?: boolean, season?: number, episode?: number, totalSeconds: number = 0, accentColor: string = '') {
     const profile = this.authService.selectedProfile();
     if (!profile) return;
 
@@ -69,6 +73,10 @@ export class HistoryService {
         poster_url: movie.posterUrl || movie.poster_path,
         backdrop_url: movie.backdropUrl || movie.backdrop_path || movie.posterUrl,
         progress_seconds: progressSeconds,
+        total_seconds: totalSeconds,
+        accent_color: accentColor,
+        season: season,
+        episode: episode,
         watched_at: new Date().toISOString()
       };
 
@@ -86,7 +94,11 @@ export class HistoryService {
         title: newItem.title,
         posterUrl: newItem.poster_url,
         backdropUrl: newItem.backdrop_url,
-        progressSeconds: newItem.progress_seconds
+        progressSeconds: newItem.progress_seconds,
+        season: newItem.season,
+        episode: newItem.episode,
+        totalSeconds: newItem.total_seconds,
+        accentColor: newItem.accent_color
       }));
 
       if (res && res.id) {
@@ -95,6 +107,27 @@ export class HistoryService {
     } catch (err) {
       console.error('Error adding to history:', err);
       if (profile) this.loadHistory(profile.id); // reload on error
+    }
+  }
+
+  getResumeProgress(mediaId: number, isSeries: boolean): HistoryItem | undefined {
+    const type = isSeries ? 'tv' : 'movie';
+    return this.items().find(i => i.media_id === mediaId && i.media_type === type);
+  }
+
+  async removeFromHistory(mediaId: number, isSeries: boolean) {
+    const profile = this.authService.selectedProfile();
+    if (!profile) return;
+    const mediaType = isSeries ? 'tv' : 'movie';
+    
+    // Optimistic UI update
+    this.items.update(curr => curr.filter(i => !(i.media_id === mediaId && i.media_type === mediaType)));
+    
+    try {
+      await firstValueFrom(this.http.delete(`${this.apiUrl}/history/${mediaId}?profileId=${profile.id}&mediaType=${mediaType}`));
+    } catch (err) {
+      console.error('Failed to remove from history', err);
+      this.loadHistory(profile.id);
     }
   }
 }

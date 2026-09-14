@@ -65,7 +65,10 @@ CREATE TABLE IF NOT EXISTS history (
     media_type VARCHAR(20) NOT NULL,
     title VARCHAR(255) NOT NULL,
     poster_url VARCHAR(255),
+    backdrop_url VARCHAR(255),
     progress INTEGER DEFAULT 0,
+    season INTEGER,
+    episode INTEGER,
     last_watched TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(profile_id, media_id, media_type)
 );

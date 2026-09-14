@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, signal, computed, inject, PLATF
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { TmdbService } from '../../services/tmdb.service';
+import { HistoryService } from '../../services/history.service';
 
 export interface PlayerConfig {
   id: number;
@@ -9,8 +10,11 @@ export interface PlayerConfig {
   accentColor?: string;
   season?: number;
   episode?: number;
-  startAt?: number; // seconds
+  startAt?: number;
   isAnime?: boolean;
+  title?: string;
+  posterUrl?: string;
+  backdropUrl?: string;
 }
 
 @Component({
@@ -124,27 +128,74 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     }
   }
 
-  private handleIframeMessage(event: MessageEvent) {
-    if (this.safeUrl()) {
-      try {
-        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        if (data && data.type === 'PLAYER_EVENT' && data.data) {
-          const vixData = data.data;
-          if (vixData.event === 'timeupdate' || vixData.event === 'pause') {
-            // Salviamo nel localStorage
-            localStorage.setItem('vixsrc_time_debug', String(Math.floor(vixData.currentTime)));
-          }
+  private historyService = inject(HistoryService);
+
+  private lastSavedTime = 0;
+  private duration = 0;
+
+
+
+  private saveProgress(currentTime: number) {
+    if (!this.config || !this.historyService) return;
+    
+    // Check tolerance (60 seconds)
+    const isCompleted = this.duration > 0 && (this.duration - currentTime <= 60);
+    const isSeries = this.config.type === 'tv';
+    
+    // Get existing history item for title/posters, or fallback to config
+    const existing = this.historyService.getResumeProgress(this.config.id, isSeries);
+    const title = existing?.title || this.config.title || '';
+    const posterUrl = existing?.poster_url || this.config.posterUrl || '';
+    const backdropUrl = existing?.backdrop_url || this.config.backdropUrl || '';
+    
+    if (isCompleted) {
+      if (!isSeries) {
+        this.historyService.removeFromHistory(this.config.id, false);
+      } else {
+        const eps = this.tvEpisodes();
+        const currentEp = this.config.episode || 1;
+        const curSeason = this.currentSeason();
+        
+        let nextEp = null;
+        if (eps.find(e => e.episodeNumber === currentEp + 1)) {
+          nextEp = { s: curSeason, e: currentEp + 1 };
+        } else if (curSeason < this.totalSeasons()) {
+          nextEp = { s: curSeason + 1, e: 1 };
         }
-      } catch (e) {
-        // Not JSON
+        
+        if (nextEp) {
+          // Add NEXT episode with 0 progress
+          this.historyService.addToHistory(
+            { id: this.config.id, isSeries: true, title, posterUrl, backdropUrl },
+            0,
+            true,
+            nextEp.s,
+            nextEp.e,
+            0,
+            this.config.accentColor || ''
+          );
+        } else {
+          // Series completely finished (no more episodes/seasons)
+          this.historyService.removeFromHistory(this.config.id, true);
+        }
       }
+    } else {
+       // Just update progress
+       this.historyService.addToHistory(
+         { id: this.config.id, isSeries: isSeries, title, posterUrl, backdropUrl },
+         currentTime,
+         isSeries,
+         this.config.season,
+         this.config.episode,
+         this.duration,
+         this.config.accentColor || ''
+       );
     }
   }
 
   showDebugTime() {
     if (isPlatformBrowser(this.platformId)) {
-      const time = localStorage.getItem('vixsrc_time_debug');
-      alert(time ? `Il tempo salvato è: ${time} secondi!` : 'Nessun tempo salvato ancora.');
+      alert(this.lastSavedTime ? `Il tempo salvato è: ${this.lastSavedTime} secondi!` : 'Nessun tempo salvato ancora.');
     }
   }
 
@@ -152,11 +203,24 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     clearTimeout(this.leaveTimeout);
     clearTimeout(this.enterTimeout);
     this.unlockBodyScroll();
+    
+    // Final save on destroy
+    if (this.lastSavedTime > 0) {
+      this.saveProgress(this.lastSavedTime);
+    }
   }
 
   private buildUrl() {
     if (!this.config) return;
-    const { id, type, accentColor, season, episode, startAt, isAnime } = this.config;
+    const { id, type, accentColor, season, episode, isAnime } = this.config;
+    let startAt = this.config.startAt;
+
+    if (!startAt) {
+      const historyItem = this.historyService.getResumeProgress(id, type === 'tv');
+      if (historyItem && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
+        startAt = historyItem.progress_seconds;
+      }
+    }
 
     // Convert accent color to hex if it's in HSL format, or strip # if it's already hex
     let hex = 'E50914'; // Fallback to Netflix Red
@@ -299,15 +363,29 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     if (event.origin.includes('vixsrc') || event.origin.includes('vidsrc')) {
       try {
         let payload = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        if (payload && payload.type === 'PLAYER_EVENT' && payload.event?.event === 'timeupdate') {
-          const currentTime = Math.floor(payload.event.currentTime);
-          if (currentTime > 0 && this.config?.id) {
-            const key = this.config.type === 'movie'
-              ? `daisy-progress-movie-${this.config.id}`
-              : `daisy-progress-tv-${this.config.id}-${this.config.season}-${this.config.episode}`;
+        if (payload && payload.type === 'PLAYER_EVENT') {
+          const vixData = payload.event || payload.data;
+          if (vixData) {
+            if (vixData.event === 'timeupdate') {
+              const currentTime = Math.floor(vixData.currentTime);
+              this.duration = Math.floor(vixData.duration || 0);
+              
+              if (currentTime > 0 && this.config?.id) {
+                // Save time to local storage
+                const key = this.config.type === 'movie'
+                  ? `daisy-progress-movie-${this.config.id}`
+                  : `daisy-progress-tv-${this.config.id}-${this.config.season}-${this.config.episode}`;
+                localStorage.setItem(key, currentTime.toString());
+              }
 
-            // Save time to local storage
-            localStorage.setItem(key, currentTime.toString());
+              // Save to HistoryService every 5 seconds to avoid spamming
+              if (Math.abs(currentTime - this.lastSavedTime) >= 5) {
+                this.lastSavedTime = currentTime;
+                this.saveProgress(currentTime);
+              }
+            } else if (vixData.event === 'pause' || vixData.event === 'ended') {
+              this.saveProgress(Math.floor(vixData.currentTime || 0));
+            }
           }
         }
       } catch (e) {

@@ -286,7 +286,16 @@ router.get('/home', async (req, res) => {
         let heroTvList = mapItems(data[mapIndices.heroTv], false, true);
         heroMoviesList = [...heroMoviesList, ...heroTvList];
       }
+      
+      const nowTime = Date.now();
+      // Keep only items that are already released (date <= today)
+      heroMoviesList = heroMoviesList.filter(item => {
+        const d = new Date(item.releaseDate).getTime();
+        return !isNaN(d) && d <= nowTime;
+      });
+      // Sort strictly by most recently released first
       heroMoviesList.sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime());
+      
       responseData.heroMovies = heroMoviesList;
     }
     if (mapIndices.trending !== undefined) responseData.trendingMovies = mapItems(data[mapIndices.trending]);
