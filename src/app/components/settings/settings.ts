@@ -7,6 +7,7 @@ import { SettingsMobile } from './settings-mobile/settings-mobile';
 import { ThemeService } from '../../services/theme.service';
 import { PreferencesService, MOCK_HISTORY_ITEMS } from '../../services/preferences.service';
 import { FavoritesService } from '../../services/favorites.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-settings',
@@ -21,6 +22,7 @@ export class Settings {
   titleService = inject(Title);
   preferencesService = inject(PreferencesService);
   favoritesService = inject(FavoritesService);
+  notificationService = inject(NotificationService);
   availableHistoryItems = MOCK_HISTORY_ITEMS;
   
   get availableFavoritesItems() {
@@ -45,6 +47,17 @@ export class Settings {
 
   constructor() {
     this.titleService.setTitle('Impostazioni');
+  }
+
+  toggleEmailDigest() {
+    this.notificationService.emailDigestEnabled.update(v => !v);
+  }
+  
+  generateTestNotification() {
+    this.notificationService.createTestNotification(
+      'Messaggio di Prova',
+      'Questa notifica è stata generata per verificare il salvataggio sul database!'
+    );
   }
 
   activeTab = signal<'account' | 'profile' | 'playback' | 'language' | 'appearance' | 'family'>('account');

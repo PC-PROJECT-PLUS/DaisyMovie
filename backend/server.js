@@ -11,6 +11,8 @@ const authRouter = require('./src/routes/auth');
 const profilesRouter = require('./src/routes/profiles');
 const favoritesRouter = require('./src/routes/favorites');
 const historyRouter = require('./src/routes/history');
+const notificationsRouter = require('./src/routes/notifications');
+const followingRouter = require('./src/routes/following');
 
 // Middleware
 app.use(cors());
@@ -22,6 +24,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/profiles', profilesRouter);
 app.use('/api/favorites', favoritesRouter);
 app.use('/api/history', historyRouter);
+app.use('/api/notifications', notificationsRouter);
+app.use('/api/following', followingRouter);
 
 // Configurazione Database PostgreSQL
 const pool = require('./src/db');
@@ -44,6 +48,10 @@ app.get('/api/test-db', async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Errore di connessione al database', error: err.message });
   }
 });
+
+// Inizializza il Cron Job
+const { startNotificationCron } = require('./src/cron/notificationCron');
+startNotificationCron();
 
 // Avvio del server
 app.listen(port, () => {

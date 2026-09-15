@@ -102,8 +102,7 @@ export class NavbarMobile {
   }
 
   logout() {
-    this.authService.logout();
+    this.authService.showLogoutModal.set(true);
     this.isMenuOpen.set(false);
-    this.router.navigate(['/auth']);
   }
 }

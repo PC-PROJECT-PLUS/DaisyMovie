@@ -1,6 +1,7 @@
 import { Component, signal, OnDestroy, OnInit, AfterViewInit, inject, PLATFORM_ID, effect, Injector, NgZone, computed } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Title } from '@angular/platform-browser';
+import { NotificationService } from '../../services/notification.service';
 import { Router, RouterLink } from '@angular/router';
 import { Navbar } from '../navbar/navbar';
 import { FooterComponent } from '../footer/footer';
@@ -110,6 +111,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
   private titleService = inject(Title);
+  public notificationService = inject(NotificationService);
   private isBrowser = isPlatformBrowser(this.platformId);
 
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
@@ -909,7 +911,15 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
-    item.isNotified = !item.isNotified;
+    const it = item as any;
+    const isSeries = !!it.isSeries;
+    this.notificationService.toggleUpcomingNotification(
+      it.id,
+      isSeries ? 'tv' : 'movie',
+      it.title || it.name,
+      it.posterUrl || it.poster_path,
+      it.backdropUrl || it.backdrop_path || it.posterUrl
+    );
   }
 
   checkScrollState(containerId: string) {

@@ -3,7 +3,9 @@ import { RouterOutlet, Router, Event as RouterEvent, NavigationStart, Navigation
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Navbar } from './components/navbar/navbar';
 import { PageLoaderComponent } from './components/page-loader/page-loader';
+import { LogoutModalComponent } from './components/shared/logout-modal/logout-modal';
 import { LoaderService } from './services/loader.service';
+import { AuthService } from './services/auth.service';
 import { filter } from 'rxjs/operators';
 
 // Routes where the navbar should be hidden
@@ -11,7 +13,7 @@ const HIDDEN_NAVBAR_ROUTES = ['/auth', '/profile'];
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, CommonModule, PageLoaderComponent],
+  imports: [RouterOutlet, Navbar, CommonModule, PageLoaderComponent, LogoutModalComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
@@ -20,6 +22,7 @@ export class App implements AfterViewInit, OnDestroy {
   private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
   public loaderService = inject(LoaderService);
+  public auth = inject(AuthService);
 
   showNavbar = signal(true);
   private minLoadingTime: number = 0;

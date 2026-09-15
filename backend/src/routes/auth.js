@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
+const { sendVerificationCodeEmail } = require('../services/emailService');
 const { OAuth2Client } = require('google-auth-library');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key';
@@ -17,39 +18,7 @@ const googleClient = new OAuth2Client(
 // Helper: Invio Email con Brevo
 // ---------------------------------------------------------
 async function sendVerificationEmail(email, code) {
-  if (!BREVO_API_KEY) {
-    console.warn('BREVO_API_KEY non impostata. Codice generato:', code);
-    return;
-  }
-  
-  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: {
-      'accept': 'application/json',
-      'api-key': BREVO_API_KEY,
-      'content-type': 'application/json'
-    },
-    body: JSON.stringify({
-      sender: { email: process.env.BREVO_SENDER_EMAIL || 'noreply@daisymovie.com', name: 'DaisyMovie' },
-      to: [{ email: email }],
-      subject: 'Il tuo codice di verifica DaisyMovie',
-      htmlContent: `<html><body>
-        <h2>Benvenuto su DaisyMovie!</h2>
-        <p>Il tuo codice di verifica è: <strong style="font-size: 24px;">${code}</strong></p>
-        <p>Inserisci questo codice nell'app per completare la registrazione.</p>
-      </body></html>`
-    })
-  });
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    console.error('Brevo API Error:', errorData);
-  }
-  
-  console.log('\n=============================================');
-  console.log(`[DEV MODE] Codice di verifica inviato (o bloccato da Brevo).`);
-  console.log(`[DEV MODE] Usa questo codice per verificare ${email}: ${code}`);
-  console.log('=============================================\n');
+  await sendVerificationCodeEmail(email, code);
 }
 
 // ---------------------------------------------------------

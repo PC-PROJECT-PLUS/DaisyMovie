@@ -378,14 +378,15 @@
 
               .notif-message {
                 margin: 0;
-                font-size: 0.8rem;
-                color: rgba(255, 255, 255, 0.7);
+                font-size: 0.85rem;
+                color: rgba(255, 255, 255, 0.65);
                 line-height: 1.4;
                 display: -webkit-box;
                 -webkit-line-clamp: 2;
                 line-clamp: 2;
                 -webkit-box-orient: vertical;
                 overflow: hidden;
+                text-overflow: ellipsis;
               }
 
               .notif-time {
@@ -398,10 +399,30 @@
               width: 8px;
               height: 8px;
               border-radius: 50%;
-              background: var(--accent-blue, #3b82f6);
-              margin-top: 14px;
+              background-color: var(--primary-color, #e50914);
               flex-shrink: 0;
+              box-shadow: 0 0 5px rgba(229, 9, 20, 0.5);
             }
+          }
+        }
+
+        .empty-notifications {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 20px;
+          color: #777;
+          text-align: center;
+          
+          svg {
+            margin-bottom: 12px;
+            opacity: 0.5;
+          }
+
+          p {
+            font-size: 14px;
+            margin: 0;
           }
         }
       }

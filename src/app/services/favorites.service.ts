@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { firstValueFrom } from 'rxjs';
+import { NotificationService } from './notification.service';
 
 export interface FavoriteItem {
   id?: string;
@@ -27,6 +28,7 @@ export class FavoritesService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private appRef = inject(ApplicationRef);
+  private notificationService = inject(NotificationService);
   private apiUrl = environment.apiUrl;
 
   items = signal<FavoriteItem[]>([]);
@@ -102,6 +104,9 @@ export class FavoritesService {
 
         if (res && res.id) {
           this.items.update(curr => curr.map(i => (i.media_id === mediaId && i.media_type === mediaType) ? res : i));
+          
+          // Ricarica le notifiche dal server per far vedere subito la nuova notifica
+          this.notificationService.fetchNotifications(profile.id);
         }
       }
     } catch (err) {

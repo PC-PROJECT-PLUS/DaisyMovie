@@ -9,6 +9,7 @@ import { NavbarMobile } from './navbar-mobile/navbar-mobile';
 import { CategoryService } from '../../services/category.service';
 import { Title } from '@angular/platform-browser';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService, AppNotification } from '../../services/notification.service';
 
 @Component({
   selector: 'app-navbar',
@@ -24,6 +25,7 @@ export class Navbar implements AfterViewInit {
   public categoryService = inject(CategoryService);
   private titleService = inject(Title);
   public authService = inject(AuthService);
+  public notificationService = inject(NotificationService);
   activeProfile = computed(() => this.authService.selectedProfile());
 
   isSearchExpanded = signal<boolean>(false);
@@ -31,48 +33,7 @@ export class Navbar implements AfterViewInit {
   isUserMenuOpen = signal<boolean>(false);
   isNotificationMenuOpen = signal<boolean>(false);
 
-  mockNotifications = [
-    {
-      id: 1,
-      title: 'Nuovo Episodio Disponibile',
-      message: 'L\'episodio 3 della stagione 2 di "The Bear" è ora disponibile.',
-      time: '2 ore fa',
-      unread: true,
-      icon: 'play' // A string to determine the SVG icon
-    },
-    {
-      id: 2,
-      title: 'Consigliato per te',
-      message: 'Perché hai guardato "Arcane", ti consigliamo "Cyberpunk: Edgerunners".',
-      time: 'Ieri',
-      unread: true,
-      icon: 'star'
-    },
-    {
-      id: 3,
-      title: 'Avviso di Scadenza',
-      message: '"Friends" lascerà il catalogo tra 7 giorni. Guardalo finché sei in tempo!',
-      time: '3 giorni fa',
-      unread: false,
-      icon: 'alert'
-    },
-    {
-      id: 4,
-      title: 'Nuova Serie in Arrivo',
-      message: 'Il trailer ufficiale di "Fallout" è stato rilasciato.',
-      time: '1 settimana fa',
-      unread: false,
-      icon: 'calendar'
-    },
-    {
-      id: 5,
-      title: 'Playlist Aggiornata',
-      message: 'La tua playlist "Da vedere con gli amici" è stata aggiornata.',
-      time: '2 settimane fa',
-      unread: false,
-      icon: 'list'
-    }
-  ];
+  unreadCount = computed(() => this.notificationService.notifications().filter(n => n.unread).length);
 
   navItems = ['Film', 'Serie TV', 'Animazione', 'Anime'];
 
@@ -169,6 +130,9 @@ export class Navbar implements AfterViewInit {
     } else {
       this.isUserMenuOpen.update(v => !v);
     }
+    if (this.isUserMenuOpen()) {
+      this.isNotificationMenuOpen.set(false);
+    }
   }
 
   toggleNotificationMenu(state?: boolean) {
@@ -177,18 +141,29 @@ export class Navbar implements AfterViewInit {
     } else {
       this.isNotificationMenuOpen.update(v => !v);
     }
+    if (this.isNotificationMenuOpen()) {
+      this.isUserMenuOpen.set(false);
+    }
+  }
+
+  onNotificationClick(notif: AppNotification) {
+    this.notificationService.markAsRead(notif.id);
+    this.isNotificationMenuOpen.set(false);
+    if (notif.targetUrl) {
+      this.router.navigate([notif.targetUrl]);
+    }
   }
 
   markAllAsRead() {
-    this.mockNotifications = this.mockNotifications.map(n => ({ ...n, unread: false }));
+    this.notificationService.markAllAsRead();
   }
 
   get hasUnreadNotifications(): boolean {
-    return this.mockNotifications.some(n => n.unread);
+    return this.unreadCount() > 0;
   }
 
   logout() {
-    this.authService.logout();
-    this.router.navigate(['/auth']);
+    this.authService.showLogoutModal.set(true);
+    this.isUserMenuOpen.set(false);
   }
 }

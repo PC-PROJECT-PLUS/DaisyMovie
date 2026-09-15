@@ -3,3 +3,7 @@
 }
 <app-page-loader [isVisible]="loaderService.isPageLoading()"></app-page-loader>
 <router-outlet />
+
+@if (auth.showLogoutModal()) {
+  <app-logout-modal></app-logout-modal>
+}

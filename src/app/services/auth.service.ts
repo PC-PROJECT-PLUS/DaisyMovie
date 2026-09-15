@@ -29,6 +29,7 @@ export class AuthService {
   isLoggedIn = signal<boolean>(false);
   selectedProfile = signal<UserProfile | null>(null);
   currentUser = signal<User | null>(null);
+  showLogoutModal = signal<boolean>(false);
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {

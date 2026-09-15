@@ -145,11 +145,16 @@
                     <h3>Preferenze Email</h3>
                   </div>
                   <div class="bento-row">
-                    <div class="bento-label">Novità e Offerte</div>
+                    <div class="bento-label">Riassunto Giornaliero Notifiche</div>
                     <label class="toggle-switch">
-                      <input type="checkbox" checked>
+                      <input type="checkbox" [checked]="notificationService.emailDigestEnabled()" (change)="toggleEmailDigest()">
                       <span class="slider"></span>
                     </label>
+                  </div>
+                  <div class="bento-row" style="margin-top: 1rem;">
+                    <button class="primary-btn" style="width: 100%;" (click)="generateTestNotification()">
+                      Genera Notifica di Prova
+                    </button>
                   </div>
                   <div class="bento-row">
                     <div class="bento-label">Consigli su misura</div>
