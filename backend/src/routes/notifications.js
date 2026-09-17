@@ -19,15 +19,18 @@ router.get('/', async (req, res) => {
     );
 
     // Mappa le notifiche per il frontend
-    const notifications = result.rows.map(n => ({
-      id: n.id,
-      title: n.title,
-      message: n.message,
-      time: 'Poco fa', // Mock o converti created_at
-      unread: !n.is_read,
-      icon: 'alert', // Puoi aggiungere un campo icon nel DB in futuro se serve
-      targetUrl: n.media_id ? `/movie/${n.media_id}` : '/'
-    }));
+    const notifications = result.rows.map(n => {
+      const typePath = n.media_type === 'tv' ? 'series' : 'movie';
+      return {
+        id: n.id,
+        title: n.title,
+        message: n.message,
+        time: 'Poco fa', // Mock o converti created_at
+        unread: !n.is_read,
+        icon: 'alert', // Puoi aggiungere un campo icon nel DB in futuro se serve
+        targetUrl: n.media_id ? `/${typePath}/${n.media_id}` : '/'
+      };
+    });
 
     res.json(notifications);
   } catch (error) {
@@ -39,15 +42,15 @@ router.get('/', async (req, res) => {
 // Crea una notifica di prova
 router.post('/test', async (req, res) => {
   try {
-    const { profileId, title, message, mediaId } = req.body;
+    const { profileId, title, message, mediaId, mediaType } = req.body;
     if (!profileId) {
       return res.status(400).json({ error: 'profileId richiesto' });
     }
 
     const result = await pool.query(
-      `INSERT INTO notifications (profile_id, title, message, media_id, is_read) 
-       VALUES ($1, $2, $3, $4, FALSE) RETURNING *`,
-      [profileId, title || 'Nuova Notifica', message || 'Questa è una notifica di prova salvata nel DB!', mediaId || null]
+      `INSERT INTO notifications (profile_id, title, message, media_id, media_type, is_read) 
+       VALUES ($1, $2, $3, $4, $5, FALSE) RETURNING *`,
+      [profileId, title || 'Nuova Notifica', message || 'Questa è una notifica di prova salvata nel DB!', mediaId || null, mediaType || 'movie']
     );
 
     res.json({ success: true, notification: result.rows[0] });

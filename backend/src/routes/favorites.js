@@ -67,36 +67,6 @@ router.post('/', async (req, res) => {
       [profileId, mediaId, mediaType, title, posterUrl, backdropUrl, releaseDate]
     );
 
-    // INVIA EMAIL IN TEMPO REALE
-    try {
-      const userRes = await client.query(`
-        SELECT p.name as profile_name, u.email as user_email 
-        FROM profiles p
-        JOIN users u ON p.user_id = u.id
-        WHERE p.id = $1
-      `, [profileId]);
-      
-      if (userRes.rows.length > 0 && result.rows.length > 0) {
-        const { profile_name, user_email } = userRes.rows[0];
-        
-        // Crea anche una notifica istantanea in-app!
-        await client.query(
-          `INSERT INTO notifications (profile_id, media_id, title, message)
-           VALUES ($1, $2, $3, $4)`,
-          [profileId, mediaId, 'Preferito aggiunto!', `Hai appena salvato "${title}" tra i tuoi preferiti.`]
-        );
-
-        // Invia la mail
-        await sendNotificationEmail(
-          user_email, 
-          profile_name, 
-          'Nuovo Titolo nei Preferiti - Daisy Movie', 
-          `Hai appena aggiunto "${title}" ai tuoi preferiti. Lo troverai nella tua area personale, pronto per essere guardato!`
-        );
-      }
-    } catch (emailErr) {
-      console.error('Errore invio email in tempo reale:', emailErr);
-    }
 
     await client.query('COMMIT');
 
@@ -147,6 +117,100 @@ router.delete('/:mediaId', async (req, res) => {
     res.status(500).json({ error: 'Errore server' });
   } finally {
     client.release();
+  }
+});
+
+// --- COLLECTIONS API ---
+
+// GET /api/favorites/collections?profileId=...
+router.get('/collections', async (req, res) => {
+  const { profileId } = req.query;
+  if (!profileId) return res.status(400).json({ error: 'profileId is required' });
+
+  try {
+    const collRes = await pool.query(
+      'SELECT id, name, created_at FROM favorite_collections WHERE profile_id = $1 ORDER BY created_at ASC',
+      [profileId]
+    );
+
+    const collections = collRes.rows;
+    for (let c of collections) {
+      const itemsRes = await pool.query(
+        'SELECT favorite_id FROM favorite_collection_items WHERE collection_id = $1',
+        [c.id]
+      );
+      c.items = itemsRes.rows.map(r => r.favorite_id);
+    }
+
+    res.json(collections);
+  } catch (error) {
+    console.error('Errore fetch collections:', error);
+    res.status(500).json({ error: 'Errore server' });
+  }
+});
+
+// POST /api/favorites/collections
+router.post('/collections', async (req, res) => {
+  const { profileId, name } = req.body;
+  if (!profileId || !name) return res.status(400).json({ error: 'Dati mancanti' });
+
+  try {
+    const result = await pool.query(
+      'INSERT INTO favorite_collections (profile_id, name) VALUES ($1, $2) RETURNING id, name, created_at',
+      [profileId, name]
+    );
+    res.status(201).json({ ...result.rows[0], items: [] });
+  } catch (error) {
+    console.error('Errore creazione collezione:', error);
+    res.status(500).json({ error: 'Errore server' });
+  }
+});
+
+// DELETE /api/favorites/collections/:id
+router.delete('/collections/:id', async (req, res) => {
+  const { id } = req.params;
+  const { profileId } = req.query;
+
+  try {
+    await pool.query('DELETE FROM favorite_collections WHERE id = $1 AND profile_id = $2', [id, profileId]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Errore eliminazione collezione:', error);
+    res.status(500).json({ error: 'Errore server' });
+  }
+});
+
+// POST /api/favorites/collections/:id/items
+router.post('/collections/:id/items', async (req, res) => {
+  const { id } = req.params;
+  const { favoriteId } = req.body;
+  if (!favoriteId) return res.status(400).json({ error: 'favoriteId is required' });
+
+  try {
+    await pool.query(
+      'INSERT INTO favorite_collection_items (collection_id, favorite_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+      [id, favoriteId]
+    );
+    res.status(201).json({ success: true });
+  } catch (error) {
+    console.error('Errore aggiunta item a collezione:', error);
+    res.status(500).json({ error: 'Errore server' });
+  }
+});
+
+// DELETE /api/favorites/collections/:id/items/:favoriteId
+router.delete('/collections/:id/items/:favoriteId', async (req, res) => {
+  const { id, favoriteId } = req.params;
+
+  try {
+    await pool.query(
+      'DELETE FROM favorite_collection_items WHERE collection_id = $1 AND favorite_id = $2',
+      [id, favoriteId]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Errore rimozione item da collezione:', error);
+    res.status(500).json({ error: 'Errore server' });
   }
 });
 

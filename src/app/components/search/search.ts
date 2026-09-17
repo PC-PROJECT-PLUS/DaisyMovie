@@ -7,6 +7,7 @@ import { ThemeService } from '../../services/theme.service';
 import { TmdbService } from '../../services/tmdb.service';
 import { FavoritesService } from '../../services/favorites.service';
 import { LoaderService } from '../../services/loader.service';
+import { CollectionsModalService } from '../../services/collections-modal.service';
 import { SearchMobileComponent } from './search-mobile/search-mobile';
 
 interface MovieItem {
@@ -37,6 +38,7 @@ export class SearchComponent implements OnInit {
   tmdbService = inject(TmdbService);
   favoritesService = inject(FavoritesService);
   loaderService = inject(LoaderService);
+  collectionsModalService = inject(CollectionsModalService);
   router = inject(Router);
   route = inject(ActivatedRoute);
   titleService = inject(Title);
@@ -146,7 +148,16 @@ export class SearchComponent implements OnInit {
 
   toggleBookmark(movie: MovieItem, event: Event) {
     event.stopPropagation();
-    this.favoritesService.toggleFavorite(movie);
+    const posterUrl = movie.posterUrl || movie.backdropUrl || '';
+    const year = movie.year || '';
+    this.collectionsModalService.openModal({
+      id: movie.id,
+      title: movie.title,
+      posterUrl: posterUrl,
+      backdropUrl: movie.backdropUrl || posterUrl,
+      year: year.toString(),
+      isSeries: !!movie.isSeries
+    });
   }
 
   performSearch(reset: boolean = false) {

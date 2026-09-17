@@ -22,6 +22,13 @@ export interface FavoriteItem {
   matchScore?: string;
 }
 
+export interface FavoriteCollection {
+  id: number;
+  name: string;
+  items: string[]; // array of favorite_ids (UUIDs)
+  created_at: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FavoritesService {
   private platformId = inject(PLATFORM_ID);
@@ -32,6 +39,7 @@ export class FavoritesService {
   private apiUrl = environment.apiUrl;
 
   items = signal<FavoriteItem[]>([]);
+  collections = signal<FavoriteCollection[]>([]);
 
   private favoritesSet = computed(() => {
     const set = new Set<string>();
@@ -54,11 +62,16 @@ export class FavoritesService {
 
   async loadFavorites(profileId: string) {
     try {
-      const items = await firstValueFrom(this.http.get<FavoriteItem[]>(`${this.apiUrl}/favorites?profileId=${profileId}`));
+      const [items, collections] = await Promise.all([
+        firstValueFrom(this.http.get<FavoriteItem[]>(`${this.apiUrl}/favorites?profileId=${profileId}`)),
+        firstValueFrom(this.http.get<FavoriteCollection[]>(`${this.apiUrl}/favorites/collections?profileId=${profileId}`))
+      ]);
       this.items.set(items);
+      this.collections.set(collections);
     } catch (err) {
-      console.error('Failed to load favorites', err);
+      console.error('Failed to load favorites or collections', err);
       this.items.set([]);
+      this.collections.set([]);
     }
   }
 
@@ -78,12 +91,12 @@ export class FavoritesService {
 
     try {
       if (isBookmarked) {
-        this.items.update(curr => curr.filter(i => !(i.media_id === mediaId && i.media_type === mediaType)));
+        this.items.update(curr => curr.filter(i => !(Number(i.media_id) === Number(mediaId) && i.media_type === mediaType)));
         this.appRef.tick(); // Force UI update
         await firstValueFrom(this.http.delete(`${this.apiUrl}/favorites/${mediaId}?profileId=${profile.id}&mediaType=${mediaType}`));
       } else {
         const newItem: FavoriteItem = {
-          media_id: mediaId,
+          media_id: Number(mediaId),
           media_type: mediaType,
           title: movie.title || movie.name,
           poster_url: movie.posterUrl || movie.poster_path,
@@ -112,6 +125,89 @@ export class FavoritesService {
     } catch (err) {
       console.error('Error toggling favorite:', err);
       if (profile) this.loadFavorites(profile.id);
+    }
+  }
+
+  // Collections methods
+  async createCollection(name: string): Promise<FavoriteCollection | undefined> {
+    const profile = this.authService.selectedProfile();
+    if (!profile) return undefined;
+    try {
+      const newColl = await firstValueFrom(this.http.post<FavoriteCollection>(`${this.apiUrl}/favorites/collections`, {
+        profileId: profile.id,
+        name
+      }));
+      this.collections.update(curr => [...curr, newColl]);
+      return newColl;
+    } catch (err) {
+      console.error('Error creating collection:', err);
+      return undefined;
+    }
+  }
+
+  async deleteCollection(collectionId: number) {
+    const profile = this.authService.selectedProfile();
+    if (!profile) return;
+    try {
+      await firstValueFrom(this.http.delete(`${this.apiUrl}/favorites/collections/${collectionId}?profileId=${profile.id}`));
+      this.collections.update(curr => curr.filter(c => c.id !== collectionId));
+    } catch (err) {
+      console.error('Error deleting collection:', err);
+    }
+  }
+
+  async addItemToCollection(collectionId: number, favoriteId: string) {
+    this.collections.update(curr => curr.map(c => 
+      c.id === collectionId && !c.items.includes(favoriteId) ? { ...c, items: [...c.items, favoriteId] } : c
+    ));
+    try {
+      await firstValueFrom(this.http.post(`${this.apiUrl}/favorites/collections/${collectionId}/items`, { favoriteId }));
+    } catch (err) {
+      console.error('Error adding to collection:', err);
+    }
+  }
+
+  async removeItemFromCollection(collectionId: number, favoriteId: string) {
+    this.collections.update(curr => curr.map(c => 
+      c.id === collectionId ? { ...c, items: c.items.filter(id => id !== favoriteId) } : c
+    ));
+    try {
+      await firstValueFrom(this.http.delete(`${this.apiUrl}/favorites/collections/${collectionId}/items/${favoriteId}`));
+    } catch (err) {
+      console.error('Error removing from collection:', err);
+    }
+  }
+
+  isMovieInCollection(mediaId: number | string, collectionId: number, isSeries?: boolean): boolean {
+    const type = isSeries ? 'tv' : 'movie';
+    const favItem = this.items().find(i => Number(i.media_id) === Number(mediaId) && i.media_type === type);
+    if (!favItem || !favItem.id) return false;
+    const col = this.collections().find(c => c.id === collectionId);
+    return col ? col.items.includes(favItem.id) : false;
+  }
+
+  async addMovieToCollection(movie: any, collectionId: number, isSeries?: boolean) {
+    const type = isSeries ? 'tv' : 'movie';
+    let favItem = this.items().find(i => Number(i.media_id) === Number(movie.id) && i.media_type === type);
+    
+    if (!favItem) {
+      // Se non è nei preferiti generali, aggiungiamolo prima lì
+      await this.toggleFavorite(movie, isSeries);
+      // Riprova a trovarlo (dopo la reattività)
+      favItem = this.items().find(i => Number(i.media_id) === Number(movie.id) && i.media_type === type);
+      if (!favItem || !favItem.id) return;
+    }
+
+    if (favItem.id) {
+      await this.addItemToCollection(collectionId, favItem.id);
+    }
+  }
+
+  async removeMovieFromCollection(mediaId: number | string, collectionId: number, isSeries?: boolean) {
+    const type = isSeries ? 'tv' : 'movie';
+    const favItem = this.items().find(i => Number(i.media_id) === Number(mediaId) && i.media_type === type);
+    if (favItem && favItem.id) {
+      await this.removeItemFromCollection(collectionId, favItem.id);
     }
   }
 }

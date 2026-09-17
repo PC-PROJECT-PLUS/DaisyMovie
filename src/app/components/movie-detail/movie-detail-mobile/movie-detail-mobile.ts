@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, input, PLATFORM_ID, inject, effect } from '@angular/core';
+import { Component, OnInit, signal, input, PLATFORM_ID, inject, effect, untracked } from '@angular/core';
 import { CommonModule, Location, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -39,16 +39,18 @@ export class MovieDetailMobile implements OnInit {
         const m = this.movie();
         if (m && isPlatformBrowser(this.platformId)) {
           const historyItem = this.historyService.getResumeProgress(m.id, false);
-          if (historyItem && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
-            this.resumeProgress.set(historyItem.progress_seconds);
-            this.resumeText.set(`Riprendi da ${this.formatTime(historyItem.progress_seconds)}`);
-          } else {
-            this.resumeProgress.set(0);
-            this.resumeText.set('');
-          }
+          untracked(() => {
+            if (historyItem && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
+              this.resumeProgress.set(historyItem.progress_seconds);
+              this.resumeText.set(`Riprendi da ${this.formatTime(historyItem.progress_seconds)}`);
+            } else {
+              this.resumeProgress.set(0);
+              this.resumeText.set('');
+            }
+          });
         }
       }
-    }, { allowSignalWrites: true });
+    });
   }
 
   private formatTime(seconds: number): string {

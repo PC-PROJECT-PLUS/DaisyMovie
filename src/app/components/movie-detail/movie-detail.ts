@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, effect, PLATFORM_ID, inject } from '@angular/core';
+import { Component, OnInit, signal, effect, PLATFORM_ID, inject, untracked } from '@angular/core';
 import { CommonModule, Location, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,6 +10,8 @@ import { LoaderService } from '../../services/loader.service';
 import { TmdbService } from '../../services/tmdb.service';
 import { FavoritesService } from '../../services/favorites.service';
 import { HistoryService } from '../../services/history.service';
+import { PreferencesService } from '../../services/preferences.service';
+import { CollectionsModalService } from '../../services/collections-modal.service';
 import { VideoPlayerComponent, PlayerConfig } from '../video-player/video-player';
 
 export interface CastMember {
@@ -82,6 +84,8 @@ export class MovieDetailComponent implements OnInit {
   private loaderService = inject(LoaderService);
   private tmdbService = inject(TmdbService);
   favoritesService = inject(FavoritesService);
+  preferencesService = inject(PreferencesService);
+  collectionsModalService = inject(CollectionsModalService);
   movieId = signal<number | null>(null);
   movie = signal<MovieDetail | null>(null);
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
@@ -101,7 +105,7 @@ export class MovieDetailComponent implements OnInit {
   // Suggested pagination
   suggestedPage = 1;
   isLoadingSuggested = false;
-  
+
   resumeProgress = signal<number>(0);
   resumeText = signal<string>('');
 
@@ -154,10 +158,10 @@ export class MovieDetailComponent implements OnInit {
     const origLangStr = JSON.stringify(m.original_language || m.originalLanguage || '').toLowerCase();
 
     // Check strict anime identifiers. Exclude spoken languages as western movies are dubbed in Japanese.
-    const isJapanese = 
-      origLangStr.includes('"ja"') || 
+    const isJapanese =
+      origLangStr.includes('"ja"') ||
       origLangStr === '"ja"' ||
-      countryStr.includes('"jp"') || 
+      countryStr.includes('"jp"') ||
       prodStr.includes('toei') ||
       prodStr.includes('mappa') ||
       prodStr.includes('ufotable') ||
@@ -185,7 +189,7 @@ export class MovieDetailComponent implements OnInit {
 
   onPlayerClosed() {
     this.playerVisible.set(false);
-    
+
     // Progress is now saved by VideoPlayerComponent internally via HistoryService
   }
 
@@ -225,20 +229,22 @@ export class MovieDetailComponent implements OnInit {
         this.pageLoaded.set(false);
       }
     });
-    
+
     effect(() => {
       const m = this.movie();
       if (!m || !isPlatformBrowser(this.platformId)) return;
-      
+
       const historyItem = this.historyService.getResumeProgress(m.id, false);
-      if (historyItem && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
-        this.resumeProgress.set(historyItem.progress_seconds);
-        this.resumeText.set(`Riprendi da ${this.formatTime(historyItem.progress_seconds)}`);
-      } else {
-        this.resumeProgress.set(0);
-        this.resumeText.set('');
-      }
-    }, { allowSignalWrites: true });
+      untracked(() => {
+        if (historyItem && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
+          this.resumeProgress.set(historyItem.progress_seconds);
+          this.resumeText.set(`Riprendi da ${this.formatTime(historyItem.progress_seconds)}`);
+        } else {
+          this.resumeProgress.set(0);
+          this.resumeText.set('');
+        }
+      });
+    });
 
     // Scroll to top on load for that fresh page feel
     if (typeof window !== 'undefined') {
@@ -680,6 +686,13 @@ export class MovieDetailComponent implements OnInit {
     if (m) {
       this.favoritesService.toggleFavorite(m);
       this.movie.update(item => item ? { ...item, isBookmarked: !item.isBookmarked } : item);
+    }
+  }
+
+  async openCollectionsModal(movieToSave?: any) {
+    const movie = movieToSave || this.movie();
+    if (movie) {
+      await this.collectionsModalService.openModal(movie);
     }
   }
 

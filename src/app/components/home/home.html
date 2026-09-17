@@ -518,43 +518,7 @@
       </section>
       }
 
-      <!-- SECTION 10: TOP PICKS FOR YOU -->
-      @if (topPicksMovies && topPicksMovies.length > 0) {
-      <section class="content-section">
-        <div class="section-header">
-          <h2 class="section-title">Scelti per te</h2>
-          <div class="header-right-controls">
-            <div class="section-scroll-arrows">
-              <button class="section-arrow-btn" (click)="scrollSlider('top-picks-slider', 'left')"
-                [disabled]="!canScrollLeftTopPicks()" aria-label="Scroll left">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="15 18 9 12 15 6"></polyline>
-                </svg>
-              </button>
-              <button class="section-arrow-btn" (click)="scrollSlider('top-picks-slider', 'right')"
-                [disabled]="!canScrollRightTopPicks()" aria-label="Scroll right">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
 
-        <div class="slider-wrapper" [class.has-fade-right]="canScrollRightTopPicks()"
-          [class.has-fade-left]="canScrollLeftTopPicks()">
-
-          <div class="trending-slider" id="top-picks-slider">
-            @for (movie of topPicksMovies; track movie.id) {
-            <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
-              (mouseleave)="onPosterMouseLeave()">
-              <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
-            </div>
-            }
-          </div>
-        </div>
-      </section>
-      }
 
       <!-- DYNAMIC GENRE SLIDERS (INFINITE SCROLL) -->
       @for (slider of dynamicSliders; track slider.id) {
@@ -670,7 +634,7 @@
       [continueWatchingList]="continueWatchingList()" [trendingMovies]="trendingMovies"
       [latestEpisodes]="latestEpisodes" [newReleasesMovies]="newReleasesMovies" [topWatchedMovies]="topWatchedMovies"
       [spotlightMovies]="spotlightMovies" [classicsMovies]="classicsMovies" [hiddenGemsMovies]="hiddenGemsMovies"
-      [topPicksMovies]="topPicksMovies" (themeChange)="onThemeChange($event)"
+      (themeChange)="onThemeChange($event)"
       [isHidden]="!responsiveService.isMobile()"></app-home-mobile>
   </div>
 

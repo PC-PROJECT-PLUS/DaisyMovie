@@ -30,6 +30,7 @@ export class PreferencesService {
   
   historyHeroMovieId = signal<number | null>(null);
   favoritesHeroMovieId = signal<number | null>(null);
+  hiddenFromGeneral = signal<string[]>([]); // Array of "{mediaType}_{mediaId}"
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
@@ -42,7 +43,28 @@ export class PreferencesService {
       if (savedFavoritesId) {
         this.favoritesHeroMovieId.set(parseInt(savedFavoritesId, 10));
       }
+      
+      const savedHidden = localStorage.getItem('daisy-hidden-general');
+      if (savedHidden) {
+        try {
+          this.hiddenFromGeneral.set(JSON.parse(savedHidden));
+        } catch(e) {}
+      }
     }
+  }
+
+  toggleHiddenFromGeneral(mediaKey: string) {
+    this.hiddenFromGeneral.update(curr => {
+      const newHidden = curr.includes(mediaKey) ? curr.filter(k => k !== mediaKey) : [...curr, mediaKey];
+      if (isPlatformBrowser(this.platformId)) {
+        localStorage.setItem('daisy-hidden-general', JSON.stringify(newHidden));
+      }
+      return newHidden;
+    });
+  }
+
+  isHiddenFromGeneral(mediaKey: string): boolean {
+    return this.hiddenFromGeneral().includes(mediaKey);
   }
 
   setHistoryHeroMovieId(id: number | null) {

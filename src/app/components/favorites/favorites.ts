@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject, PLATFORM_ID, effect, viewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, PLATFORM_ID, effect, viewChild, ElementRef, HostListener } from '@angular/core';
 import autoAnimate from '@formkit/auto-animate';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Title } from '@angular/platform-browser';
@@ -61,7 +61,40 @@ export class Favorites implements OnInit {
   heroImageB = signal<string>('');
   activeHero = signal<'a' | 'b'>('a');
 
+  // Collections
+  activeCollectionId = signal<number | null>(null);
+  isCreatingCollection = signal<boolean>(false);
+  newCollectionName = signal<string>('');
+
+  isSidebarOpen = signal<boolean>(false);
+
+  toggleSidebar() {
+    this.isSidebarOpen.update(v => !v);
+  }
+
+  activeCollectionName = computed(() => {
+    const id = this.activeCollectionId();
+    if (id === null) return this.heroTitle;
+    const col = this.favoritesService.collections().find(c => c.id === id);
+    return col ? col.name : this.heroTitle;
+  });
+
   gridContainer = viewChild<ElementRef>('gridContainer');
+  sidebarPanel = viewChild<ElementRef>('sidebarPanel');
+  fabButton = viewChild<ElementRef>('fabButton');
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (!this.isSidebarOpen()) return;
+    const sidebar = this.sidebarPanel()?.nativeElement;
+    const fab = this.fabButton()?.nativeElement;
+
+    if (sidebar && fab) {
+      if (!sidebar.contains(event.target as Node) && !fab.contains(event.target as Node)) {
+        this.isSidebarOpen.set(false);
+      }
+    }
+  }
 
   constructor() {
     effect(() => {
@@ -87,9 +120,20 @@ export class Favorites implements OnInit {
         return;
       }
 
-      if (this.heroImageA() === url || this.heroImageB() === url) return;
+      if (this.activeHero() === 'a' && this.heroImageA() === url) return;
+      if (this.activeHero() === 'b' && this.heroImageB() === url) return;
 
       if (isPlatformBrowser(this.platformId)) {
+        // If the URL is already loaded in the inactive buffer, just switch to it instantly
+        if (this.heroImageA() === url) {
+          this.activeHero.set('a');
+          return;
+        }
+        if (this.heroImageB() === url) {
+          this.activeHero.set('b');
+          return;
+        }
+
         const img = new Image();
         img.onload = () => {
           if (this.activeHero() === 'a') {
@@ -110,6 +154,7 @@ export class Favorites implements OnInit {
   favoriteItems = computed(() => {
     return this.favoritesService.items().map(item => ({
       id: item.media_id,
+      favoriteId: item.id,
       title: item.title,
       posterUrl: item.poster_url,
       backdropUrl: item.backdrop_url,
@@ -126,15 +171,10 @@ export class Favorites implements OnInit {
   });
 
   currentHeroImage = computed(() => {
-    const prefId = this.preferencesService.favoritesHeroMovieId();
-    const items = this.favoriteItems();
+    const items = this.filteredItems();
     if (items.length === 0) return this.heroImage;
 
-    let heroMovie = items.find(m => m.id === prefId);
-    if (!heroMovie) {
-      heroMovie = items[0];
-    }
-
+    const heroMovie = items[0];
     const url = heroMovie.backdropUrl || heroMovie.posterUrl;
     return url ? url.replace('w=500', 'w=1920') : this.heroImage;
   });
@@ -142,6 +182,23 @@ export class Favorites implements OnInit {
   // Computed state for filtered and sorted items
   filteredItems = computed(() => {
     let items = this.favoriteItems();
+
+    // 0. Collection Filter
+    const activeColId = this.activeCollectionId();
+    if (activeColId !== null) {
+      const col = this.favoritesService.collections().find(c => c.id === activeColId);
+      if (col) {
+        items = items.filter(item => col.items.includes((item as any).favoriteId));
+      } else {
+        items = [];
+      }
+    } else {
+      // General list: hide items the user has explicitly unchecked from "Tutti i preferiti"
+      items = items.filter(item => {
+        const mediaKey = `${item.isSeries ? 'tv' : 'movie'}_${item.id}`;
+        return !this.preferencesService.isHiddenFromGeneral(mediaKey);
+      });
+    }
 
     // 1. Search Filter
     const query = this.searchQuery().toLowerCase().trim();
@@ -233,6 +290,44 @@ export class Favorites implements OnInit {
       'match': 'Miglior Match'
     };
     return map[this.sortOption()];
+  }
+
+  // Collections Methods
+  selectCollection(id: number | null) {
+    this.activeCollectionId.set(id);
+    this.searchQuery.set('');
+    this.preferencesService.setFavoritesHeroMovieId(null); // Reset hero image to last saved item of new collection
+  }
+
+  startCreatingCollection() {
+    this.isCreatingCollection.set(true);
+    this.newCollectionName.set('');
+  }
+
+  cancelCreatingCollection() {
+    this.isCreatingCollection.set(false);
+    this.newCollectionName.set('');
+  }
+
+  async saveNewCollection() {
+    const name = this.newCollectionName().trim();
+    if (!name) return;
+    const col = await this.favoritesService.createCollection(name);
+    if (col) {
+      this.selectCollection(col.id);
+    }
+    this.isCreatingCollection.set(false);
+    this.newCollectionName.set('');
+  }
+
+  async deleteCollection(id: number, event: Event) {
+    event.stopPropagation();
+    if (confirm('Sei sicuro di voler eliminare questa collezione? I preferiti al suo interno non verranno eliminati.')) {
+      await this.favoritesService.deleteCollection(id);
+      if (this.activeCollectionId() === id) {
+        this.selectCollection(null);
+      }
+    }
   }
 
 }

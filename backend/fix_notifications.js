@@ -1,0 +1,1 @@
+const pool = require('./src/db'); pool.query('UPDATE notifications n SET media_type = (SELECT media_type FROM history h WHERE h.media_id = n.media_id LIMIT 1) WHERE media_id IS NOT NULL AND (SELECT media_type FROM history h WHERE h.media_id = n.media_id LIMIT 1) IS NOT NULL').then(r => console.log(Updated: )).catch(e => console.log(e.message)).finally(() => pool.end());

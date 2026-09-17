@@ -50,8 +50,31 @@ app.get('/api/test-db', async (req, res) => {
 });
 
 // Inizializza il Cron Job
-const { startNotificationCron } = require('./src/cron/notificationCron');
+const { startNotificationCron, processDailyReleases } = require('./src/cron/notificationCron');
+const { initRecommendationCron, runRecommendationProcess } = require('./src/cron/recommendationCron');
 startNotificationCron();
+initRecommendationCron();
+
+// Rotta per forzare manualmente l'invio delle raccomandazioni (TESTING)
+app.post('/api/test/recommend', async (req, res) => {
+  try {
+    // Eseguiamo il processo in background senza bloccare la richiesta HTTP
+    runRecommendationProcess();
+    res.json({ message: 'Processo di raccomandazione avviato in background!' });
+  } catch (err) {
+    res.status(500).json({ error: 'Errore avvio processo' });
+  }
+});
+
+// Rotta per forzare manualmente il controllo delle uscite giornaliere (TESTING)
+app.post('/api/test/daily-releases', async (req, res) => {
+  try {
+    processDailyReleases();
+    res.json({ message: 'Controllo uscite giornaliere avviato in background!' });
+  } catch (err) {
+    res.status(500).json({ error: 'Errore avvio controllo' });
+  }
+});
 
 // Avvio del server
 app.listen(port, () => {

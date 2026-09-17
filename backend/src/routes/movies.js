@@ -1,5 +1,6 @@
 const express = require('express');
 const axios = require('axios');
+const pool = require('../db');
 const router = express.Router();
 
 const cache = new Map();
@@ -168,6 +169,7 @@ router.get('/home', async (req, res) => {
     if (category === 'Anime') langFilter = '&with_original_language=ja';
     let genreFilterStr = genreFilter ? `&with_genres=${genreFilter}` : '';
     let discoverBase = `${TMDB_BASE_URL}/discover/${contentType}?${lang}${langFilter}`;
+    let discoverPastBase = `${discoverBase}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${today}`;
 
     let tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -178,34 +180,34 @@ router.get('/home', async (req, res) => {
     let nowPlayingTvUrl = `${TMDB_BASE_URL}/discover/tv?${lang}&sort_by=popularity.desc&air_date.gte=${pastThreeMonthsDate}&air_date.lte=${today}`;
 
     let trendingUrl = genreFilter || langFilter ?
-      `${discoverBase}&sort_by=popularity.desc${genreFilterStr}` :
+      `${discoverPastBase}&sort_by=popularity.desc${genreFilterStr}` :
       `${TMDB_BASE_URL}/trending/${contentType}/week?${lang}`;
 
     let topRatedUrl = genreFilter || langFilter ?
-      `${discoverBase}&sort_by=vote_average.desc&vote_count.gte=500${genreFilterStr}` :
+      `${discoverPastBase}&sort_by=vote_average.desc&vote_count.gte=500${genreFilterStr}` :
       `${TMDB_BASE_URL}/${contentType}/top_rated?${lang}`;
 
     let twoMonths = new Date();
     twoMonths.setMonth(twoMonths.getMonth() + 2);
     let twoMonthsDate = twoMonths.toISOString().split('T')[0];
 
-    let strictUpcomingUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${today}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${twoMonthsDate}${genreFilterStr}`;
-    let strictUpcomingMovieUrl = `${TMDB_BASE_URL}/discover/movie?${lang}${langFilter}&sort_by=popularity.desc&primary_release_date.gte=${today}&primary_release_date.lte=${twoMonthsDate}${genreFilterStr}`;
+    let strictUpcomingUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${tomorrowDate}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${twoMonthsDate}${genreFilterStr}`;
+    let strictUpcomingMovieUrl = `${TMDB_BASE_URL}/discover/movie?${lang}${langFilter}&sort_by=popularity.desc&primary_release_date.gte=${tomorrowDate}&primary_release_date.lte=${twoMonthsDate}${genreFilterStr}`;
 
     let voteCountThreshold = category === 'Anime' ? 200 : 3000;
     let classicsUrl = `${discoverBase}&sort_by=vote_average.desc&vote_count.gte=${voteCountThreshold}&${isSeries ? 'first_air_date.lte' : 'primary_release_date.lte'}=2005-01-01${genreFilterStr}`;
-    let recentReleasesUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${twoMonthsDate}${genreFilterStr}`;
+    let recentReleasesUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${pastThreeMonthsDate}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${today}${genreFilterStr}`;
 
     let dramaGenre = 18;
     let mysteryGenre = 9648;
     let fantasyGenre = isSeries ? 10765 : 14; // TV uses 10765 for Sci-Fi & Fantasy
     let actionGenre = isSeries ? 10759 : 28; // TV uses 10759 for Action & Adventure
 
-    let spotlightUrl = `${discoverBase}&with_genres=${genreFilter ? genreFilter + ',' + dramaGenre : dramaGenre}`;
-    let hiddenGemsUrl = `${discoverBase}&with_genres=${genreFilter ? genreFilter + ',' + mysteryGenre : mysteryGenre}`;
-    let topPicksUrl = `${discoverBase}&with_genres=${genreFilter ? genreFilter + ',' + fantasyGenre : fantasyGenre}`;
-    let actionUrl = `${discoverBase}&with_genres=${genreFilter ? genreFilter + ',' + actionGenre : actionGenre}`;
-    let acclaimedUrl = `${discoverBase}&sort_by=vote_average.desc&vote_count.gte=${voteCountThreshold}${genreFilterStr}`;
+    let spotlightUrl = `${discoverPastBase}&with_genres=${genreFilter ? genreFilter + ',' + dramaGenre : dramaGenre}`;
+    let hiddenGemsUrl = `${discoverPastBase}&with_genres=${genreFilter ? genreFilter + ',' + mysteryGenre : mysteryGenre}`;
+    let topPicksUrl = `${discoverPastBase}&with_genres=${genreFilter ? genreFilter + ',' + fantasyGenre : fantasyGenre}`;
+    let actionUrl = `${discoverPastBase}&with_genres=${genreFilter ? genreFilter + ',' + actionGenre : actionGenre}`;
+    let acclaimedUrl = `${discoverPastBase}&sort_by=vote_average.desc&vote_count.gte=${voteCountThreshold}${genreFilterStr}`;
 
     if (phase === '1') {
       requests = [
@@ -366,16 +368,17 @@ router.get('/page', async (req, res) => {
     if (category === 'Anime') langFilter = '&with_original_language=ja';
     let genreFilterStr = genreFilter ? `&with_genres=${genreFilter}` : '';
     let discoverBase = `${TMDB_BASE_URL}/discover/${contentType}?${lang}${langFilter}`;
-    let recentReleasesUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${twoMonthsDate}${genreFilterStr}`;
+    let discoverPastBase = `${discoverBase}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${today}`;
+    let recentReleasesUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${pastThreeMonthsDate}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${today}${genreFilterStr}`;
 
     let url = '';
 
     // Check if listName is a number (a specific Genre ID dynamically generated)
     if (!isNaN(Number(listName))) {
-      url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + listName : listName}`;
+      url = `${discoverPastBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + listName : listName}`;
     } else if (typeof listName === 'string' && listName.startsWith('keyword_')) {
       const keywordId = listName.split('_')[1];
-      url = `${discoverBase}&page=${page}&with_keywords=${keywordId}${genreFilterStr}`;
+      url = `${discoverPastBase}&page=${page}&with_keywords=${keywordId}${genreFilterStr}`;
     } else {
       let voteCountThreshold = category === 'Anime' ? 200 : 3000;
       let dramaGenre = 18;
@@ -383,20 +386,20 @@ router.get('/page', async (req, res) => {
       let fantasyGenre = isSeries ? 10765 : 14;
       let actionGenre = isSeries ? 10759 : 28;
 
-      if (listName === 'trending') url = genreFilter || langFilter ? `${discoverBase}&sort_by=popularity.desc${genreFilterStr}&page=${page}` : `${TMDB_BASE_URL}/trending/${contentType}/week?${lang}&page=${page}`;
-      else if (listName === 'topWatched') url = genreFilter || langFilter ? `${discoverBase}&sort_by=vote_average.desc&vote_count.gte=500${genreFilterStr}&page=${page}` : `${TMDB_BASE_URL}/${contentType}/top_rated?${lang}&page=${page}`;
+      if (listName === 'trending') url = genreFilter || langFilter ? `${discoverPastBase}&sort_by=popularity.desc${genreFilterStr}&page=${page}` : `${TMDB_BASE_URL}/trending/${contentType}/week?${lang}&page=${page}`;
+      else if (listName === 'topWatched') url = genreFilter || langFilter ? `${discoverPastBase}&sort_by=vote_average.desc&vote_count.gte=500${genreFilterStr}&page=${page}` : `${TMDB_BASE_URL}/${contentType}/top_rated?${lang}&page=${page}`;
       else if (listName === 'classics') url = `${discoverBase}&page=${page}&sort_by=vote_average.desc&vote_count.gte=${voteCountThreshold}&${isSeries ? 'first_air_date.lte' : 'primary_release_date.lte'}=2005-01-01${genreFilterStr}`;
       else if (listName === 'newReleases') url = `${recentReleasesUrl}&page=${page}`;
       else if (listName === 'episodes') {
         let strictUpcomingUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${today}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${twoMonthsDate}${genreFilterStr}`;
         url = `${strictUpcomingUrl}&page=${page}`;
       }
-      else if (listName === 'spotlight') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + dramaGenre : dramaGenre}`;
-      else if (listName === 'hiddenGems') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + mysteryGenre : mysteryGenre}`;
-      else if (listName === 'topPicks') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + fantasyGenre : fantasyGenre}`;
-      else if (listName === 'action') url = `${discoverBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + actionGenre : actionGenre}`;
-      else if (listName === 'acclaimed') url = `${discoverBase}&page=${page}&sort_by=vote_average.desc&vote_count.gte=${voteCountThreshold}${genreFilterStr}`;
-      else url = `${discoverBase}&page=${page}${genreFilterStr}`;
+      else if (listName === 'spotlight') url = `${discoverPastBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + dramaGenre : dramaGenre}`;
+      else if (listName === 'hiddenGems') url = `${discoverPastBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + mysteryGenre : mysteryGenre}`;
+      else if (listName === 'topPicks') url = `${discoverPastBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + fantasyGenre : fantasyGenre}`;
+      else if (listName === 'action') url = `${discoverPastBase}&page=${page}&with_genres=${genreFilter ? genreFilter + ',' + actionGenre : actionGenre}`;
+      else if (listName === 'acclaimed') url = `${discoverPastBase}&page=${page}&sort_by=vote_average.desc&vote_count.gte=${voteCountThreshold}${genreFilterStr}`;
+      else url = `${discoverPastBase}&page=${page}${genreFilterStr}`;
     }
 
     const response = await axios.get(url, { headers: HEADERS });
@@ -659,6 +662,127 @@ router.get('/season/:id/:seasonNumber', async (req, res) => {
   } catch (error) {
     console.error('Error fetching season episodes:', error.response?.data || error.message);
     res.status(500).json({ error: 'Failed to fetch season episodes' });
+  }
+});
+
+router.get('/top-picks', async (req, res) => {
+  try {
+    const { category, page = 1, profileId } = req.query;
+    if (!profileId) {
+      return res.status(400).json({ error: 'Missing profileId' });
+    }
+    const isSeries = category === 'Serie TV' || category === 'Anime';
+    const contentType = isSeries ? 'tv' : 'movie';
+    const lang = 'language=it-IT';
+    let genreFilter = '';
+    let langFilter = '';
+
+    if (category === 'Animazione') {
+      genreFilter = '16';
+      langFilter = '&without_original_language=ja';
+    } else if (category === 'Anime') {
+      genreFilter = '16';
+      langFilter = '&with_original_language=ja';
+    }
+
+    // Trova gli ultimi 10 media interagiti in questa categoria di tipo (movie o tv)
+    const dbRes = await pool.query(`
+      SELECT media_id 
+      FROM (
+        SELECT media_id, created_at as interacted_at FROM followed_media WHERE profile_id = $1 AND media_type = $2 AND source = 'favorite'
+        UNION
+        SELECT media_id, last_watched as interacted_at FROM history WHERE profile_id = $1 AND media_type = $2
+      ) combined
+      ORDER BY interacted_at DESC
+      LIMIT 10
+    `, [profileId, contentType]);
+
+    let selectedMediaId = null;
+
+    if (dbRes.rows.length > 0) {
+      if (category === 'Animazione' || category === 'Anime') {
+        const detailsPromises = dbRes.rows.map(row => 
+          axios.get(`${TMDB_BASE_URL}/${contentType}/${row.media_id}?language=it-IT`, { headers: HEADERS }).catch(() => null)
+        );
+        const detailsResponses = await Promise.all(detailsPromises);
+        
+        for (let i = 0; i < detailsResponses.length; i++) {
+          const res = detailsResponses[i];
+          if (res && res.data) {
+            const data = res.data;
+            const hasAnim = data.genres && data.genres.some(g => g.id === 16);
+            const isJa = data.original_language === 'ja';
+            if (category === 'Animazione' && hasAnim && !isJa) {
+              selectedMediaId = dbRes.rows[i].media_id;
+              break;
+            } else if (category === 'Anime' && hasAnim && isJa) {
+              selectedMediaId = dbRes.rows[i].media_id;
+              break;
+            }
+          }
+        }
+      } else {
+        selectedMediaId = dbRes.rows[0].media_id;
+      }
+    }
+
+    let url;
+    let usedRecommendations = false;
+    if (selectedMediaId) {
+      url = `${TMDB_BASE_URL}/${contentType}/${selectedMediaId}/recommendations?${lang}&page=${page}`;
+      usedRecommendations = true;
+    } else {
+      // Fallback a discover generico per questa categoria se non ha history valida
+      const genreFilterStr = genreFilter ? `&with_genres=${genreFilter}` : '';
+      url = `${TMDB_BASE_URL}/discover/${contentType}?${lang}${langFilter}${genreFilterStr}&sort_by=popularity.desc&page=${page}`;
+    }
+
+    let response = await axios.get(url, { headers: HEADERS });
+    
+    const foreignRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\u0400-\u04FF\u0E00-\u0E7F\u0600-\u06FF\u0900-\u097F]/;
+    let rawItems = (response.data.results || [])
+      .filter(i => i.poster_path && i.backdrop_path && i.overview && i.overview.trim().length > 10)
+      .filter(i => !foreignRegex.test(i.title || i.name || ''));
+
+    if (category === 'Animazione') {
+      rawItems = rawItems.filter(i => i.genre_ids && i.genre_ids.includes(16) && i.original_language !== 'ja');
+    } else if (category === 'Anime') {
+      rawItems = rawItems.filter(i => i.genre_ids && i.genre_ids.includes(16) && i.original_language === 'ja');
+    }
+
+    let items = rawItems.map(item => mapMovieItem(item, isSeries));
+
+    // Fallback/Padding if recommendations return very few relevant items (only if we used recommendations)
+    if (usedRecommendations && items.length < 8) {
+      const genreFilterStr = genreFilter ? `&with_genres=${genreFilter}` : '';
+      const fallbackUrl = `${TMDB_BASE_URL}/discover/${contentType}?${lang}${langFilter}${genreFilterStr}&sort_by=popularity.desc&page=${page}`;
+      const fallbackResponse = await axios.get(fallbackUrl, { headers: HEADERS }).catch(() => ({ data: { results: [] } }));
+      
+      let fallbackItems = (fallbackResponse.data.results || [])
+        .filter(i => i.poster_path && i.backdrop_path && i.overview && i.overview.trim().length > 10)
+        .filter(i => !foreignRegex.test(i.title || i.name || ''));
+        
+      if (category === 'Animazione') {
+        fallbackItems = fallbackItems.filter(i => i.genre_ids && i.genre_ids.includes(16) && i.original_language !== 'ja');
+      } else if (category === 'Anime') {
+        fallbackItems = fallbackItems.filter(i => i.genre_ids && i.genre_ids.includes(16) && i.original_language === 'ja');
+      }
+      
+      const mappedFallback = fallbackItems.map(item => mapMovieItem(item, isSeries));
+
+      const existingIds = new Set(items.map(i => i.id));
+      for (const fi of mappedFallback) {
+        if (!existingIds.has(fi.id)) {
+          items.push(fi);
+          existingIds.add(fi.id);
+        }
+      }
+    }
+
+    res.json(items);
+  } catch (error) {
+    console.error('Error fetching top picks:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to fetch top picks' });
   }
 });
 

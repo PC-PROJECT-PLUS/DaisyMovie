@@ -1,372 +1,395 @@
 <div class="detail-container" [attr.data-theme]="activeTheme()">
   <!-- Top Navigation (Persists) -->
   <div class="desktop-only">
-  @if (movie()) {
-  <div class="detail-content" [class.loaded]="pageLoaded()">
+    @if (movie()) {
+    <div class="detail-content" [class.loaded]="pageLoaded()">
 
-    <!-- Hero Backdrop & Gradient Overlay -->
-    <div class="backdrop-wrapper" [style.background-image]="'url(' + movie()!.backdropUrl + ')'">
-      <div class="backdrop-gradient"></div>
-    </div>
-
-    <!-- Main Content Container -->
-    <div class="main-info-container">
-
-
-
-      <!-- TOP SECTION (Animated in) -->
-      <div class="top-section-animated">
-
-        <div class="title-row">
-          <div class="title-group">
-            <h1 class="movie-title">{{ movie()!.title | titlecase }}</h1>
-            <span class="duration">{{ movie()!.duration }}</span>
-          </div>
-
-          @if (movie()!.omdbRatings) {
-          <div class="ratings-group">
-            @if (movie()!.omdbRatings?.imdb) {
-            <div class="rating-item">
-              <span class="rating-badge imdb">IMDb</span>
-              <span class="rating-score">{{ movie()!.omdbRatings!.imdb }}</span>
-            </div>
-            }
-            @if (movie()!.omdbRatings?.rottenTomatoes) {
-            @if (movie()!.omdbRatings?.imdb) { <div class="rating-divider"></div> }
-            <div class="rating-item">
-              <span class="rating-icon tomato">🍅</span>
-              <span class="rating-score">{{ movie()!.omdbRatings!.rottenTomatoes }}</span>
-            </div>
-            } @else if (movie()!.omdbRatings?.tmdb) {
-            @if (movie()!.omdbRatings?.imdb) { <div class="rating-divider"></div> }
-            <div class="rating-item">
-              <span class="rating-badge tmdb">TMDB</span>
-              <span class="rating-score">{{ movie()!.omdbRatings!.tmdb }}</span>
-            </div>
-            }
-            @if (movie()!.omdbRatings?.metacritic) {
-            <div class="rating-divider"></div>
-            <div class="rating-item">
-              <span class="rating-badge meta">M</span>
-              <span class="rating-score">{{ movie()!.omdbRatings!.metacritic }}</span>
-            </div>
-            } @else if (movie()!.omdbRatings?.tmdb && movie()!.omdbRatings?.rottenTomatoes) {
-            <div class="rating-divider"></div>
-            <div class="rating-item">
-              <span class="rating-badge tmdb">TMDB</span>
-              <span class="rating-score">{{ movie()!.omdbRatings!.tmdb }}</span>
-            </div>
-            }
-          </div>
-          }
-        </div>
-
-        <div class="genres-row">
-          @for (genre of movie()!.genres || []; track genre) {
-          <span class="genre-pill">{{ genre }}</span>
-          }
-        </div>
-
-        <div class="action-buttons">
-          <button class="play-btn" [style.background]="movie()!.accentColor" (click)="openPlayer()">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-            <span>{{ resumeProgress() > 0 ? resumeText() : 'Guarda Ora' }}</span>
-          </button>
-
-          <button class="play-btn trailer-btn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
-              <line x1="7" y1="2" x2="7" y2="22"></line>
-              <line x1="17" y1="2" x2="17" y2="22"></line>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <line x1="2" y1="7" x2="7" y2="7"></line>
-              <line x1="2" y1="17" x2="7" y2="17"></line>
-              <line x1="17" y1="17" x2="22" y2="17"></line>
-              <line x1="17" y1="7" x2="22" y2="7"></line>
-            </svg>
-            <span>Guarda Trailer</span>
-          </button>
-
-          <button class="action-circle-btn bookmark-btn" [class.active]="favoritesService.isBookmarked(movie()!.id, false)"
-            (click)="toggleBookmark()" title="Aggiungi alla lista">
-            <svg width="22" height="22" viewBox="0 0 24 24" [style.fill]="favoritesService.isBookmarked(movie()!.id, false) ? '#ffffff' : 'none'" stroke="currentColor" stroke-width="2">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-            </svg>
-          </button>
-        </div>
-
-        <p class="synopsis">{{ movie()!.synopsis }}</p>
-
-        <div class="additional-info">
-          <h3 class="info-title">Più informazioni</h3>
-          <div class="info-line">
-            <span class="label">Data di uscita:</span>
-            <span class="value">{{ movie()!.releaseDate }}</span>
-          </div>
-          <div class="info-line">
-            <span class="label">Regista:</span>
-            <span class="value">{{ movie()!.director }}</span>
-          </div>
-          <div class="info-line">
-            <span class="label">Produttori:</span>
-            <span class="value">{{ movie()!.producer }}</span>
-          </div>
-          @if (movie()!.music) {
-          <div class="info-line">
-            <span class="label">Musiche:</span>
-            <span class="value">{{ movie()!.music }}</span>
-          </div>
-          }
-          @if (movie()!.productionCompanies) {
-          <div class="info-line">
-            <span class="label">Case di produzione:</span>
-            <span class="value">{{ movie()!.productionCompanies }}</span>
-          </div>
-          }
-          @if (movie()!.distributedBy) {
-          <div class="info-line">
-            <span class="label">Distribuito da:</span>
-            <span class="value">{{ movie()!.distributedBy }}</span>
-          </div>
-          }
-          @if (movie()!.editedBy) {
-          <div class="info-line">
-            <span class="label">Montaggio:</span>
-            <span class="value">{{ movie()!.editedBy }}</span>
-          </div>
-          }
-          @if (movie()!.writers) {
-          <div class="info-line">
-            <span class="label">Sceneggiatura:</span>
-            <span class="value">{{ movie()!.writers }}</span>
-          </div>
-          }
-          @if (movie()!.cinematography) {
-          <div class="info-line">
-            <span class="label">Fotografia:</span>
-            <span class="value">{{ movie()!.cinematography }}</span>
-          </div>
-          }
-          @if (movie()!.budget) {
-          <div class="info-line">
-            <span class="label">Budget:</span>
-            <span class="value">{{ movie()!.budget }}</span>
-          </div>
-          }
-          @if (movie()!.boxOffice) {
-          <div class="info-line">
-            <span class="label">Botteghino:</span>
-            <span class="value">{{ movie()!.boxOffice }}</span>
-          </div>
-          }
-          @if (movie()!.languages) {
-          <div class="info-line">
-            <span class="label">Lingue:</span>
-            <span class="value">{{ movie()!.languages }}</span>
-          </div>
-          }
-        </div>
-
+      <!-- Hero Backdrop & Gradient Overlay -->
+      <div class="backdrop-wrapper" [style.background-image]="'url(' + movie()!.backdropUrl + ')'">
+        <div class="backdrop-gradient"></div>
       </div>
 
-      <!-- LOWER SECTIONS (Static/Not loaded with hero animation) -->
-      <div class="lower-sections">
+      <!-- Main Content Container -->
+      <div class="main-info-container">
 
-        <!-- CAST SECTION -->
-        <div class="section-block cast-section">
-          <div class="section-header">
-            <h2 class="section-title">Cast</h2>
-            <div class="header-right-controls">
-              <div class="section-scroll-arrows">
-                <button class="section-arrow-btn" (click)="scrollCast('left')" aria-label="Scroll left" [disabled]="!canScrollLeftCast()">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                  </svg>
-                </button>
-                <button class="section-arrow-btn" (click)="scrollCast('right')" aria-label="Scroll right" [disabled]="!canScrollRightCast()">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-                </button>
-              </div>
+
+
+        <!-- TOP SECTION (Animated in) -->
+        <div class="top-section-animated">
+
+          <div class="title-row">
+            <div class="title-group">
+              <h1 class="movie-title">{{ movie()!.title | titlecase }}</h1>
+              <span class="duration">{{ movie()!.duration }}</span>
             </div>
-          </div>
-          <div class="slider-wrapper" [class.has-fade-right]="canScrollRightCast()" [class.has-fade-left]="canScrollLeftCast()">
-            <div class="cast-grid" id="cast-slider" (scroll)="checkScrollState()">
-              @for (actor of movie()!.cast || []; track actor.name) {
-              <div class="cast-card">
-                <img [src]="actor.imageUrl" [alt]="actor.name" class="cast-img" (error)="actor.imageUrl = 'https://ui-avatars.com/api/?name=' + actor.name + '&background=random&color=fff'" />
-                <div class="cast-names">
-                  <span class="actor-name">{{ actor.name }}</span>
-                  <span class="character-name">{{ actor.character }}</span>
-                </div>
+
+            @if (movie()!.omdbRatings) {
+            <div class="ratings-group">
+              @if (movie()!.omdbRatings?.imdb) {
+              <div class="rating-item">
+                <span class="rating-badge imdb">IMDb</span>
+                <span class="rating-score">{{ movie()!.omdbRatings!.imdb }}</span>
+              </div>
+              }
+              @if (movie()!.omdbRatings?.rottenTomatoes) {
+              @if (movie()!.omdbRatings?.imdb) { <div class="rating-divider"></div> }
+              <div class="rating-item">
+                <span class="rating-icon tomato">🍅</span>
+                <span class="rating-score">{{ movie()!.omdbRatings!.rottenTomatoes }}</span>
+              </div>
+              } @else if (movie()!.omdbRatings?.tmdb) {
+              @if (movie()!.omdbRatings?.imdb) { <div class="rating-divider"></div> }
+              <div class="rating-item">
+                <span class="rating-badge tmdb">TMDB</span>
+                <span class="rating-score">{{ movie()!.omdbRatings!.tmdb }}</span>
+              </div>
+              }
+              @if (movie()!.omdbRatings?.metacritic) {
+              <div class="rating-divider"></div>
+              <div class="rating-item">
+                <span class="rating-badge meta">M</span>
+                <span class="rating-score">{{ movie()!.omdbRatings!.metacritic }}</span>
+              </div>
+              } @else if (movie()!.omdbRatings?.tmdb && movie()!.omdbRatings?.rottenTomatoes) {
+              <div class="rating-divider"></div>
+              <div class="rating-item">
+                <span class="rating-badge tmdb">TMDB</span>
+                <span class="rating-score">{{ movie()!.omdbRatings!.tmdb }}</span>
               </div>
               }
             </div>
-          </div>
-        </div>
-
-        <!-- SCREENSHOT SECTION (Asymmetric Grid) -->
-        <div class="section-block screenshot-section">
-          <div class="section-header">
-            <h2 class="section-title">Screenshot</h2>
+            }
           </div>
 
-          <div class="screenshot-grid">
-            <div class="grid-item img-large">
-              <img [src]="movie()!.screenshots[0]" alt="Screenshot 1" />
-            </div>
-            <div class="grid-item img-large">
-              <img [src]="movie()!.screenshots[1]" alt="Screenshot 2" />
-            </div>
-
-            <div class="grid-item img-vertical">
-              <img [src]="movie()!.screenshots[2]" alt="Screenshot 3" />
-            </div>
-            <div class="grid-item img-vertical">
-              <img [src]="movie()!.screenshots[3]" alt="Screenshot 4" />
-            </div>
-            <div class="grid-item img-wide">
-              <img [src]="movie()!.screenshots[4]" alt="Screenshot 5" />
-            </div>
-            
-            <!-- Third Row (added) -->
-            <div class="grid-item img-large">
-              <img [src]="movie()!.screenshots[5]" alt="Screenshot 6" />
-            </div>
-            <div class="grid-item img-large">
-              <img [src]="movie()!.screenshots[6]" alt="Screenshot 7" />
-            </div>
-          </div>
-        </div>
-
-
-        <!-- SUGGESTED MOVIES SECTION -->
-        <div class="section-block suggested-section">
-          <div class="section-header">
-            <h2 class="section-title">Film simili consigliati</h2>
-            <div class="header-right-controls">
-              <div class="section-scroll-arrows">
-                <button class="section-arrow-btn glass-card" (click)="scrollSuggested('left')" aria-label="Scroll left" [disabled]="!canScrollLeftSuggested()">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                  </svg>
-                </button>
-                <button class="section-arrow-btn glass-card" (click)="scrollSuggested('right')" aria-label="Scroll right" [disabled]="!canScrollRightSuggested()">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-                </button>
-              </div>
-            </div>
+          <div class="genres-row">
+            @for (genre of movie()!.genres || []; track genre) {
+            <span class="genre-pill">{{ genre }}</span>
+            }
           </div>
 
-          <div class="slider-wrapper" [class.has-fade-right]="canScrollRightSuggested()"
-            [class.has-fade-left]="canScrollLeftSuggested()">
-            
-            <div class="suggested-slider" id="suggested-slider" (scroll)="checkScrollState()">
-              @for (item of movie()?.suggested || []; track item.id) {
-              <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(item, $event)"
-                (mouseleave)="onPosterMouseLeave()" (click)="goToMovie(item)">
-                <img [src]="item.posterUrl" [alt]="item.title" class="poster-img" />
-              </div>
-              }
-            </div>
-          </div>
-        </div>
+          <div class="action-buttons">
+            <button class="play-btn" [style.background]="movie()!.accentColor" (click)="openPlayer()">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span>{{ resumeProgress() > 0 ? resumeText() : 'Guarda Ora' }}</span>
+            </button>
 
-        <!-- REVIEWS SECTION -->
-        <div class="section-block reviews-section">
-          <div class="section-header">
-            <h2 class="section-title">Recensioni degli utenti</h2>
-          </div>
+            <button class="play-btn trailer-btn">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                <line x1="7" y1="2" x2="7" y2="22"></line>
+                <line x1="17" y1="2" x2="17" y2="22"></line>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <line x1="2" y1="7" x2="7" y2="7"></line>
+                <line x1="2" y1="17" x2="7" y2="17"></line>
+                <line x1="17" y1="17" x2="22" y2="17"></line>
+                <line x1="17" y1="7" x2="22" y2="7"></line>
+              </svg>
+              <span>Guarda Trailer</span>
+            </button>
 
-          <div class="reviews-subheader">
-            <span class="reviews-count">{{ movie()!.reviews?.length || 0 }} Recensioni</span>
-            <label class="reviews-checkbox">
-              <input type="checkbox" />
-              <span class="checkmark"></span>
-              Nascondi spoiler
-            </label>
-            <div class="reviews-sort">
-              <span class="sort-label">Ordina per</span>
-              <span class="sort-value">Più recenti <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
-            </div>
-          </div>
-
-          <div class="reviews-input-container">
-            <input type="text" class="reviews-input" placeholder="Scrivi la tua recensione per {{ movie()!.title }}" 
-                   [ngModel]="newReviewText()" (ngModelChange)="newReviewText.set($event)" (keyup.enter)="submitReview()" />
-            <button class="reviews-submit-btn" aria-label="Submit review" (click)="submitReview()">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            <button class="action-circle-btn bookmark-btn"
+              [class.active]="favoritesService.isBookmarked(movie()!.id, false)" (click)="collectionsModalService.openModal({id: movie()!.id, title: movie()!.title, posterUrl: movie()!.posterUrl, backdropUrl: movie()!.backdropUrl || movie()!.posterUrl, year: (movie()!.year || '').toString(), isSeries: false})"
+              title="Aggiungi alla lista">
+              <svg width="22" height="22" viewBox="0 0 24 24"
+                [style.fill]="favoritesService.isBookmarked(movie()!.id, false) ? '#ffffff' : 'none'"
+                stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
               </svg>
             </button>
           </div>
 
-          <div class="reviews-list">
-            @for (review of (showAllReviews() ? movie()!.reviews : (movie()!.reviews || []).slice(0, 3)); track review.id) {
-            <div class="review-card">
-              <div class="review-header">
-                <span class="review-author">{{ review.author }}</span>
-                <button class="review-menu-btn" aria-label="More options">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="12" cy="5" r="2"/>
-                    <circle cx="12" cy="12" r="2"/>
-                    <circle cx="12" cy="19" r="2"/>
-                  </svg>
-                </button>
-              </div>
-              <h3 class="review-title">{{ review.title }}</h3>
-              <p class="review-content">{{ review.content }}</p>
-              <div class="review-footer">
-                <div class="review-actions">
-                  <button class="review-action-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                    </svg>
-                    <span>{{ review.likes }}</span>
-                  </button>
-                  <button class="review-action-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-2"></path>
-                    </svg>
-                    <span>{{ review.dislikes }}</span>
-                  </button>
-                </div>
-                <span class="review-date">{{ review.date }}</span>
-              </div>
+          <p class="synopsis">{{ movie()!.synopsis }}</p>
+
+          <div class="additional-info">
+            <h3 class="info-title">Più informazioni</h3>
+            <div class="info-line">
+              <span class="label">Data di uscita:</span>
+              <span class="value">{{ movie()!.releaseDate }}</span>
+            </div>
+            <div class="info-line">
+              <span class="label">Regista:</span>
+              <span class="value">{{ movie()!.director }}</span>
+            </div>
+            <div class="info-line">
+              <span class="label">Produttori:</span>
+              <span class="value">{{ movie()!.producer }}</span>
+            </div>
+            @if (movie()!.music) {
+            <div class="info-line">
+              <span class="label">Musiche:</span>
+              <span class="value">{{ movie()!.music }}</span>
+            </div>
+            }
+            @if (movie()!.productionCompanies) {
+            <div class="info-line">
+              <span class="label">Case di produzione:</span>
+              <span class="value">{{ movie()!.productionCompanies }}</span>
+            </div>
+            }
+            @if (movie()!.distributedBy) {
+            <div class="info-line">
+              <span class="label">Distribuito da:</span>
+              <span class="value">{{ movie()!.distributedBy }}</span>
+            </div>
+            }
+            @if (movie()!.editedBy) {
+            <div class="info-line">
+              <span class="label">Montaggio:</span>
+              <span class="value">{{ movie()!.editedBy }}</span>
+            </div>
+            }
+            @if (movie()!.writers) {
+            <div class="info-line">
+              <span class="label">Sceneggiatura:</span>
+              <span class="value">{{ movie()!.writers }}</span>
+            </div>
+            }
+            @if (movie()!.cinematography) {
+            <div class="info-line">
+              <span class="label">Fotografia:</span>
+              <span class="value">{{ movie()!.cinematography }}</span>
+            </div>
+            }
+            @if (movie()!.budget) {
+            <div class="info-line">
+              <span class="label">Budget:</span>
+              <span class="value">{{ movie()!.budget }}</span>
+            </div>
+            }
+            @if (movie()!.boxOffice) {
+            <div class="info-line">
+              <span class="label">Botteghino:</span>
+              <span class="value">{{ movie()!.boxOffice }}</span>
+            </div>
+            }
+            @if (movie()!.languages) {
+            <div class="info-line">
+              <span class="label">Lingue:</span>
+              <span class="value">{{ movie()!.languages }}</span>
             </div>
             }
           </div>
 
-          @if ((movie()!.reviews?.length || 0) > 3) {
-          <div class="reviews-see-all-container" [class.is-expanded]="showAllReviews()">
-            <button class="reviews-see-all-btn" (click)="toggleReviews()">
-              {{ showAllReviews() ? 'Mostra meno recensioni' : 'Vedi tutte le recensioni' }}
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.rotate-180]="showAllReviews()">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
-          </div>
-          }
         </div>
 
+        <!-- LOWER SECTIONS (Static/Not loaded with hero animation) -->
+        <div class="lower-sections">
 
+          <!-- CAST SECTION -->
+          <div class="section-block cast-section">
+            <div class="section-header">
+              <h2 class="section-title">Cast</h2>
+              <div class="header-right-controls">
+                <div class="section-scroll-arrows">
+                  <button class="section-arrow-btn" (click)="scrollCast('left')" aria-label="Scroll left"
+                    [disabled]="!canScrollLeftCast()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+                  <button class="section-arrow-btn" (click)="scrollCast('right')" aria-label="Scroll right"
+                    [disabled]="!canScrollRightCast()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="slider-wrapper" [class.has-fade-right]="canScrollRightCast()"
+              [class.has-fade-left]="canScrollLeftCast()">
+              <div class="cast-grid" id="cast-slider" (scroll)="checkScrollState()">
+                @for (actor of movie()!.cast || []; track actor.name) {
+                <div class="cast-card">
+                  <img [src]="actor.imageUrl" [alt]="actor.name" class="cast-img"
+                    (error)="actor.imageUrl = 'https://ui-avatars.com/api/?name=' + actor.name + '&background=random&color=fff'" />
+                  <div class="cast-names">
+                    <span class="actor-name">{{ actor.name }}</span>
+                    <span class="character-name">{{ actor.character }}</span>
+                  </div>
+                </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- SCREENSHOT SECTION (Asymmetric Grid) -->
+          <div class="section-block screenshot-section">
+            <div class="section-header">
+              <h2 class="section-title">Screenshot</h2>
+            </div>
+
+            <div class="screenshot-grid">
+              <div class="grid-item img-large">
+                <img [src]="movie()!.screenshots[0]" alt="Screenshot 1" />
+              </div>
+              <div class="grid-item img-large">
+                <img [src]="movie()!.screenshots[1]" alt="Screenshot 2" />
+              </div>
+
+              <div class="grid-item img-vertical">
+                <img [src]="movie()!.screenshots[2]" alt="Screenshot 3" />
+              </div>
+              <div class="grid-item img-vertical">
+                <img [src]="movie()!.screenshots[3]" alt="Screenshot 4" />
+              </div>
+              <div class="grid-item img-wide">
+                <img [src]="movie()!.screenshots[4]" alt="Screenshot 5" />
+              </div>
+
+              <!-- Third Row (added) -->
+              <div class="grid-item img-large">
+                <img [src]="movie()!.screenshots[5]" alt="Screenshot 6" />
+              </div>
+              <div class="grid-item img-large">
+                <img [src]="movie()!.screenshots[6]" alt="Screenshot 7" />
+              </div>
+            </div>
+          </div>
+
+
+          <!-- SUGGESTED MOVIES SECTION -->
+          <div class="section-block suggested-section">
+            <div class="section-header">
+              <h2 class="section-title">Film simili consigliati</h2>
+              <div class="header-right-controls">
+                <div class="section-scroll-arrows">
+                  <button class="section-arrow-btn glass-card" (click)="scrollSuggested('left')"
+                    aria-label="Scroll left" [disabled]="!canScrollLeftSuggested()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+                  <button class="section-arrow-btn glass-card" (click)="scrollSuggested('right')"
+                    aria-label="Scroll right" [disabled]="!canScrollRightSuggested()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="slider-wrapper" [class.has-fade-right]="canScrollRightSuggested()"
+              [class.has-fade-left]="canScrollLeftSuggested()">
+
+              <div class="suggested-slider" id="suggested-slider" (scroll)="checkScrollState()">
+                @for (item of movie()?.suggested || []; track item.id) {
+                <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(item, $event)"
+                  (mouseleave)="onPosterMouseLeave()" (click)="goToMovie(item)">
+                  <img [src]="item.posterUrl" [alt]="item.title" class="poster-img" />
+                </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- REVIEWS SECTION -->
+          <div class="section-block reviews-section">
+            <div class="section-header">
+              <h2 class="section-title">Recensioni degli utenti</h2>
+            </div>
+
+            <div class="reviews-subheader">
+              <span class="reviews-count">{{ movie()!.reviews?.length || 0 }} Recensioni</span>
+              <label class="reviews-checkbox">
+                <input type="checkbox" />
+                <span class="checkmark"></span>
+                Nascondi spoiler
+              </label>
+              <div class="reviews-sort">
+                <span class="sort-label">Ordina per</span>
+                <span class="sort-value">Più recenti <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg></span>
+              </div>
+            </div>
+
+            <div class="reviews-input-container">
+              <input type="text" class="reviews-input" placeholder="Scrivi la tua recensione per {{ movie()!.title }}"
+                [ngModel]="newReviewText()" (ngModelChange)="newReviewText.set($event)"
+                (keyup.enter)="submitReview()" />
+              <button class="reviews-submit-btn" aria-label="Submit review" (click)="submitReview()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="reviews-list">
+              @for (review of (showAllReviews() ? movie()!.reviews : (movie()!.reviews || []).slice(0, 3)); track
+              review.id) {
+              <div class="review-card">
+                <div class="review-header">
+                  <span class="review-author">{{ review.author }}</span>
+                  <button class="review-menu-btn" aria-label="More options">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="5" r="2" />
+                      <circle cx="12" cy="12" r="2" />
+                      <circle cx="12" cy="19" r="2" />
+                    </svg>
+                  </button>
+                </div>
+                <h3 class="review-title">{{ review.title }}</h3>
+                <p class="review-content">{{ review.content }}</p>
+                <div class="review-footer">
+                  <div class="review-actions">
+                    <button class="review-action-btn">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path
+                          d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3">
+                        </path>
+                      </svg>
+                      <span>{{ review.likes }}</span>
+                    </button>
+                    <button class="review-action-btn">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path
+                          d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-2">
+                        </path>
+                      </svg>
+                      <span>{{ review.dislikes }}</span>
+                    </button>
+                  </div>
+                  <span class="review-date">{{ review.date }}</span>
+                </div>
+              </div>
+              }
+            </div>
+
+            @if ((movie()!.reviews?.length || 0) > 3) {
+            <div class="reviews-see-all-container" [class.is-expanded]="showAllReviews()">
+              <button class="reviews-see-all-btn" (click)="toggleReviews()">
+                {{ showAllReviews() ? 'Mostra meno recensioni' : 'Vedi tutte le recensioni' }}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  [class.rotate-180]="showAllReviews()">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+            </div>
+            }
+          </div>
+
+
+        </div>
       </div>
     </div>
-  </div>
-  }
+    }
   </div>
   <div class="mobile-only">
-  <app-movie-detail-mobile [movie]="movie()"></app-movie-detail-mobile>
+    <app-movie-detail-mobile [movie]="movie()"></app-movie-detail-mobile>
   </div>
   <div style="margin-top: auto; transition: opacity 0.6s ease;" [style.opacity]="pageLoaded() ? 1 : 0">
     <app-footer></app-footer>
   </div>
+
+
 </div>
 
 <!-- =====================================================================
@@ -403,14 +426,16 @@
 
     <!-- BUTTONS -->
     <div class="ghp-actions">
-      <button class="ghp-btn-watch" [style.background]="panelAccentColor()" (click)="goToMovie(panelMovie(), panelAccentColor())">
+      <button class="ghp-btn-watch" [style.background]="panelAccentColor()"
+        (click)="goToMovie(panelMovie(), panelAccentColor())">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
           <polygon points="5 3 19 12 5 21 5 3"></polygon>
         </svg>
         <span>Guarda ora</span>
       </button>
 
-      <button class="ghp-btn-bookmark" [class.active]="favoritesService.isBookmarked(movie()!.id, false)" title="Aggiungi alla lista">
+      <button class="ghp-btn-bookmark" [class.active]="favoritesService.isBookmarked(panelMovie()!.id, false)"
+        (click)="collectionsModalService.openModal({id: panelMovie()!.id, title: panelMovie()!.title, posterUrl: panelMovie()!.posterUrl, backdropUrl: panelMovie()!.backdropUrl || panelMovie()!.posterUrl, year: (panelMovie()!.year || '').toString(), isSeries: false})" title="Aggiungi alla lista">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
         </svg>
@@ -421,8 +446,5 @@
 </div>
 
 <!-- VIDEO PLAYER OVERLAY -->
-<app-video-player
-  [config]="playerConfig()"
-  [visible]="playerVisible()"
-  (closed)="onPlayerClosed()">
+<app-video-player [config]="playerConfig()" [visible]="playerVisible()" (closed)="onPlayerClosed()">
 </app-video-player>

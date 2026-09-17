@@ -34,6 +34,13 @@ export class TmdbService {
   }
 
   /**
+   * Fetch top picks tailored to the user profile and category (infinite scroll support)
+   */
+  getTopPicks(category: string, page: number, profileId: string): Observable<any> {
+    return this.http.get<any>(`${this.BFF_URL}/top-picks?category=${encodeURIComponent(category)}&page=${page}&profileId=${encodeURIComponent(profileId)}`);
+  }
+
+  /**
    * Fetch top 10 trending items for a specific period
    */
   getTrendingTop10(category: string, period: string): Observable<any> {

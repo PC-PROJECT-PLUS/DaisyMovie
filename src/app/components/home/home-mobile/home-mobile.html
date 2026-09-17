@@ -208,18 +208,6 @@
     </div>
   </section>
 
-  <!-- TOP PICKS FOR YOU -->
-  <section class="mobile-section">
-    <div class="section-header">
-      <h2>Scelti per Te</h2>
-    </div>
-    <div class="mobile-slider posters-only">
-      @for (movie of topPicksMovies; track movie.id) {
-      <div class="poster-card" (click)="goToMovie(movie)"><img [src]="movie.posterUrl" [alt]="movie.title"
-          loading="lazy" /></div>
-      }
-    </div>
-  </section>
 
   <!-- ACTION & ADVENTURE -->
   <section class="mobile-section">

@@ -13,6 +13,8 @@ import { HomeMobile } from './home-mobile/home-mobile';
 import { TmdbService } from '../../services/tmdb.service';
 import { FavoritesService } from '../../services/favorites.service';
 import { HistoryService } from '../../services/history.service';
+import { AuthService } from '../../services/auth.service';
+import { CollectionsModalService } from '../../services/collections-modal.service';
 
 export const globalColorCache = new Map<string, string>();
 
@@ -102,10 +104,14 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   public responsiveService = inject(ResponsiveService);
   public themeService = inject(ThemeService);
   loaderService = inject(LoaderService);
-  public categoryService = inject(CategoryService);
-  public tmdbService = inject(TmdbService);
+  private categoryService = inject(CategoryService);
+  private tmdbService = inject(TmdbService);
   public favoritesService = inject(FavoritesService);
-  public historyService = inject(HistoryService);
+  private historyService = inject(HistoryService);
+  public authService = inject(AuthService);
+  private collectionsModalService = inject(CollectionsModalService);
+
+  private readonly STORAGE_KEY = 'home_scroll_positions';
   public ngZone = inject(NgZone);
   private injector = inject(Injector);
   private platformId = inject(PLATFORM_ID);
@@ -398,10 +404,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   }
 
   classicsMovies: any[] = [];
-
   hiddenGemsMovies: any[] = [];
-
-  topPicksMovies: any[] = [];
   acclaimedMovies: any[] = [];
 
   dynamicSliders: { id: string, title: string, genreId: string | number, movies: any[], canScrollLeft: any, canScrollRight: any, page: number, isLoaded?: boolean, isLoading?: boolean }[] = [];
@@ -507,7 +510,20 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           isLoading: false
         }));
 
-        this.dynamicSliders = [...standardSliders, ...thematicSliders].sort(() => Math.random() - 0.5);
+        const topPicksSlider = {
+          id: `top-picks-slider-${cat.replace(/\s+/g, '-').toLowerCase()}`,
+          title: 'Scelti per te',
+          genreId: 'top-picks',
+          movies: [],
+          canScrollLeft: signal(false),
+          canScrollRight: signal(true),
+          page: 1,
+          isLoaded: false,
+          isLoading: false
+        };
+
+        const shuffledOthers = [...standardSliders, ...thematicSliders].sort(() => Math.random() - 0.5);
+        this.dynamicSliders = [topPicksSlider, ...shuffledOthers];
         setTimeout(() => this.checkVerticalSliders(), 500);
       });
 
@@ -572,7 +588,6 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
         if (data2.classicsMovies) this.classicsMovies = data2.classicsMovies;
         if (data2.hiddenGemsMovies) this.hiddenGemsMovies = data2.hiddenGemsMovies;
-        if (data2.topPicksMovies) this.topPicksMovies = data2.topPicksMovies;
         if (data2.acclaimedMovies) this.acclaimedMovies = data2.acclaimedMovies;
         
         setTimeout(() => this.checkAllStaticSlidersScroll(), 300);
@@ -599,17 +614,45 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   loadDynamicSlider(slider: any) {
     slider.isLoading = true;
     const cat = this.categoryService.activeCategory();
+    
+    if (slider.genreId === 'top-picks') {
+      const profile = this.authService.selectedProfile();
+      if (!profile) {
+        slider.isLoading = false;
+        slider.isLoaded = true;
+        return;
+      }
+      this.tmdbService.getTopPicks(cat, 1, profile.id).subscribe({
+        next: (data) => {
+          if (data && data.length >= 8) {
+            slider.movies = data;
+            slider.isLoaded = true;
+            slider.isLoading = false;
+            setTimeout(() => this.checkScrollState(slider.id), 200);
+          } else {
+            this.dynamicSliders = this.dynamicSliders.filter(s => s.id !== slider.id);
+          }
+        },
+        error: () => { 
+          this.dynamicSliders = this.dynamicSliders.filter(s => s.id !== slider.id);
+        }
+      });
+      return;
+    }
+
     this.tmdbService.getCategoryPage(slider.genreId.toString(), cat, 1).subscribe({
       next: (data) => {
-        if (data) {
+        if (data && data.length >= 8) {
           slider.movies = data;
+          slider.isLoaded = true;
+          slider.isLoading = false;
+          setTimeout(() => this.checkScrollState(slider.id), 200);
+        } else {
+          this.dynamicSliders = this.dynamicSliders.filter(s => s.id !== slider.id);
         }
-        slider.isLoaded = true;
-        slider.isLoading = false;
-        setTimeout(() => this.checkScrollState(slider.id), 200);
       },
       error: () => {
-        slider.isLoading = false;
+        this.dynamicSliders = this.dynamicSliders.filter(s => s.id !== slider.id);
       }
     });
   }
@@ -904,7 +947,16 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
-    this.favoritesService.toggleFavorite(item);
+    const posterUrl = item.posterUrl || item.backdropUrl || '';
+    const year = item.year || (item.releaseDate ? item.releaseDate.substring(0, 4) : '');
+    this.collectionsModalService.openModal({
+      id: item.id,
+      title: item.title,
+      posterUrl: posterUrl,
+      backdropUrl: item.backdropUrl || posterUrl,
+      year: year.toString(),
+      isSeries: !!item.isSeries
+    });
   }
 
   toggleNotification(item: LatestEpisodeItem, event?: Event) {
@@ -955,13 +1007,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     } else if (containerId === 'hidden-gems-slider') {
       this.canScrollRightHiddenGems.set(canRight);
       this.canScrollLeftHiddenGems.set(canLeft);
-    } else if (containerId === 'top-picks-slider') {
-      this.canScrollRightTopPicks.set(canRight);
-      this.canScrollLeftTopPicks.set(canLeft);
     } else if (containerId === 'acclaimed-slider') {
       this.canScrollRightAcclaimed.set(canRight);
       this.canScrollLeftAcclaimed.set(canLeft);
-    } else if (containerId.startsWith('genre-')) {
+    } else if (containerId.startsWith('genre-') || containerId.startsWith('theme-') || containerId.startsWith('top-picks-slider')) {
       const sliderObj = this.dynamicSliders.find(s => s.id === containerId);
       if (sliderObj) {
         sliderObj.canScrollRight.set(canRight);
@@ -980,26 +1029,44 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         'spotlight-slider': 'spotlight',
         'classics-slider': 'classics',
         'hidden-gems-slider': 'hiddenGems',
-        'top-picks-slider': 'topPicks',
         'acclaimed-slider': 'acclaimed'
       };
       if (listMap[containerId]) {
         this.loadMore(listMap[containerId]);
-      } else if (containerId.startsWith('genre-')) {
+      } else if (containerId.startsWith('genre-') || containerId.startsWith('top-picks-slider') || containerId.startsWith('theme-')) {
         const sliderObj = this.dynamicSliders.find(s => s.id === containerId);
         if (sliderObj && !this.loadingPages[sliderObj.genreId]) {
           this.loadingPages[sliderObj.genreId] = true;
           sliderObj.page = (sliderObj.page || 1) + 1;
-          this.tmdbService.getCategoryPage(sliderObj.genreId.toString(), this.categoryService.activeCategory(), sliderObj.page).subscribe(data => {
-            if (data && data.length > 0) {
-              const filterNew = (existing: any[], incoming: any[]) => {
-                const existingIds = new Set(existing.map(i => i.id));
-                return [...existing, ...incoming.filter(i => !existingIds.has(i.id))];
-              };
-              sliderObj.movies = filterNew(sliderObj.movies, data);
+          
+          if (sliderObj.genreId === 'top-picks') {
+            const profile = this.authService.selectedProfile();
+            if (profile) {
+              this.tmdbService.getTopPicks(this.categoryService.activeCategory(), sliderObj.page, profile.id).subscribe(data => {
+                if (data && data.length > 0) {
+                  const filterNew = (existing: any[], incoming: any[]) => {
+                    const existingIds = new Set(existing.map(i => i.id));
+                    return [...existing, ...incoming.filter(i => !existingIds.has(i.id))];
+                  };
+                  sliderObj.movies = filterNew(sliderObj.movies, data);
+                }
+                this.loadingPages[sliderObj.genreId!] = false;
+              });
+            } else {
+               this.loadingPages[sliderObj.genreId!] = false;
             }
-            this.loadingPages[sliderObj.genreId] = false;
-          });
+          } else {
+            this.tmdbService.getCategoryPage(sliderObj.genreId.toString(), this.categoryService.activeCategory(), sliderObj.page).subscribe(data => {
+              if (data && data.length > 0) {
+                const filterNew = (existing: any[], incoming: any[]) => {
+                  const existingIds = new Set(existing.map(i => i.id));
+                  return [...existing, ...incoming.filter(i => !existingIds.has(i.id))];
+                };
+                sliderObj.movies = filterNew(sliderObj.movies, data);
+              }
+              this.loadingPages[sliderObj.genreId!] = false;
+            });
+          }
         }
       }
     }
@@ -1027,7 +1094,6 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           }
           if (listName === 'classics') this.classicsMovies = filterNew(this.classicsMovies, data);
           if (listName === 'hiddenGems') this.hiddenGemsMovies = filterNew(this.hiddenGemsMovies, data);
-          if (listName === 'topPicks') this.topPicksMovies = filterNew(this.topPicksMovies, data);
           if (listName === 'acclaimed') this.acclaimedMovies = filterNew(this.acclaimedMovies, data);
         }
         this.loadingPages[listName] = false;

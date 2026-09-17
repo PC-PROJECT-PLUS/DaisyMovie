@@ -44,9 +44,9 @@ const processDailyReleases = async () => {
 
       // 1. Crea la notifica nel DB per l'app
       await client.query(
-        `INSERT INTO notifications (profile_id, media_id, title, message)
-         VALUES ($1, $2, $3, $4)`,
-        [profile_id, media_id, 'Novità in Catalogo!', messageText]
+        `INSERT INTO notifications (profile_id, media_id, media_type, title, message)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [profile_id, media_id, media_type, 'Novità in Catalogo!', messageText]
       );
 
       // 2. Invia Email Reale (se l'utente ha il digest email abilitato, ma per ora lo mandiamo a tutti)

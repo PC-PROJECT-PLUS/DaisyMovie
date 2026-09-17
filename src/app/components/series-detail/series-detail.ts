@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, effect, PLATFORM_ID, inject } from '@angular/core';
+import { Component, OnInit, signal, effect, PLATFORM_ID, inject, untracked } from '@angular/core';
 import { CommonModule, Location, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,6 +8,8 @@ import { SeriesDetailMobile } from './series-detail-mobile/series-detail-mobile'
 import { LoaderService } from '../../services/loader.service';
 import { TmdbService } from '../../services/tmdb.service';
 import { FavoritesService } from '../../services/favorites.service';
+import { PreferencesService } from '../../services/preferences.service';
+import { CollectionsModalService } from '../../services/collections-modal.service';
 import { HistoryService } from '../../services/history.service';
 import { VideoPlayerComponent, PlayerConfig } from '../video-player/video-player';
 
@@ -91,6 +93,8 @@ export class SeriesDetailComponent implements OnInit {
   private loaderService = inject(LoaderService);
   private tmdbService = inject(TmdbService);
   favoritesService = inject(FavoritesService);
+  preferencesService = inject(PreferencesService);
+  collectionsModalService = inject(CollectionsModalService);
   private historyService = inject(HistoryService);
   seriesId = signal<number | null>(null);
   series = signal<SeriesDetail | null>(null);
@@ -110,7 +114,7 @@ export class SeriesDetailComponent implements OnInit {
   // Suggested pagination
   suggestedPage = 1;
   isLoadingSuggested = false;
-  
+
   resumeProgress = signal<number>(0);
   resumeText = signal<string>('');
   resumeSeason = signal<number>(1);
@@ -161,10 +165,10 @@ export class SeriesDetailComponent implements OnInit {
     const countryStr = JSON.stringify(s.origin_country || s.originCountry || '').toLowerCase();
     const origLangStr = JSON.stringify(s.original_language || s.originalLanguage || '').toLowerCase();
 
-    const isJapanese = 
-      origLangStr.includes('"ja"') || 
+    const isJapanese =
+      origLangStr.includes('"ja"') ||
       origLangStr === '"ja"' ||
-      countryStr.includes('"jp"') || 
+      countryStr.includes('"jp"') ||
       prodStr.includes('toei') ||
       prodStr.includes('mappa') ||
       prodStr.includes('ufotable') ||
@@ -194,10 +198,10 @@ export class SeriesDetailComponent implements OnInit {
 
   onPlayerClosed() {
     this.playerVisible.set(false);
-    
+
     // Progress is now saved by VideoPlayerComponent internally via HistoryService
   }
-    
+
 
 
   async openEpisodePlayer(episodeNumber: number) {
@@ -228,10 +232,10 @@ export class SeriesDetailComponent implements OnInit {
     const countryStr = JSON.stringify(s.origin_country || s.originCountry || '').toLowerCase();
     const origLangStr = JSON.stringify(s.original_language || s.originalLanguage || '').toLowerCase();
 
-    const isJapanese = 
-      origLangStr.includes('"ja"') || 
+    const isJapanese =
+      origLangStr.includes('"ja"') ||
       origLangStr === '"ja"' ||
-      countryStr.includes('"jp"') || 
+      countryStr.includes('"jp"') ||
       prodStr.includes('toei') ||
       prodStr.includes('mappa') ||
       prodStr.includes('ufotable') ||
@@ -292,24 +296,26 @@ export class SeriesDetailComponent implements OnInit {
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0);
     }
-    
+
     effect(() => {
       const s = this.series();
       if (!s || !isPlatformBrowser(this.platformId)) return;
-      
+
       const historyItem = this.historyService.getResumeProgress(s.id, true);
-      if (historyItem && historyItem.progress_seconds !== undefined && historyItem.progress_seconds >= 0) {
-        this.resumeProgress.set(historyItem.progress_seconds);
-        this.resumeSeason.set(historyItem.season || 1);
-        this.resumeEpisode.set(historyItem.episode || 1);
-        this.resumeText.set(`Riprendi S${historyItem.season} E${historyItem.episode}`);
-      } else {
-        this.resumeProgress.set(0);
-        this.resumeText.set('');
-        this.resumeSeason.set(1);
-        this.resumeEpisode.set(1);
-      }
-    }, { allowSignalWrites: true });
+      untracked(() => {
+        if (historyItem && historyItem.progress_seconds !== undefined && historyItem.progress_seconds >= 0) {
+          this.resumeProgress.set(historyItem.progress_seconds);
+          this.resumeSeason.set(historyItem.season || 1);
+          this.resumeEpisode.set(historyItem.episode || 1);
+          this.resumeText.set(`Riprendi S${historyItem.season} E${historyItem.episode}`);
+        } else {
+          this.resumeProgress.set(0);
+          this.resumeText.set('');
+          this.resumeSeason.set(1);
+          this.resumeEpisode.set(1);
+        }
+      });
+    });
   }
 
   ngOnInit() {
@@ -875,6 +881,13 @@ export class SeriesDetailComponent implements OnInit {
     const s = this.series();
     if (s) {
       this.favoritesService.toggleFavorite(s, true);
+    }
+  }
+
+  async openCollectionsModal(seriesToSave?: any) {
+    const series = seriesToSave || this.series();
+    if (series) {
+      await this.collectionsModalService.openModal(series);
     }
   }
 

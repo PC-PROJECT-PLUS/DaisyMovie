@@ -1,6 +1,7 @@
 import { Component, input, output, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FavoritesService } from '../../../services/favorites.service';
+import { CollectionsModalService } from '../../../services/collections-modal.service';
 import { RouterModule } from '@angular/router';
 
 @Component({
@@ -17,9 +18,19 @@ export class SearchMobileComponent {
   pageLoaded = input<boolean>(false);
   
   favoritesService = inject(FavoritesService);
+  collectionsModalService = inject(CollectionsModalService);
 
   onToggleBookmark(item: any, event: Event) {
     event.stopPropagation();
-    this.favoritesService.toggleFavorite(item);
+    const posterUrl = item.posterUrl || item.backdropUrl || '';
+    const year = item.year || (item.releaseDate ? item.releaseDate.substring(0, 4) : '');
+    this.collectionsModalService.openModal({
+      id: item.id,
+      title: item.title,
+      posterUrl: posterUrl,
+      backdropUrl: item.backdropUrl || posterUrl,
+      year: year.toString(),
+      isSeries: !!item.isSeries
+    });
   }
 }

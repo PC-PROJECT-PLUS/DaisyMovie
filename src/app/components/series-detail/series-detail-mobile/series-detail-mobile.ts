@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, input, PLATFORM_ID, inject, effect } from '@angular/core';
+import { Component, OnInit, signal, input, PLATFORM_ID, inject, effect, untracked } from '@angular/core';
 import { CommonModule, Location, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -44,20 +44,22 @@ export class SeriesDetailMobile implements OnInit {
         const s = this.series();
         if (s && isPlatformBrowser(this.platformId)) {
           const historyItem = this.historyService.getResumeProgress(s.id, true);
-          if (historyItem && historyItem.progress_seconds !== undefined && historyItem.progress_seconds >= 0) {
-            this.resumeProgress.set(historyItem.progress_seconds);
-            this.resumeSeason.set(historyItem.season || 1);
-            this.resumeEpisode.set(historyItem.episode || 1);
-            this.resumeText.set(`Riprendi S${historyItem.season} E${historyItem.episode}`);
-          } else {
-            this.resumeProgress.set(0);
-            this.resumeText.set('');
-            this.resumeSeason.set(1);
-            this.resumeEpisode.set(1);
-          }
+          untracked(() => {
+            if (historyItem && historyItem.progress_seconds !== undefined && historyItem.progress_seconds >= 0) {
+              this.resumeProgress.set(historyItem.progress_seconds);
+              this.resumeSeason.set(historyItem.season || 1);
+              this.resumeEpisode.set(historyItem.episode || 1);
+              this.resumeText.set(`Riprendi S${historyItem.season} E${historyItem.episode}`);
+            } else {
+              this.resumeProgress.set(0);
+              this.resumeText.set('');
+              this.resumeSeason.set(1);
+              this.resumeEpisode.set(1);
+            }
+          });
         }
       }
-    }, { allowSignalWrites: true });
+    });
   }
 
   goBack() {

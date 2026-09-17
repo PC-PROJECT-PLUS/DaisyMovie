@@ -4,6 +4,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Navbar } from './components/navbar/navbar';
 import { PageLoaderComponent } from './components/page-loader/page-loader';
 import { LogoutModalComponent } from './components/shared/logout-modal/logout-modal';
+import { CollectionsModalComponent } from './components/collections-modal/collections-modal';
 import { LoaderService } from './services/loader.service';
 import { AuthService } from './services/auth.service';
 import { filter } from 'rxjs/operators';
@@ -13,7 +14,7 @@ const HIDDEN_NAVBAR_ROUTES = ['/auth', '/profile'];
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, CommonModule, PageLoaderComponent, LogoutModalComponent],
+  imports: [RouterOutlet, Navbar, CommonModule, PageLoaderComponent, LogoutModalComponent, CollectionsModalComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

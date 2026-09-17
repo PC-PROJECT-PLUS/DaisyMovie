@@ -9,6 +9,7 @@ import { NavbarMobile } from '../../navbar/navbar-mobile/navbar-mobile';
 import { ThemeService } from '../../../services/theme.service';
 import { PreferencesService } from '../../../services/preferences.service';
 import { FavoritesService } from '../../../services/favorites.service';
+import { CollectionsModalService } from '../../../services/collections-modal.service';
 import { HistoryViewItem } from '../history';
 
 @Component({
@@ -24,6 +25,7 @@ export class HistoryMobile implements OnInit {
   onRemove = output<HistoryViewItem>();
   themeService = inject(ThemeService);
   favoritesService = inject(FavoritesService);
+  collectionsModalService = inject(CollectionsModalService);
   router = inject(Router);
   preferencesService = inject(PreferencesService);
   pageLoaded = signal(false);
@@ -146,7 +148,16 @@ export class HistoryMobile implements OnInit {
 
   toggleFavorite(item: HistoryViewItem, event?: Event) {
     if (event) event.stopPropagation();
-    this.onRemove.emit(item);
+    const posterUrl = item.posterUrl || item.backdropUrl || '';
+    const year = item.year || '';
+    this.collectionsModalService.openModal({
+      id: item.id,
+      title: item.title,
+      posterUrl: posterUrl,
+      backdropUrl: item.backdropUrl || posterUrl,
+      year: year.toString(),
+      isSeries: !!item.isSeries
+    });
   }
 
   toggleSortDropdown() {

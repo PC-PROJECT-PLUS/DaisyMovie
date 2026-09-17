@@ -82,7 +82,7 @@ const getBaseEmailTemplate = (contentHTML) => `
     <div class="email-wrapper">
       <div class="email-header">
         <h1>
-          <img src="http://localhost:4200/assets/Logo_cropped.png" alt="Daisy Movie Logo" width="36" height="36" style="border-radius: 8px; margin-right: 12px;">
+          <img src="https://daisymovie.com/assets/Logo_cropped.png" alt="Daisy Movie Logo" width="36" height="36" style="border-radius: 8px; margin-right: 12px;">
           Daisy Movie
         </h1>
       </div>
@@ -115,7 +115,7 @@ const sendNotificationEmail = async (userEmail, userName, title, message) => {
       htmlContent: getBaseEmailTemplate(`
         <div class="greeting">Ciao ${userName},</div>
         <div class="message">${message}</div>
-        <a href="http://localhost:4200" class="cta-button">Apri Daisy Movie</a>
+        <a href="https://daisymovie.com" class="cta-button">Apri Daisy Movie</a>
       `)
     });
     console.log('API Brevo chiamata con successo. Email inviata.');
@@ -164,7 +164,46 @@ const sendVerificationCodeEmail = async (userEmail, code) => {
   }
 };
 
+const sendRecommendationEmail = async (userEmail, userName, movieTitle, movieOverview, moviePosterUrl) => {
+  if (!process.env.BREVO_API_KEY) {
+    console.log(`\n[EMAIL SIMULATA - RACCOMANDAZIONE] A: ${userEmail}\nFilm: ${movieTitle}\n`);
+    return true;
+  }
+
+  const client = new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || "noreply@daisymovie.com";
+
+  try {
+    const data = await client.transactionalEmails.sendTransacEmail({
+      subject: "Consigliato per te: Cosa guardare oggi?",
+      sender: { name: "Daisy Movie", email: senderEmail },
+      to: [{ email: userEmail, name: userName }],
+      htmlContent: getBaseEmailTemplate(`
+        <div class="greeting">Ciao ${userName}!</div>
+        <div class="message">Abbiamo pensato a qualcosa che potrebbe piacerti moltissimo:</div>
+        <div style="text-align: center; margin-bottom: 20px;">
+          ${moviePosterUrl ? `<img src="https://image.tmdb.org/t/p/w500${moviePosterUrl}" alt="${movieTitle}" style="max-width: 200px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">` : ''}
+          <h2 style="color: #facc15; margin-top: 15px;">${movieTitle}</h2>
+          <p style="color: #d1d1d1; font-size: 14px; text-align: left;">${movieOverview}</p>
+        </div>
+        <a href="https://daisymovie.com" class="cta-button">Apri Daisy Movie</a>
+      `)
+    });
+    console.log(`API Brevo: Email di raccomandazione inviata a ${userEmail}.`);
+    return true;
+  } catch (error) {
+    console.error('Errore durante l\'invio dell\'email di raccomandazione:');
+    if (error.response && error.response.text) {
+      console.error(error.response.text);
+    } else {
+      console.error(error);
+    }
+    return false;
+  }
+};
+
 module.exports = {
   sendNotificationEmail,
-  sendVerificationCodeEmail
+  sendVerificationCodeEmail,
+  sendRecommendationEmail
 };

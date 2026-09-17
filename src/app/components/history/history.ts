@@ -12,6 +12,7 @@ import { HistoryMobile } from './history-mobile/history-mobile';
 
 import { HistoryService } from '../../services/history.service';
 import { FavoritesService } from '../../services/favorites.service';
+import { CollectionsModalService } from '../../services/collections-modal.service';
 
 export interface HistoryViewItem {
   id: number;
@@ -46,8 +47,10 @@ export class HistoryComponent implements OnInit {
 
   historyService = inject(HistoryService);
   favoritesService = inject(FavoritesService);
+  private collectionsModalService = inject(CollectionsModalService);
 
   isMobile = signal<boolean>(false);
+  activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
   pageLoaded = signal<boolean>(false);
 
   sortOption = signal<'az' | 'recent' | 'match'>('recent');
@@ -218,12 +221,15 @@ export class HistoryComponent implements OnInit {
 
   toggleFavorite(item: HistoryViewItem, event?: Event) {
     if (event) event.stopPropagation();
-    this.favoritesService.toggleFavorite({
+    const posterUrl = item.posterUrl || item.backdropUrl || '';
+    const year = item.year || '';
+    this.collectionsModalService.openModal({
       id: item.id,
-      isSeries: item.isSeries,
       title: item.title,
-      posterUrl: item.posterUrl,
-      backdropUrl: item.backdropUrl
+      posterUrl: posterUrl,
+      backdropUrl: item.backdropUrl || posterUrl,
+      year: year.toString(),
+      isSeries: !!item.isSeries
     });
   }
 

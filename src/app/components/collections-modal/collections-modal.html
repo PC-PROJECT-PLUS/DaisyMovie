@@ -1,0 +1,85 @@
+@if (collectionsModalService.isOpen() && collectionsModalService.mediaItem()) {
+<div class="collections-modal-overlay" (click)="closeModal()">
+  <div class="collections-modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Salva in...</h3>
+      <button class="close-btn" (click)="closeModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-movie-info">
+      <img [src]="collectionsModalService.mediaItem()!.posterUrl" [alt]="collectionsModalService.mediaItem()!.title" class="modal-poster" />
+      <div class="modal-movie-details">
+        <h4>{{ collectionsModalService.mediaItem()!.title }}</h4>
+        <span class="modal-year">{{ collectionsModalService.mediaItem()!.year }}</span>
+      </div>
+    </div>
+
+    <ul class="modal-collections-list">
+      <!-- ALL FAVORITES DEFAULT -->
+      <li (click)="toggleMovieInCollection(null)">
+        <div class="col-checkbox"
+          [class.checked]="isMovieInCollection(null)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="col-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
+        <span class="col-name">Tutti i preferiti</span>
+      </li>
+
+      <!-- CUSTOM COLLECTIONS -->
+      @for (col of favoritesService.collections(); track col.id) {
+      <li (click)="toggleMovieInCollection(col.id)">
+        <div class="col-checkbox" [class.checked]="isMovieInCollection(col.id)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="col-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
+        <span class="col-name">{{ col.name }}</span>
+      </li>
+      }
+    </ul>
+
+    <div class="new-collection-container">
+      <div class="smooth-collapse" [class.show]="!isCreatingCollection()">
+        <div class="smooth-collapse-inner">
+          <button class="new-col-btn" (click)="isCreatingCollection.set(true); focusInput()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Nuova Collezione</span>
+          </button>
+        </div>
+      </div>
+      
+      <div class="smooth-collapse" [class.show]="isCreatingCollection()">
+        <div class="smooth-collapse-inner">
+          <div class="new-col-input-group">
+            <input id="global-new-col-input" type="text" [ngModel]="newCollectionName()" (ngModelChange)="newCollectionName.set($event)"
+              placeholder="Nome collezione..." (keyup.enter)="saveNewCollection()" autofocus />
+            <div class="new-col-actions">
+              <button class="btn-cancel" (click)="isCreatingCollection.set(false)">Annulla</button>
+              <button class="btn-save" (click)="saveNewCollection()" [disabled]="!newCollectionName().trim()">Crea e salva</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}

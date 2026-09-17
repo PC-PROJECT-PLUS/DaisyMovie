@@ -4,6 +4,7 @@ import { DomSanitizer, Title } from '@angular/platform-browser';
 import { Router, RouterModule } from '@angular/router';
 import { CategoryService } from '../../../services/category.service';
 import { FavoritesService } from '../../../services/favorites.service';
+import { CollectionsModalService } from '../../../services/collections-modal.service';
 import { HeroMovie, ContinueWatchingItem, MovieItem, LatestEpisodeItem, TopWatchedItem, DetailedMovieItem, globalColorCache } from '../home';
 
 @Component({
@@ -18,6 +19,7 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
   private router = inject(Router);
   private categoryService = inject(CategoryService);
   favoritesService = inject(FavoritesService);
+  private collectionsModalService = inject(CollectionsModalService);
   private sanitizer = inject(DomSanitizer);
   private titleService = inject(Title);
   private isBrowser = isPlatformBrowser(this.platformId);
@@ -69,7 +71,6 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
   @Input() spotlightMovies: DetailedMovieItem[] = [];
   @Input() classicsMovies: MovieItem[] = [];
   @Input() hiddenGemsMovies: MovieItem[] = [];
-  @Input() topPicksMovies: MovieItem[] = [];
   @Input() actionMovies: MovieItem[] = [];
   @Input() isPageLoaded: boolean = false;
   @Input() isHidden: boolean = false;
@@ -552,7 +553,16 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
-    this.favoritesService.toggleFavorite(item);
+    const posterUrl = item.posterUrl || item.backdropUrl || '';
+    const year = item.year || (item.releaseDate ? item.releaseDate.substring(0, 4) : '');
+    this.collectionsModalService.openModal({
+      id: item.id,
+      title: item.title,
+      posterUrl: posterUrl,
+      backdropUrl: item.backdropUrl || posterUrl,
+      year: year.toString(),
+      isSeries: !!item.isSeries
+    });
   }
 
   checkScrollState(containerId: string) {
