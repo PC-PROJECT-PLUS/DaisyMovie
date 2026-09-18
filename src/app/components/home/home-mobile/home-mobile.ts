@@ -451,9 +451,9 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
   startHeroAutoplay() {
     this.stopHeroAutoplay();
     this.heroInterval = setInterval(() => {
-      if (this.isHidden) return; // Pause timer when hidden
+      if (this.isHidden || this.collectionsModalService.isOpen()) return; // Pause timer when hidden or modal is open
       this.nextHeroSlide();
-    }, 6000);
+    }, 7000);
   }
 
   stopHeroAutoplay() {

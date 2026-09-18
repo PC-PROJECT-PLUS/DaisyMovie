@@ -166,6 +166,27 @@ router.post('/collections', async (req, res) => {
   }
 });
 
+// PUT /api/favorites/collections/:id
+router.put('/collections/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'Dati mancanti' });
+
+  try {
+    const result = await pool.query(
+      'UPDATE favorite_collections SET name = $1 WHERE id = $2 RETURNING id, name',
+      [name, id]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Collezione non trovata' });
+    }
+    res.json({ success: true, collection: result.rows[0] });
+  } catch (error) {
+    console.error('Errore aggiornamento collezione:', error);
+    res.status(500).json({ error: 'Errore server' });
+  }
+});
+
 // DELETE /api/favorites/collections/:id
 router.delete('/collections/:id', async (req, res) => {
   const { id } = req.params;

@@ -145,6 +145,19 @@ export class FavoritesService {
     }
   }
 
+  async renameCollection(collectionId: number, newName: string) {
+    const profile = this.authService.selectedProfile();
+    if (!profile) return;
+    try {
+      await firstValueFrom(this.http.put(`${this.apiUrl}/favorites/collections/${collectionId}`, {
+        name: newName
+      }));
+      this.collections.update(curr => curr.map(c => c.id === collectionId ? { ...c, name: newName } : c));
+    } catch (err) {
+      console.error('Error renaming collection:', err);
+    }
+  }
+
   async deleteCollection(collectionId: number) {
     const profile = this.authService.selectedProfile();
     if (!profile) return;

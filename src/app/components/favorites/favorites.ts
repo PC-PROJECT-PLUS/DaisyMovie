@@ -227,6 +227,25 @@ export class Favorites implements OnInit {
     return items;
   });
 
+  hasItemsInCollection = computed(() => {
+    let items = this.favoriteItems();
+    const activeColId = this.activeCollectionId();
+    if (activeColId !== null) {
+      const col = this.favoritesService.collections().find(c => c.id === activeColId);
+      if (col) {
+        items = items.filter(item => col.items.includes((item as any).favoriteId));
+      } else {
+        items = [];
+      }
+    } else {
+      items = items.filter(item => {
+        const mediaKey = `${item.isSeries ? 'tv' : 'movie'}_${item.id}`;
+        return !this.preferencesService.isHiddenFromGeneral(mediaKey);
+      });
+    }
+    return items.length > 0;
+  });
+
   hoveredItemId = signal<number | null>(null);
 
   setHoveredItem(id: number | null) {
@@ -293,10 +312,17 @@ export class Favorites implements OnInit {
   }
 
   // Collections Methods
+  collectionToDelete = signal<any | null>(null);
+  collectionToEdit = signal<any | null>(null);
+  editCollectionName = signal<string>('');
+  
   selectCollection(id: number | null) {
     this.activeCollectionId.set(id);
     this.searchQuery.set('');
     this.preferencesService.setFavoritesHeroMovieId(null); // Reset hero image to last saved item of new collection
+    if (isPlatformBrowser(this.platformId)) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   startCreatingCollection() {
@@ -320,13 +346,43 @@ export class Favorites implements OnInit {
     this.newCollectionName.set('');
   }
 
-  async deleteCollection(id: number, event: Event) {
+  startEditCollection(col: any, event: Event) {
     event.stopPropagation();
-    if (confirm('Sei sicuro di voler eliminare questa collezione? I preferiti al suo interno non verranno eliminati.')) {
-      await this.favoritesService.deleteCollection(id);
-      if (this.activeCollectionId() === id) {
+    this.collectionToEdit.set(col);
+    this.editCollectionName.set(col.name);
+  }
+
+  cancelEditCollection() {
+    this.collectionToEdit.set(null);
+    this.editCollectionName.set('');
+  }
+
+  async saveEditCollection() {
+    const col = this.collectionToEdit();
+    const name = this.editCollectionName().trim();
+    if (col && name && name !== col.name) {
+      await this.favoritesService.renameCollection(col.id, name);
+    }
+    this.cancelEditCollection();
+  }
+
+  startDeleteCollection(col: any, event: Event) {
+    event.stopPropagation();
+    this.collectionToDelete.set(col);
+  }
+
+  cancelDeleteCollection() {
+    this.collectionToDelete.set(null);
+  }
+
+  async confirmDeleteCollection() {
+    const col = this.collectionToDelete();
+    if (col) {
+      await this.favoritesService.deleteCollection(col.id);
+      if (this.activeCollectionId() === col.id) {
         this.selectCollection(null);
       }
+      this.cancelDeleteCollection();
     }
   }
 

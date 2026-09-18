@@ -17,7 +17,6 @@
   /* Allow the dropdown panel to spill out */
   border: none !important;
 
-
   &::before {
     content: '';
     position: absolute;
@@ -29,16 +28,17 @@
     border-radius: inherit;
     pointer-events: none;
 
-    /* Pure Liquid Glass without visible borders */
+    /* Frosted Glass Navbar */
     background: rgba(255, 255, 255, 0.1);
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
-
     -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.15);
     backdrop-filter: blur(28px) saturate(200%) brightness(1.15);
 
     will-change: transform, backdrop-filter;
     -webkit-will-change: transform, -webkit-backdrop-filter;
   }
+
+
 
   .nav-left {
     display: flex;
@@ -414,7 +414,7 @@
           padding: 40px 20px;
           color: #777;
           text-align: center;
-          
+
           svg {
             margin-bottom: 12px;
             opacity: 0.5;
@@ -616,5 +616,9 @@
 }
 
 .active-indicator.no-transition {
+  transition: none !important;
+}
+
+active-indicator.no-transition {
   transition: none !important;
 }
