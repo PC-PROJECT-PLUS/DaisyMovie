@@ -60,9 +60,17 @@
           font-size: 0.95rem;
 
           &.trailer-btn {
-            background: rgba(255, 255, 255, 0.15) !important;
+            background: transparent !important;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 2px solid var(--accent-color, rgba(255, 255, 255, 0.3));
+            color: var(--accent-color, #fff) !important;
+            transition: all 0.3s ease;
+            svg { stroke: currentColor !important; }
+
+            &:hover {
+              background: transparent !important;
+              transform: scale(1.05);
+            }
           }
         }
 

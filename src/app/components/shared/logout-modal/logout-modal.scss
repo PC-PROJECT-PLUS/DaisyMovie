@@ -91,23 +91,26 @@
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
     border: none;
     
-    &.btn-primary {
-      background: var(--accent-color, #3b82f6);
-      color: #fff;
-      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);
-      
+    &.btn-warning {
+      background: rgba(250, 204, 21, 0.15);
+      border: 1px solid rgba(250, 204, 21, 0.3);
+      color: #facc15;
+      box-shadow: 0 4px 15px rgba(250, 204, 21, 0.1);
+
       &:hover {
-        background: var(--accent-hover, #2563eb);
+        background: rgba(250, 204, 21, 1);
+        border-color: rgba(250, 204, 21, 1);
+        color: #000;
         transform: translateY(-2px);
-        box-shadow: 0 12px 28px rgba(59, 130, 246, 0.35);
+        box-shadow: 0 8px 25px rgba(250, 204, 21, 0.4);
       }
       
       &:active {
         transform: translateY(1px);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        box-shadow: 0 4px 12px rgba(250, 204, 21, 0.2);
       }
     }
 

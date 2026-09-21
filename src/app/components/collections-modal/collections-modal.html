@@ -1,5 +1,5 @@
 @if (collectionsModalService.isOpen() && collectionsModalService.mediaItem()) {
-<div class="collections-modal-overlay" (click)="closeModal()">
+<div class="collections-modal-overlay" [class.closing]="isClosingModal()" (click)="closeModal()">
   <div class="collections-modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>Salva in...</h3>

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, input, PLATFORM_ID, inject, effect, untracked } from '@angular/core';
+import { Component, OnInit, signal, input, PLATFORM_ID, inject, effect, untracked, Output, EventEmitter } from '@angular/core';
 import { CommonModule, Location, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -23,6 +23,9 @@ export class MovieDetailMobile implements OnInit {
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
   pageLoaded = signal<boolean>(false);
   
+  @Output() play = new EventEmitter<void>();
+  @Output() playTrailer = new EventEmitter<void>();
+  
   resumeProgress = signal<number>(0);
   resumeText = signal<string>('');
 
@@ -32,10 +35,6 @@ export class MovieDetailMobile implements OnInit {
   constructor() {
     effect(() => {
       if (this.movie()) {
-        if (typeof window !== 'undefined') {
-          setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }), 10);
-        }
-        
         const m = this.movie();
         if (m && isPlatformBrowser(this.platformId)) {
           const historyItem = this.historyService.getResumeProgress(m.id, false);

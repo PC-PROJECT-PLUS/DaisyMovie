@@ -209,12 +209,24 @@ button.btn-circle-action.active svg path,
   opacity: 0;
   animation: fadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   padding: 24px;
+
+  &.closing {
+    animation: fadeOut 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    
+    .collections-modal-content {
+      animation: slideDown 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+  }
 }
 
 @keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 .collections-modal-content {
@@ -235,9 +247,13 @@ button.btn-circle-action.active svg path,
 }
 
 @keyframes slideUp {
-  to {
-    transform: translateY(0) scale(1);
-  }
+  from { transform: translateY(20px) scale(0.95); }
+  to { transform: translateY(0) scale(1); }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(0) scale(1); }
+  to { transform: translateY(20px) scale(0.95); }
 }
 
 .collections-modal-content .modal-header {

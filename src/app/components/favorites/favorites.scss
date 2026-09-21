@@ -186,45 +186,62 @@
 }
 
 .favorites-sidebar {
-  width: 320px;
-  flex-shrink: 0;
-  padding: 32px 24px;
+  /* Expandable Panel Styles (like navbar) */
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+  margin: 0;
+  
+  /* Closed State */
+  width: 64px;
+  max-height: 64px;
+  height: min(600px, calc(100vh - 160px));
+  padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  box-shadow: none;
   backdrop-filter: blur(28px) saturate(200%) brightness(1.15);
   -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.15);
-  border-radius: 24px;
+  border-radius: 32px;
 
   display: flex;
   flex-direction: column;
   gap: 24px;
-
-  /* Popup styles */
-  position: fixed;
-  bottom: 112px;
-  right: 32px;
-  top: auto;
-  left: auto;
-  margin: 0;
-  height: min(600px, calc(100vh - 160px));
-  z-index: 90;
-
-  opacity: 0;
-  transform: translateY(40px) scale(0.95);
-  transform-origin: bottom right;
+  overflow: hidden;
   pointer-events: none;
-  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+
+  transition: max-height 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+              width 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+              border-radius 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+              padding 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+              background 0.3s ease, box-shadow 0.3s ease;
 
   &.open {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+    width: 320px;
+    max-height: min(600px, calc(100vh - 160px));
+    padding: 32px 24px 80px 24px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.12); /* Slightly brighter when open */
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
     pointer-events: auto;
   }
 
-  &.loaded {
+  /* Fade in children */
+  .sidebar-header,
+  .collections-list,
+  .new-collection-container {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  &.open .sidebar-header,
+  &.open .collections-list,
+  &.open .new-collection-container {
     opacity: 1;
-    transform: translateX(0);
+    pointer-events: auto;
+    transition-delay: 0.15s;
   }
 
   .sidebar-header {
@@ -361,7 +378,11 @@
   }
 
   .new-collection-container {
-    margin-top: auto;
+    position: absolute;
+    bottom: 16px;
+    left: 24px;
+    right: 76px; /* Closer to the FAB to make the button longer */
+    margin: 0;
 
     .new-col-btn {
       width: 100%;
@@ -1626,11 +1647,27 @@
   }
 }
 
-/* FAB BUTTON */
-.fab-collections {
+/* FAB AND SIDEBAR WRAPPER */
+.fab-wrapper {
   position: fixed;
   bottom: 32px;
   right: 32px;
+  z-index: 100;
+  /* Invisible pseudo-element to maintain hover over the gap */
+  &::before {
+    content: '';
+    position: absolute;
+    top: -24px;
+    bottom: 0;
+    left: -50px;
+    right: 0;
+    z-index: -1;
+  }
+}
+
+/* FAB BUTTON */
+.fab-collections {
+  position: relative;
   width: 64px;
   height: 64px;
   border-radius: 50%;
@@ -1654,9 +1691,13 @@
   }
 
   &.active {
-    background: rgba(234, 179, 8, 0.25);
-    border-color: rgba(234, 179, 8, 0.5);
-    box-shadow: inset 0 1px 1px 0 rgba(234, 179, 8, 0.4), 0 20px 40px rgba(0, 0, 0, 0.5);
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    
+    /* We can still keep the icon yellow or white, let's keep it yellow to indicate active state */
     color: #eab308;
 
     svg {

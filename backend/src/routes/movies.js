@@ -579,6 +579,12 @@ router.get('/detail/:type/:id', async (req, res) => {
       omdbRatings.tmdb = (Math.round(data.vote_average * 10) / 10).toFixed(1);
     }
 
+    let trailerKey = null;
+    if (data.videos && data.videos.results) {
+      const trailer = data.videos.results.find(v => v.site === 'YouTube' && v.type === 'Trailer');
+      if (trailer) trailerKey = trailer.key;
+    }
+
     const mappedData = {
       ...mapMovieItem(data, isSeries), // gets id, title, backdropUrl, etc.
       duration: duration,
@@ -598,6 +604,7 @@ router.get('/detail/:type/:id', async (req, res) => {
       omdbRatings: omdbRatings,
       number_of_seasons: data.number_of_seasons,
       number_of_episodes: data.number_of_episodes,
+      trailerKey: trailerKey,
       status: data.status
     };
 

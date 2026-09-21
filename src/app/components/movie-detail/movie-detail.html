@@ -75,7 +75,8 @@
               <span>{{ resumeProgress() > 0 ? resumeText() : 'Guarda Ora' }}</span>
             </button>
 
-            <button class="play-btn trailer-btn">
+            @if (movie()!.trailerKey) {
+            <button class="play-btn trailer-btn" [style.--accent-color]="movie()!.accentColor" (click)="openTrailer()">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
@@ -89,6 +90,7 @@
               </svg>
               <span>Guarda Trailer</span>
             </button>
+            }
 
             <button class="action-circle-btn bookmark-btn"
               [class.active]="favoritesService.isBookmarked(movie()!.id, false)" (click)="collectionsModalService.openModal({id: movie()!.id, title: movie()!.title, posterUrl: movie()!.posterUrl, backdropUrl: movie()!.backdropUrl || movie()!.posterUrl, year: (movie()!.year || '').toString(), isSeries: false})"
@@ -179,6 +181,7 @@
         <div class="lower-sections">
 
           <!-- CAST SECTION -->
+          @defer (on viewport) {
           <div class="section-block cast-section">
             <div class="section-header">
               <h2 class="section-title">Cast</h2>
@@ -204,7 +207,7 @@
               <div class="cast-grid" id="cast-slider" (scroll)="checkScrollState()">
                 @for (actor of movie()!.cast || []; track actor.name) {
                 <div class="cast-card">
-                  <img [src]="actor.imageUrl" [alt]="actor.name" class="cast-img"
+                  <img [src]="actor.imageUrl" [alt]="actor.name" class="cast-img" loading="lazy"
                     (error)="actor.imageUrl = 'https://ui-avatars.com/api/?name=' + actor.name + '&background=random&color=fff'" />
                   <div class="cast-names">
                     <span class="actor-name">{{ actor.name }}</span>
@@ -215,8 +218,12 @@
               </div>
             </div>
           </div>
+          } @placeholder {
+            <div style="height: 300px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2);">Caricamento cast...</div>
+          }
 
           <!-- SCREENSHOT SECTION (Asymmetric Grid) -->
+          @defer (on viewport) {
           <div class="section-block screenshot-section">
             <div class="section-header">
               <h2 class="section-title">Screenshot</h2>
@@ -224,34 +231,38 @@
 
             <div class="screenshot-grid">
               <div class="grid-item img-large">
-                <img [src]="movie()!.screenshots[0]" alt="Screenshot 1" />
+                <img [src]="movie()!.screenshots[0]" alt="Screenshot 1" loading="lazy" />
               </div>
               <div class="grid-item img-large">
-                <img [src]="movie()!.screenshots[1]" alt="Screenshot 2" />
+                <img [src]="movie()!.screenshots[1]" alt="Screenshot 2" loading="lazy" />
               </div>
 
               <div class="grid-item img-vertical">
-                <img [src]="movie()!.screenshots[2]" alt="Screenshot 3" />
+                <img [src]="movie()!.screenshots[2]" alt="Screenshot 3" loading="lazy" />
               </div>
               <div class="grid-item img-vertical">
-                <img [src]="movie()!.screenshots[3]" alt="Screenshot 4" />
+                <img [src]="movie()!.screenshots[3]" alt="Screenshot 4" loading="lazy" />
               </div>
               <div class="grid-item img-wide">
-                <img [src]="movie()!.screenshots[4]" alt="Screenshot 5" />
+                <img [src]="movie()!.screenshots[4]" alt="Screenshot 5" loading="lazy" />
               </div>
 
               <!-- Third Row (added) -->
               <div class="grid-item img-large">
-                <img [src]="movie()!.screenshots[5]" alt="Screenshot 6" />
+                <img [src]="movie()!.screenshots[5]" alt="Screenshot 6" loading="lazy" />
               </div>
               <div class="grid-item img-large">
-                <img [src]="movie()!.screenshots[6]" alt="Screenshot 7" />
+                <img [src]="movie()!.screenshots[6]" alt="Screenshot 7" loading="lazy" />
               </div>
             </div>
           </div>
+          } @placeholder {
+            <div style="height: 400px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2);">Caricamento screenshot...</div>
+          }
 
 
           <!-- SUGGESTED MOVIES SECTION -->
+          @defer (on viewport) {
           <div class="section-block suggested-section">
             <div class="section-header">
               <h2 class="section-title">Film simili consigliati</h2>
@@ -280,14 +291,18 @@
                 @for (item of movie()?.suggested || []; track item.id) {
                 <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(item, $event)"
                   (mouseleave)="onPosterMouseLeave()" (click)="goToMovie(item)">
-                  <img [src]="item.posterUrl" [alt]="item.title" class="poster-img" />
+                  <img [src]="item.posterUrl" [alt]="item.title" class="poster-img" loading="lazy" />
                 </div>
                 }
               </div>
             </div>
           </div>
+          } @placeholder {
+            <div style="height: 350px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2);">Caricamento suggeriti...</div>
+          }
 
           <!-- REVIEWS SECTION -->
+          @defer (on viewport) {
           <div class="section-block reviews-section">
             <div class="section-header">
               <h2 class="section-title">Recensioni degli utenti</h2>
@@ -375,6 +390,9 @@
             </div>
             }
           </div>
+          } @placeholder {
+            <div style="height: 300px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2);">Caricamento recensioni...</div>
+          }
 
 
         </div>
@@ -383,7 +401,7 @@
     }
   </div>
   <div class="mobile-only">
-    <app-movie-detail-mobile [movie]="movie()"></app-movie-detail-mobile>
+    <app-movie-detail-mobile [movie]="movie()" (play)="openPlayer()" (playTrailer)="openTrailer()"></app-movie-detail-mobile>
   </div>
   <div style="margin-top: auto; transition: opacity 0.6s ease;" [style.opacity]="pageLoaded() ? 1 : 0">
     <app-footer></app-footer>

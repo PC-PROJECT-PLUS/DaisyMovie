@@ -69,6 +69,7 @@ export interface MovieDetail {
     metacritic?: string;
     tmdb?: string;
   } | null;
+  trailerKey?: string | null;
 }
 
 @Component({
@@ -189,8 +190,21 @@ export class MovieDetailComponent implements OnInit {
 
   onPlayerClosed() {
     this.playerVisible.set(false);
-
     // Progress is now saved by VideoPlayerComponent internally via HistoryService
+  }
+
+  async openTrailer() {
+    const m = this.movie();
+    if (!m || !m.trailerKey) return;
+
+    this.playerConfig.set({
+      id: m.id,
+      type: 'movie',
+      isTrailer: true,
+      trailerKey: m.trailerKey,
+      title: m.title
+    });
+    this.playerVisible.set(true);
   }
 
   // HOVER PANEL STATE

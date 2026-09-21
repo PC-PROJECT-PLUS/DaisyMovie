@@ -61,10 +61,16 @@ export class CollectionsModalComponent {
     this.localState.set(newState);
   }
 
+  isClosingModal = signal(false);
+
   closeModal() {
-    this.collectionsModalService.closeModal();
-    this.isCreatingCollection.set(false);
-    this.newCollectionName.set('');
+    this.isClosingModal.set(true);
+    setTimeout(() => {
+      this.collectionsModalService.closeModal();
+      this.isCreatingCollection.set(false);
+      this.newCollectionName.set('');
+      this.isClosingModal.set(false);
+    }, 300);
   }
 
   isMovieInCollection(colId: number | null): boolean {

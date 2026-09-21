@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, input, PLATFORM_ID, inject, effect, untracked } from '@angular/core';
+import { Component, OnInit, signal, input, PLATFORM_ID, inject, effect, untracked, Output, EventEmitter } from '@angular/core';
 import { CommonModule, Location, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,6 +22,9 @@ export class SeriesDetailMobile implements OnInit {
   series = input<SeriesDetail | null>(null);
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
   pageLoaded = signal<boolean>(false);
+  
+  @Output() play = new EventEmitter<void>();
+  @Output() playTrailer = new EventEmitter<void>();
 
   newReviewText = signal<string>('');
   showAllReviews = signal<boolean>(false);
@@ -37,10 +40,6 @@ export class SeriesDetailMobile implements OnInit {
   constructor() {
     effect(() => {
       if (this.series()) {
-        if (typeof window !== 'undefined') {
-          setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }), 10);
-        }
-        
         const s = this.series();
         if (s && isPlatformBrowser(this.platformId)) {
           const historyItem = this.historyService.getResumeProgress(s.id, true);

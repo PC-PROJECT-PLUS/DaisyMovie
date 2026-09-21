@@ -15,6 +15,8 @@ export interface PlayerConfig {
   title?: string;
   posterUrl?: string;
   backdropUrl?: string;
+  isTrailer?: boolean;
+  trailerKey?: string;
 }
 
 @Component({
@@ -36,6 +38,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
   animState = signal<'entering' | 'visible' | 'leaving' | 'hidden'>('hidden');
   iframeReady = signal(false);
   safeUrl = signal<SafeResourceUrl | null>(null);
+  controlsVisible = signal(true);
 
   private tmdbService = inject(TmdbService);
   tvEpisodes = signal<any[]>([]);
@@ -46,6 +49,21 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
 
   private leaveTimeout: any;
   private enterTimeout: any;
+  private idleTimeout: any;
+
+  @HostListener('window:mousemove')
+  onMouseMove() {
+    this.controlsVisible.set(true);
+    this.resetIdleTimeout();
+  }
+
+  private resetIdleTimeout() {
+    if (!this.isBrowser) return;
+    clearTimeout(this.idleTimeout);
+    this.idleTimeout = setTimeout(() => {
+      this.controlsVisible.set(false);
+    }, 3000);
+  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['visible']) {
@@ -53,9 +71,12 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
         if (this.config.type === 'tv' && this.config.season !== undefined) {
           this.currentSeason.set(this.config.season);
         }
+        this.controlsVisible.set(true);
+        this.resetIdleTimeout();
         this.open();
       } else if (!this.visible) {
         this.close();
+        clearTimeout(this.idleTimeout);
       }
     }
     if (changes['config'] && this.config && this.visible) {
@@ -202,6 +223,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
   ngOnDestroy() {
     clearTimeout(this.leaveTimeout);
     clearTimeout(this.enterTimeout);
+    clearTimeout(this.idleTimeout);
     this.unlockBodyScroll();
     
     // Final save on destroy
@@ -214,6 +236,13 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     if (!this.config) return;
     const { id, type, accentColor, season, episode, isAnime } = this.config;
     let startAt = this.config.startAt;
+
+    if (this.config.isTrailer && this.config.trailerKey) {
+      const url = `https://www.youtube.com/embed/${this.config.trailerKey}?autoplay=1&rel=0&modestbranding=1`;
+      console.log('[VideoPlayer] Opening Trailer URL:', url);
+      this.safeUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
+      return;
+    }
 
     if (!startAt) {
       const historyItem = this.historyService.getResumeProgress(id, type === 'tv');

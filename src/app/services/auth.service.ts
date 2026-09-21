@@ -47,9 +47,25 @@ export class AuthService {
         }
         
         const storedProfile = sessionStorage.getItem('daisy_profile');
-        if (storedProfile) {
+        let isReload = false;
+        if (window.performance) {
+          const navEntries = performance.getEntriesByType('navigation');
+          if (navEntries.length > 0) {
+            isReload = (navEntries[0] as PerformanceNavigationTiming).type === 'reload';
+          } else if (performance.navigation) {
+            isReload = performance.navigation.type === 1; // TYPE_RELOAD
+          }
+        }
+
+        // Se non è un reload (F5), significa che il tab è stato appena aperto
+        // o ripristinato dal browser ("Riprendi da dove avevi interrotto").
+        // In questo caso, ignoriamo e cancelliamo il profilo in sessionStorage.
+        if (!isReload) {
+          sessionStorage.removeItem('daisy_profile');
+        } else if (storedProfile) {
           this.selectedProfile.set(JSON.parse(storedProfile));
         }
+
       } catch { /* ignore */ }
     }
   }

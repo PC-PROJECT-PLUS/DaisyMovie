@@ -42,12 +42,29 @@
 
       <!-- 4. Action Buttons -->
       <div class="action-buttons">
-        <button class="play-btn" [style.background]="series()!.accentColor">
+        <button class="play-btn" [style.background]="series()!.accentColor" (click)="play.emit()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <polygon points="5 3 19 12 5 21 5 3"></polygon>
           </svg>
           <span>{{ resumeProgress() > 0 ? resumeText() : 'Guarda' }}</span>
         </button>
+
+        @if (series()!.trailerKey) {
+        <button class="play-btn trailer-btn" [style.--accent-color]="series()!.accentColor" (click)="playTrailer.emit()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+            <line x1="7" y1="2" x2="7" y2="22"></line>
+            <line x1="17" y1="2" x2="17" y2="22"></line>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <line x1="2" y1="7" x2="7" y2="7"></line>
+            <line x1="2" y1="17" x2="7" y2="17"></line>
+            <line x1="17" y1="17" x2="22" y2="17"></line>
+            <line x1="17" y1="7" x2="22" y2="7"></line>
+          </svg>
+          <span>Trailer</span>
+        </button>
+        }
 
         <button class="action-circle-btn bookmark-btn" [class.active]="favoritesService.isBookmarked(series()!.id, true)" (click)="toggleBookmark()" title="Aggiungi alla lista">
           <svg width="22" height="22" viewBox="0 0 24 24" [style.fill]="favoritesService.isBookmarked(series()!.id, true) ? '#ffffff' : 'transparent'" stroke="currentColor" stroke-width="2">
@@ -92,6 +109,7 @@
   </div>
 
   <!-- EPISODES -->
+  @defer (on viewport) {
   <section class="mobile-section episodes-mobile">
     <div class="section-header-flex">
       <h2 class="section-title">Episodi</h2>
@@ -132,22 +150,30 @@
       }
     </div>
   </section>
+  } @placeholder {
+    <div style="height: 350px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2);">Caricamento episodi...</div>
+  }
 
   <!-- CAST -->
+  @defer (on viewport) {
   <section class="mobile-section">
     <h2 class="section-title">Cast</h2>
     <div class="horizontal-slider cast-slider">
       @for (actor of series()!.cast || []; track actor.name) {
         <div class="cast-card">
-          <img [src]="actor.imageUrl" [alt]="actor.name" />
+          <img [src]="actor.imageUrl" [alt]="actor.name" loading="lazy" />
           <span class="name">{{ actor.name }}</span>
           <span class="character">{{ actor.character }}</span>
         </div>
       }
     </div>
   </section>
+  } @placeholder {
+    <div style="height: 150px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2);">Caricamento cast...</div>
+  }
 
   <!-- SCREENSHOTS -->
+  @defer (on viewport) {
   <section class="mobile-section">
     <div class="section-header-flex">
       <h2 class="section-title">Screenshot</h2>
@@ -156,14 +182,18 @@
     
     <div class="screenshot-mosaic">
       <!-- 4 images: rectangle -> square, square -> rectangle -->
-      <img [src]="series()!.screenshots[0]" alt="Screenshot" class="mosaic-img rect-img" />
-      <img [src]="series()!.screenshots[1]" alt="Screenshot" class="mosaic-img square-img" />
-      <img [src]="series()!.screenshots[2]" alt="Screenshot" class="mosaic-img square-img" />
-      <img [src]="series()!.screenshots[3]" alt="Screenshot" class="mosaic-img rect-img" />
+      <img [src]="series()!.screenshots[0]" alt="Screenshot" class="mosaic-img rect-img" loading="lazy" />
+      <img [src]="series()!.screenshots[1]" alt="Screenshot" class="mosaic-img square-img" loading="lazy" />
+      <img [src]="series()!.screenshots[2]" alt="Screenshot" class="mosaic-img square-img" loading="lazy" />
+      <img [src]="series()!.screenshots[3]" alt="Screenshot" class="mosaic-img rect-img" loading="lazy" />
     </div>
   </section>
+  } @placeholder {
+    <div style="height: 250px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2);">Caricamento screenshot...</div>
+  }
 
   <!-- REVIEWS SECTION -->
+  @defer (on viewport) {
   <section class="mobile-section reviews-section">
     <div class="section-header-flex">
       <h2 class="section-title">Recensioni degli utenti</h2>
@@ -224,6 +254,9 @@
       </div>
     }
   </section>
+  } @placeholder {
+    <div style="height: 300px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2);">Caricamento recensioni...</div>
+  }
 
   <section class="spacer"></section>
 </div>

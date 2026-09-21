@@ -2,7 +2,7 @@
   [class.leaving]="animState() === 'leaving'" [class.hidden]="animState() === 'hidden'"
   (click)="onBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Video Player">
 
-  <div class="player-container" [style.--accent]="accentGlow">
+  <div class="player-container" [style.--accent]="accentGlow" [class.is-trailer]="config?.isTrailer" [class.controls-hidden]="!controlsVisible()">
 
     <!-- Floating Controls Top Right -->
     <div class="player-top-controls">
@@ -22,6 +22,9 @@
         </svg>
       </button>
     </div>
+
+    <!-- Wake Up Zone per catturare il mouse senza bloccare il player -->
+    <div class="wake-up-zone" (mousemove)="onMouseMove()" (touchstart)="onMouseMove()"></div>
 
     <!-- Iframe Area -->
     <div class="player-iframe-wrapper">

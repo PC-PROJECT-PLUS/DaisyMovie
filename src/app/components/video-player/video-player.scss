@@ -85,6 +85,33 @@
   .player-backdrop.visible & {
     opacity: 1;
   }
+
+  .player-container.is-trailer & {
+    right: 140px; // Spostiamo ancora più a sinistra
+    top: 16px;
+  }
+
+  .player-container.controls-hidden & {
+    opacity: 0;
+    pointer-events: none;
+    transition-delay: 0s; // Nascondi subito
+  }
+}
+
+// ── Wake Up Zones ──────────────────────────────────────────────────────────────
+
+.wake-up-zone {
+  position: absolute;
+  inset: 0; // Copre tutto lo schermo
+  z-index: 45; // Sopra l'iframe, sotto i controlli
+
+  .player-container:not(.controls-hidden) & {
+    pointer-events: none; // Disabilitato quando i controlli sono visibili (lascia passare i click all'iframe)
+  }
+  
+  .player-container.controls-hidden & {
+    pointer-events: auto; // Abilitato per catturare il primo movimento del mouse
+  }
 }
 
 .player-action-btn {
@@ -153,6 +180,12 @@
   .player-backdrop.visible & {
     opacity: 1;
     transform: translateY(0);
+  }
+
+  .player-container.controls-hidden & {
+    opacity: 0;
+    pointer-events: none;
+    transition-delay: 0s; // Nascondi subito
   }
 }
 

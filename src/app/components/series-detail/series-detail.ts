@@ -79,6 +79,7 @@ export interface SeriesDetail {
     metacritic?: string;
     tmdb?: string;
   } | null;
+  trailerKey?: string | null;
 }
 
 @Component({
@@ -200,6 +201,20 @@ export class SeriesDetailComponent implements OnInit {
     this.playerVisible.set(false);
 
     // Progress is now saved by VideoPlayerComponent internally via HistoryService
+  }
+
+  async openTrailer() {
+    const s = this.series();
+    if (!s || !s.trailerKey) return;
+
+    this.playerConfig.set({
+      id: s.id,
+      type: 'tv',
+      isTrailer: true,
+      trailerKey: s.trailerKey,
+      title: s.title
+    });
+    this.playerVisible.set(true);
   }
 
 

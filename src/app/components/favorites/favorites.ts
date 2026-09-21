@@ -315,6 +315,15 @@ export class Favorites implements OnInit {
   collectionToDelete = signal<any | null>(null);
   collectionToEdit = signal<any | null>(null);
   editCollectionName = signal<string>('');
+  isClosingModal = signal<boolean>(false);
+  
+  closeModalWithAnimation(callback: () => void) {
+    this.isClosingModal.set(true);
+    setTimeout(() => {
+      callback();
+      this.isClosingModal.set(false);
+    }, 300);
+  }
   
   selectCollection(id: number | null) {
     this.activeCollectionId.set(id);
@@ -331,19 +340,23 @@ export class Favorites implements OnInit {
   }
 
   cancelCreatingCollection() {
-    this.isCreatingCollection.set(false);
-    this.newCollectionName.set('');
+    this.closeModalWithAnimation(() => {
+      this.isCreatingCollection.set(false);
+      this.newCollectionName.set('');
+    });
   }
 
   async saveNewCollection() {
     const name = this.newCollectionName().trim();
     if (!name) return;
-    const col = await this.favoritesService.createCollection(name);
-    if (col) {
-      this.selectCollection(col.id);
-    }
-    this.isCreatingCollection.set(false);
-    this.newCollectionName.set('');
+    this.closeModalWithAnimation(async () => {
+      const col = await this.favoritesService.createCollection(name);
+      if (col) {
+        this.selectCollection(col.id);
+      }
+      this.isCreatingCollection.set(false);
+      this.newCollectionName.set('');
+    });
   }
 
   startEditCollection(col: any, event: Event) {
@@ -353,17 +366,24 @@ export class Favorites implements OnInit {
   }
 
   cancelEditCollection() {
-    this.collectionToEdit.set(null);
-    this.editCollectionName.set('');
+    this.closeModalWithAnimation(() => {
+      this.collectionToEdit.set(null);
+      this.editCollectionName.set('');
+    });
   }
 
   async saveEditCollection() {
     const col = this.collectionToEdit();
     const name = this.editCollectionName().trim();
     if (col && name && name !== col.name) {
-      await this.favoritesService.renameCollection(col.id, name);
+      this.closeModalWithAnimation(async () => {
+        await this.favoritesService.renameCollection(col.id, name);
+        this.collectionToEdit.set(null);
+        this.editCollectionName.set('');
+      });
+    } else {
+      this.cancelEditCollection();
     }
-    this.cancelEditCollection();
   }
 
   startDeleteCollection(col: any, event: Event) {
@@ -372,17 +392,21 @@ export class Favorites implements OnInit {
   }
 
   cancelDeleteCollection() {
-    this.collectionToDelete.set(null);
+    this.closeModalWithAnimation(() => {
+      this.collectionToDelete.set(null);
+    });
   }
 
   async confirmDeleteCollection() {
     const col = this.collectionToDelete();
     if (col) {
-      await this.favoritesService.deleteCollection(col.id);
-      if (this.activeCollectionId() === col.id) {
-        this.selectCollection(null);
-      }
-      this.cancelDeleteCollection();
+      this.closeModalWithAnimation(async () => {
+        await this.favoritesService.deleteCollection(col.id);
+        if (this.activeCollectionId() === col.id) {
+          this.selectCollection(null);
+        }
+        this.collectionToDelete.set(null);
+      });
     }
   }
 

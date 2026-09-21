@@ -89,15 +89,15 @@
 
       .hero-content {
         .hero-title {
-          animation: fadeIn 0.6s ease-out forwards;
+          animation: fadeIn 0.6s ease-out both;
         }
 
         .hero-synopsis {
-          animation: fadeIn 0.6s ease-out 0.1s forwards;
+          animation: fadeIn 0.6s ease-out 0.1s both;
         }
 
         .hero-actions {
-          animation: fadeIn 0.6s ease-out 0.2s forwards;
+          animation: fadeIn 0.6s ease-out 0.2s both;
         }
       }
     }
@@ -166,7 +166,6 @@
         display: flex;
         align-items: center;
         gap: 16px;
-
         .btn-watch-now {
           display: inline-flex;
           align-items: center;

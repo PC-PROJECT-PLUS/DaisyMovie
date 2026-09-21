@@ -117,16 +117,19 @@
 }
 
 .trailer-btn {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent !important;
+  border: 2px solid var(--accent-color, rgba(255, 255, 255, 0.3));
   backdrop-filter: blur(10px);
-  color: #fff;
+  color: var(--accent-color, #fff) !important;
   transition: all 0.3s ease;
 
+  svg {
+    stroke: currentColor !important;
+  }
+
   &:hover {
-    background: rgba(255, 255, 255, 0.15) !important;
+    background: transparent !important;
     transform: scale(1.05);
-    border-color: rgba(255, 255, 255, 0.3);
   }
 }
 
