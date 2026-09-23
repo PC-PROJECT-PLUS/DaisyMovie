@@ -68,38 +68,90 @@
             </div>
             <div class="form-divider"><span>oppure con email</span></div>
             <div class="fields">
-              <div class="field">
-                <label>Email</label>
-                <div class="input-wrap">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                  <input type="email" placeholder="nome@email.com" [ngModel]="email()" (ngModelChange)="email.set($event)" />
+              <!-- STEP EMAIL -->
+              @if (loginStep() === 'email') {
+                <div class="field">
+                  <label>Email</label>
+                  <div class="input-wrap">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    <input type="email" placeholder="nome@email.com" [ngModel]="email()" (ngModelChange)="email.set($event)" (keydown.enter)="submitEmail()" />
+                  </div>
                 </div>
-              </div>
-              <div class="field">
-                <label>Password</label>
-                <div class="input-wrap">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                  <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="password()" (ngModelChange)="password.set($event)" (keydown.enter)="submit()" />
-                  <button tabindex="-1" class="pwd-toggle" (click)="togglePassword()">
-                    @if (!passwordVisible()) {
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                      </svg>
-                    } @else {
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                        <line x1="1" y1="1" x2="23" y2="23"></line>
-                      </svg>
-                    }
-                  </button>
+              }
+
+              <!-- STEP PASSWORD -->
+              @if (loginStep() === 'password') {
+                <div class="field field-enter">
+                  <label>Email</label>
+                  <div class="input-wrap disabled">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    <input type="email" [ngModel]="email()" readonly disabled />
+                  </div>
                 </div>
+                <div class="field field-enter">
+                  <label>Password</label>
+                  <div class="input-wrap">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="password()" (ngModelChange)="password.set($event)" (keydown.enter)="submitPassword()" />
+                    <button tabindex="-1" class="pwd-toggle" (click)="togglePassword()">
+                      @if (!passwordVisible()) {
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      } @else {
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                      }
+                    </button>
+                  </div>
+                </div>
+              }
+
+              <!-- STEP SET-PASSWORD -->
+              @if (loginStep() === 'set-password') {
+                <div class="field field-enter">
+                  <label>Imposta nuova password</label>
+                  <p class="pwd-hint">Min. 8 caratteri, 1 maiuscola, 1 numero, 1 carattere speciale</p>
+                  <div class="input-wrap">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="Nuova password" [ngModel]="password()" (ngModelChange)="password.set($event)" />
+                    <button tabindex="-1" class="pwd-toggle" (click)="togglePassword()">
+                      @if (!passwordVisible()) {
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                      } @else {
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                      }
+                    </button>
+                  </div>
+                </div>
+                <div class="field field-enter">
+                  <label>Conferma password</label>
+                  <div class="input-wrap">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="Ripeti password" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" (keydown.enter)="submitSetPassword()" />
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="msg-collapse" [class.show]="!!errorMsg()">
+              <div class="msg-collapse-inner">
+                <p class="error-msg">{{ errorMsg() }}</p>
               </div>
             </div>
-            @if (errorMsg()) { <p class="error-msg">{{ errorMsg() }}</p> }
-            <button class="btn-submit" [class.loading]="isLoading()" (click)="submit()">
-              @if (isLoading()) { <span class="spinner"></span> } @else { Accedi }
-            </button>
+            
+            <div class="action-buttons-row">
+              <button class="btn-submit" [class.loading]="isLoading()" 
+                (click)="loginStep() === 'email' ? submitEmail() : (loginStep() === 'password' ? submitPassword() : submitSetPassword())">
+                <span>
+                  {{ loginStep() === 'email' ? 'Continua' : (loginStep() === 'password' ? 'Accedi' : 'Salva e Accedi') }}
+                </span>
+                @if (isLoading()) { <div class="loader-spinner"></div> }
+              </button>
+            </div>
             <p class="switch-hint">Non hai un account?<button (click)="openView('register')">Registrati</button></p>
           </div>
         </div>
@@ -136,6 +188,7 @@
               </div>
               <div class="field">
                 <label>Password</label>
+                <p class="pwd-hint">Min. 8 caratteri, 1 maiuscola, 1 numero, 1 carattere speciale</p>
                 <div class="input-wrap">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                   <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="password()" (ngModelChange)="password.set($event)" />
@@ -158,12 +211,16 @@
                 <label>Conferma Password</label>
                 <div class="input-wrap">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" (keydown.enter)="submit()" />
+                  <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" (keydown.enter)="submitRegister()" />
                 </div>
               </div>
             </div>
-            @if (errorMsg()) { <p class="error-msg">{{ errorMsg() }}</p> }
-            <button class="btn-submit" [class.loading]="isLoading()" (click)="submit()">
+            <div class="msg-collapse" [class.show]="!!errorMsg()">
+              <div class="msg-collapse-inner">
+                <p class="error-msg">{{ errorMsg() }}</p>
+              </div>
+            </div>
+            <button class="btn-submit" [class.loading]="isLoading()" (click)="submitRegister()">
               @if (isLoading()) { <span class="spinner"></span> } @else { Crea Account }
             </button>
             <p class="switch-hint">Hai già un account?<button (click)="openView('login')">Accedi</button></p>
@@ -256,8 +313,7 @@
   <!-- ═══════════════════════════════════ MOBILE VIEWS ═══════════════════════════════════ -->
   <div class="mob-unified-views">
     
-    @if (isLanding()) {
-    <div class="mob-landing">
+    <div class="mob-landing" [class.hidden]="!isLanding()">
       <!-- Animated poster grid in background -->
       <div class="poster-grid-shared">
         <div class="mob-poster-inner">
@@ -309,7 +365,6 @@
         <p class="mob-terms">Continuando accetti i <a href="#">Termini</a> e la <a href="#">Privacy Policy</a>.</p>
       </div>
     </div>
-    }
 
     @if (isLogin()) {
     <div class="mob-form-page-wrap">
@@ -331,39 +386,90 @@
         </div>
         <div class="mob-form-divider"><span>oppure con email</span></div>
         <div class="mob-form-fields">
-          <div class="mob-form-field">
-            <label>Email</label>
-            <div class="mob-input-wrap">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-              <input type="email" placeholder="nome@email.com" [ngModel]="email()" (ngModelChange)="email.set($event)" />
+          <!-- STEP EMAIL -->
+          @if (loginStep() === 'email') {
+            <div class="mob-form-field">
+              <label>Email</label>
+              <div class="mob-input-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <input type="email" placeholder="nome@email.com" [ngModel]="email()" (ngModelChange)="email.set($event)" (keydown.enter)="submitEmail()" />
+              </div>
             </div>
-          </div>
-          <div class="mob-form-field">
-            <label>Password</label>
-            <div class="mob-input-wrap">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-              <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="password()" (ngModelChange)="password.set($event)" (keydown.enter)="submit()" />
-              <button tabindex="-1" class="pwd-toggle" (click)="togglePassword()">
-                @if (!passwordVisible()) {
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                } @else {
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                  </svg>
-                }
-              </button>
+          }
+
+          <!-- STEP PASSWORD -->
+          @if (loginStep() === 'password') {
+            <div class="mob-form-field field-enter">
+              <label>Email</label>
+              <div class="mob-input-wrap disabled">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <input type="email" [ngModel]="email()" readonly disabled />
+              </div>
             </div>
+            <div class="mob-form-field field-enter">
+              <label>Password</label>
+              <div class="mob-input-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="password()" (ngModelChange)="password.set($event)" (keydown.enter)="submitPassword()" />
+                <button tabindex="-1" class="pwd-toggle" (click)="togglePassword()">
+                  @if (!passwordVisible()) {
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  } @else {
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  }
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- STEP SET-PASSWORD -->
+          @if (loginStep() === 'set-password') {
+            <div class="mob-form-field field-enter">
+              <label>Imposta nuova password</label>
+              <p class="pwd-hint">Min. 8 caratteri, 1 maiuscola, 1 numero, 1 carattere speciale</p>
+              <div class="mob-input-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="Nuova password" [ngModel]="password()" (ngModelChange)="password.set($event)" />
+                <button tabindex="-1" class="pwd-toggle" (click)="togglePassword()">
+                  @if (!passwordVisible()) {
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  } @else {
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                  }
+                </button>
+              </div>
+            </div>
+            <div class="mob-form-field field-enter">
+              <label>Conferma password</label>
+              <div class="mob-input-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="Ripeti password" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" (keydown.enter)="submitSetPassword()" />
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="msg-collapse" [class.show]="!!errorMsg()">
+          <div class="msg-collapse-inner">
+            <p class="mob-error-msg">{{ errorMsg() }}</p>
           </div>
         </div>
-        @if (errorMsg()) { <p class="mob-error-msg">{{ errorMsg() }}</p> }
+        
         <div class="mob-form-bottom">
-          <button class="mob-form-submit" [class.loading]="isLoading()" (click)="submit()">
-            @if (isLoading()) { <span class="mob-form-spinner"></span> } @else { Accedi }
-          </button>
+          <div class="action-buttons-row">
+            <button class="mob-form-submit" [class.loading]="isLoading()" 
+              (click)="loginStep() === 'email' ? submitEmail() : (loginStep() === 'password' ? submitPassword() : submitSetPassword())">
+              @if (isLoading()) { <span class="mob-form-spinner"></span> } @else { 
+                {{ loginStep() === 'email' ? 'Continua' : (loginStep() === 'password' ? 'Accedi' : 'Salva e Accedi') }}
+              }
+            </button>
+          </div>
           <p class="mob-switch-hint">Non hai un account?<button (click)="openView('register')">Registrati</button></p>
         </div>
       </div>
@@ -399,6 +505,7 @@
           </div>
           <div class="mob-form-field">
             <label>Password</label>
+            <p class="pwd-hint">Min. 8 caratteri, 1 maiuscola, 1 numero, 1 carattere speciale</p>
             <div class="mob-input-wrap">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
               <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="password()" (ngModelChange)="password.set($event)" />
@@ -421,13 +528,17 @@
             <label>Conferma Password</label>
             <div class="mob-input-wrap">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" (keydown.enter)="submit()" />
+              <input [type]="passwordVisible() ? 'text' : 'password'" placeholder="••••••••" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" (keydown.enter)="submitRegister()" />
             </div>
           </div>
         </div>
-        @if (errorMsg()) { <p class="mob-error-msg">{{ errorMsg() }}</p> }
+        <div class="msg-collapse" [class.show]="!!errorMsg()">
+          <div class="msg-collapse-inner">
+            <p class="mob-error-msg">{{ errorMsg() }}</p>
+          </div>
+        </div>
         <div class="mob-form-bottom">
-          <button class="mob-form-submit" [class.loading]="isLoading()" (click)="submit()">
+          <button class="mob-form-submit" [class.loading]="isLoading()" (click)="submitRegister()">
             @if (isLoading()) { <span class="mob-form-spinner"></span> } @else { Crea Account }
           </button>
           <p class="mob-switch-hint">Hai già un account?<button (click)="openView('login')">Accedi</button></p>

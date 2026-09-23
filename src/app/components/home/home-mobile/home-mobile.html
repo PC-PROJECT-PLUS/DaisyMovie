@@ -12,7 +12,7 @@
           <h2 class="hero-title">{{ movie.title }}</h2>
           <p class="hero-synopsis">{{ movie.synopsis }}</p>
           <div class="hero-actions">
-            <button class="btn-play" [style.background]="heroButtonColor()" (click)="goToMovie(movie, heroButtonColor())">
+            <button class="btn-play" [style.background]="heroButtonColor()" [style.box-shadow]="'0 4px 24px ' + toRgba(heroButtonColor(), 0.5)" (click)="goToMovie(movie, heroButtonColor())">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <polygon points="5 3 19 12 5 21 5 3"></polygon>
               </svg>
@@ -41,27 +41,36 @@
   <section class="mobile-section">
     <div class="section-header">
       <h2>Continua a guardare</h2>
-      <a href="javascript:void(0)">Vedi tutti</a>
+
     </div>
     <div class="mobile-slider">
-      @for (ep of continueWatchingList; track ep.id) {
-      <div class="continue-card">
-        <div class="thumb-wrap">
-          <img [src]="ep.thumbnailUrl" [alt]="ep.showTitle" loading="lazy" />
-          <div class="progress-bar">
-            <div class="fill" [style.width.%]="ep.progressPercent"></div>
+      @for (item of continueWatchingList; track item.id) {
+      <a [routerLink]="item.isSeries ? ['/series', item.id] : ['/movie', item.id]"
+        class="continue-card glass-card fluid-hover-card">
+        <div class="card-thumbnail-container">
+          <img [src]="item.thumbnailUrl" [alt]="item.showTitle" class="thumbnail-img" />
+          <div class="thumbnail-overlay-gradient"></div>
+
+          <div class="play-icon-overlay">
+            <div class="glass-play-btn">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            </div>
           </div>
-          <button class="play-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-          </button>
+
+          <div class="ep-info-badge">
+            <span class="ep-title">{{ item.showTitle }}{{ item.episodeTitle !== 'Film' ? ' - ' + item.episodeTitle
+              : '' }}</span>
+            <span class="air-date">{{ item.airDate }}</span>
+          </div>
+
+          <div class="progress-bar-container">
+            <div class="progress-fill" [style.width.%]="item.progressPercent"
+              [style.background]="item.accentColor" [style.box-shadow]="'0 0 10px ' + item.accentColor"></div>
+          </div>
         </div>
-        <div class="card-info">
-          <p class="title">{{ ep.showTitle }}</p>
-          <p class="subtitle">{{ ep.episodeTitle }}</p>
-        </div>
-      </div>
+      </a>
       }
     </div>
   </section>
@@ -72,7 +81,7 @@
     <div class="section-header">
       <h2>In tendenza</h2>
     </div>
-    <div class="mobile-slider posters-only">
+    <div class="mobile-slider posters-only" (scroll)="onSliderScroll($event, 'trending')">
       @for (movie of trendingMovies; track movie.id) {
       <div class="poster-card" (click)="goToMovie(movie)">
         <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
@@ -90,15 +99,43 @@
   <!-- LATEST EPISODES -->
   <section class="mobile-section">
     <div class="section-header">
-      <h2>Ultimi Episodi Aggiunti</h2>
+      <h2>{{ upcomingTitle }}</h2>
     </div>
     <div class="mobile-slider">
       @for (ep of latestEpisodes; track ep.id) {
-      <div class="episode-card">
-        <img [src]="ep.bannerUrl" [alt]="ep.title" loading="lazy" class="banner-img" />
-        <div class="ep-info">
-          <h3 class="ep-show-title">{{ ep.title }}</h3>
-          <span class="ep-number">{{ ep.seasonEpisode }}</span>
+      <div class="episode-card glass-card" [style.--card-accent]="ep.accentColor" (click)="goToMovie(ep)">
+        <div class="episode-banner">
+          <img [src]="ep.bannerUrl" [alt]="ep.title" class="banner-img" />
+          <div class="banner-gradient"></div>
+        </div>
+
+        <div class="episode-details">
+          <div class="ep-text">
+            <h3 class="ep-show-title">{{ ep.title }}</h3>
+            <span class="ep-number">{{ ep.seasonEpisode }}</span>
+          </div>
+
+          <div class="ep-actions">
+            <button class="action-circle-btn"
+              [class.active]="notificationService.upcomingNotifiedIds().has(ep.id)"
+              (click)="toggleNotification(ep, $event)" aria-label="Notificami">
+              <svg width="16" height="16" viewBox="0 0 24 24"
+                [attr.fill]="notificationService.upcomingNotifiedIds().has(ep.id) ? '#ffffff' : 'none'"
+                stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </button>
+
+            <button class="action-circle-btn" [class.active]="favoritesService.isBookmarked(ep.id, true)"
+              (click)="toggleFavorite(ep, $event)" aria-label="Bookmark Episode">
+              <svg width="16" height="16" viewBox="0 0 24 24"
+                [style.fill]="favoritesService.isBookmarked(ep.id, true) ? '#ffffff' : 'none'"
+                stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
       }
@@ -108,9 +145,9 @@
   <!-- NEW RELEASES -->
   <section class="mobile-section">
     <div class="section-header">
-      <h2>Nuove Uscite</h2>
+      <h2>Nuove uscite</h2>
     </div>
-    <div class="mobile-slider posters-only">
+    <div class="mobile-slider posters-only" (scroll)="onSliderScroll($event, 'newReleases')">
       @for (movie of newReleasesMovies; track movie.id) {
       <div class="poster-card" (click)="goToMovie(movie)">
         <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
@@ -131,9 +168,10 @@
       <div class="chart-heading">
         <h2>Classifica</h2>
       </div>
+      @if (topWatchedMovies.length > 0) {
       <div class="chart-list">
         @for (item of topWatchedMovies.slice(0, showAllCharts() ? 10 : 3); track item.id; let i = $index) {
-        <div class="chart-item" [class.podium]="i < 3">
+        <div class="chart-item" [class.podium]="i < 3" [style.--card-accent]="item.accentColor || '#ffffff'" (click)="goToMovie(item)">
           <span class="rank">{{ i + 1 }}</span>
           <img [src]="item.posterUrl" [alt]="item.title" loading="lazy" />
           <div class="item-info">
@@ -146,21 +184,74 @@
       <button class="btn-show-more" (click)="showAllCharts.set(!showAllCharts())">
         {{ showAllCharts() ? 'Mostra meno' : 'Mostra tutta la classifica' }}
       </button>
+      } @else {
+      <!-- Skeleton loader while chart data is fetching -->
+      <div class="chart-list chart-skeleton">
+        <div class="chart-item chart-item-skeleton">
+          <span class="rank skeleton-rank"></span>
+          <div class="skeleton-poster"></div>
+          <div class="chart-skeleton-text">
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-line skeleton-subtitle"></div>
+          </div>
+        </div>
+        <div class="chart-item chart-item-skeleton">
+          <span class="rank skeleton-rank"></span>
+          <div class="skeleton-poster"></div>
+          <div class="chart-skeleton-text">
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-line skeleton-subtitle"></div>
+          </div>
+        </div>
+        <div class="chart-item chart-item-skeleton">
+          <span class="rank skeleton-rank"></span>
+          <div class="skeleton-poster"></div>
+          <div class="chart-skeleton-text">
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-line skeleton-subtitle"></div>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </section>
+
+
+
+  <!-- ACCLAIMED BY CRITICS -->
+  <section class="mobile-section">
+    <div class="section-header">
+      <h2>Acclamati dalla critica</h2>
+    </div>
+    <div class="mobile-slider posters-only" (scroll)="onSliderScroll($event, 'acclaimed')">
+      @for (movie of acclaimedMovies; track movie.id) {
+      <div class="poster-card" (click)="goToMovie(movie)">
+        <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
+        <button class="btn-bookmark-mini" [class.active]="favoritesService.isBookmarked(movie.id, false)" (click)="toggleBookmark(movie, $event)"
+          aria-label="Aggiungi ai preferiti">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </button>
+      </div>
+      }
     </div>
   </section>
 
   <!-- SPOTLIGHT -->
   <section class="mobile-section">
     <div class="section-header">
-      <h2>In Evidenza</h2>
+      <h2>In primo piano</h2>
     </div>
-    <div class="mobile-slider">
+    <div class="mobile-slider" (scroll)="onSliderScroll($event, 'spotlight')">
       @for (movie of spotlightMovies; track movie.id) {
       <div class="spotlight-card">
         <img [src]="movie.posterUrl" [alt]="movie.title" class="spotlight-poster" loading="lazy" />
         <div class="spotlight-info">
-          <h3>{{ movie.title }}</h3>
-          <p class="synopsis">{{ movie.synopsis }}</p>
+          <div class="spotlight-text-content">
+            <h3>{{ movie.title }}</h3>
+            <p class="synopsis" [class.clamp-4]="movie.title.length > 30" [class.clamp-5]="movie.title.length <= 30">{{ movie.synopsis }}</p>
+          </div>
           <div class="actions">
             <button class="btn-play" [style.background]="movie.accentColor" (click)="goToMovie(movie)">Guarda</button>
             <button class="btn-bookmark" [class.active]="favoritesService.isBookmarked(movie.id, false)" (click)="toggleBookmark(movie, $event)">
@@ -175,12 +266,12 @@
     </div>
   </section>
 
-  <!-- COMING SOON -->
+  <!-- CLASSICS -->
   <section class="mobile-section">
     <div class="section-header">
-      <h2>In Arrivo</h2>
+      <h2>Grandi Classici</h2>
     </div>
-    <div class="mobile-slider posters-only">
+    <div class="mobile-slider posters-only" (scroll)="onSliderScroll($event, 'classics')">
       @for (movie of classicsMovies; track movie.id) {
       <div class="poster-card" (click)="goToMovie(movie)">
         <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
@@ -198,9 +289,9 @@
   <!-- HIDDEN GEMS -->
   <section class="mobile-section">
     <div class="section-header">
-      <h2>Perle Nascoste</h2>
+      <h2>Perle nascoste</h2>
     </div>
-    <div class="mobile-slider posters-only">
+    <div class="mobile-slider posters-only" (scroll)="onSliderScroll($event, 'hiddenGems')">
       @for (movie of hiddenGemsMovies; track movie.id) {
       <div class="poster-card" (click)="goToMovie(movie)"><img [src]="movie.posterUrl" [alt]="movie.title"
           loading="lazy" /></div>
@@ -209,18 +300,43 @@
   </section>
 
 
-  <!-- ACTION & ADVENTURE -->
+  <!-- DYNAMIC GENRE SLIDERS (INFINITE SCROLL) -->
+  @for (slider of dynamicSliders; track slider.id) {
+  @if (!slider.isLoaded || (slider.movies && slider.movies.length > 0)) {
   <section class="mobile-section">
     <div class="section-header">
-      <h2>Azione e Avventura</h2>
+      <h2>{{ slider.title }}</h2>
     </div>
-    <div class="mobile-slider posters-only">
-      @for (movie of actionMovies; track movie.id) {
-      <div class="poster-card" (click)="goToMovie(movie)"><img [src]="movie.posterUrl" [alt]="movie.title"
-          loading="lazy" /></div>
+    <!-- Sentinel: observed by IntersectionObserver to trigger lazy loading -->
+    <div [attr.data-slider-id]="slider.id" class="genre-sentinel"></div>
+    @if (slider.isLoaded) {
+    <div class="mobile-slider posters-only" [id]="slider.id" (scroll)="onSliderScroll($event, slider.id)">
+      @for (movie of slider.movies; track movie.id) {
+      <div class="poster-card" (click)="goToMovie(movie)">
+        <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
+        <button class="btn-bookmark-mini" [class.active]="favoritesService.isBookmarked(movie.id, false)" (click)="toggleBookmark(movie, $event)"
+          aria-label="Aggiungi ai preferiti">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </button>
+      </div>
       }
     </div>
+    } @else {
+    <!-- Skeleton loader while genre is being fetched -->
+    <div class="mobile-slider posters-only genre-skeleton">
+      <div class="poster-card skeleton-card"></div>
+      <div class="poster-card skeleton-card"></div>
+      <div class="poster-card skeleton-card"></div>
+      <div class="poster-card skeleton-card"></div>
+      <div class="poster-card skeleton-card"></div>
+    </div>
+    }
   </section>
+  }
+  }
+
 
 </div>
 

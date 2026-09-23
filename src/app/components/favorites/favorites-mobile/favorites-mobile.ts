@@ -8,9 +8,11 @@ import { FormsModule } from '@angular/forms';
 import { NavbarMobile } from '../../navbar/navbar-mobile/navbar-mobile';
 import { ThemeService } from '../../../services/theme.service';
 import { PreferencesService } from '../../../services/preferences.service';
+import { FavoritesService } from '../../../services/favorites.service';
 
 interface FavoriteItem {
   id: number;
+  favoriteId?: string;
   title: string;
   year: number;
   matchScore: string;
@@ -46,6 +48,11 @@ export class FavoritesMobile implements OnInit {
   searchQuery = signal<string>('');
   isSearchFocused = signal<boolean>(false);
 
+  favoritesService = inject(FavoritesService);
+  activeCollectionId = signal<number | null>(null);
+
+  isSidebarOpen = signal<boolean>(false);
+
   heroImage = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1920px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg';
   heroTitle = 'I tuoi Preferiti';
 
@@ -80,9 +87,20 @@ export class FavoritesMobile implements OnInit {
         return;
       }
 
-      if (this.heroImageA() === url || this.heroImageB() === url) return;
+      if (this.activeHero() === 'a' && this.heroImageA() === url) return;
+      if (this.activeHero() === 'b' && this.heroImageB() === url) return;
 
       if (isPlatformBrowser(this.platformId)) {
+        // If the URL is already loaded in the inactive buffer, just switch to it instantly
+        if (this.heroImageA() === url) {
+          this.activeHero.set('a');
+          return;
+        }
+        if (this.heroImageB() === url) {
+          this.activeHero.set('b');
+          return;
+        }
+
         const img = new Image();
         img.onload = () => {
           if (this.activeHero() === 'a') {
@@ -101,22 +119,36 @@ export class FavoritesMobile implements OnInit {
   }
 
   currentHeroImage = computed(() => {
-    const prefId = this.preferencesService.favoritesHeroMovieId();
-    if (prefId) {
-      const movie = this.favoriteItems().find(m => m.id === prefId);
-      if (movie) {
-        const url = movie.backdropUrl || movie.posterUrl;
-        return url ? url.replace('w=500', 'w=1920') : url;
-      }
-    }
-    return this.heroImage;
+    const items = this.filteredItems();
+    if (items.length === 0) return this.heroImage;
+
+    const heroMovie = items[0];
+    const url = heroMovie.backdropUrl || heroMovie.posterUrl;
+    return url ? url.replace('w=500', 'w=1920') : this.heroImage;
   });
 
   // Computed state for filtered and sorted items
   filteredItems = computed(() => {
     let items = this.favoriteItems();
 
-    // 1. Search Filter
+    // 1. Collection Filter
+    const activeColId = this.activeCollectionId();
+    if (activeColId !== null) {
+      const col = this.favoritesService.collections().find(c => c.id === activeColId);
+      if (col) {
+        items = items.filter(item => col.items.includes((item as any).favoriteId));
+      } else {
+        items = [];
+      }
+    } else {
+      // General list: hide items the user has explicitly unchecked from "Tutti i preferiti"
+      items = items.filter(item => {
+        const mediaKey = `${item.isSeries ? 'tv' : 'movie'}_${item.id}`;
+        return !this.preferencesService.isHiddenFromGeneral(mediaKey);
+      });
+    }
+
+    // 2. Search Filter
     const query = this.searchQuery().toLowerCase().trim();
     if (query) {
       items = items.filter(item =>
@@ -180,6 +212,116 @@ export class FavoritesMobile implements OnInit {
       'match': 'Match'
     };
     return map[this.sortOption()];
+  }
+
+  selectCollection(id: number | null) {
+    this.activeCollectionId.set(id);
+    this.searchQuery.set('');
+  }
+
+  selectCollectionAndClose(id: number | null) {
+    this.selectCollection(id);
+    this.isSidebarOpen.set(false);
+  }
+
+  toggleSidebar() {
+    this.isSidebarOpen.update(val => !val);
+  }
+
+  // ── Collection CRUD ──────────────────────────────────────────────
+  isCreatingCollection = signal<boolean>(false);
+  newCollectionName = signal<string>('');
+  collectionToDelete = signal<any | null>(null);
+  collectionToEdit = signal<any | null>(null);
+  editCollectionName = signal<string>('');
+  isClosingModal = signal<boolean>(false);
+
+  closeModalWithAnimation(callback: () => void) {
+    this.isClosingModal.set(true);
+    setTimeout(() => {
+      callback();
+      this.isClosingModal.set(false);
+    }, 300);
+  }
+
+  startCreatingCollection() {
+    this.isSidebarOpen.set(false);
+    this.isCreatingCollection.set(true);
+    this.newCollectionName.set('');
+  }
+
+  cancelCreatingCollection() {
+    this.closeModalWithAnimation(() => {
+      this.isCreatingCollection.set(false);
+      this.newCollectionName.set('');
+    });
+  }
+
+  async saveNewCollection() {
+    const name = this.newCollectionName().trim();
+    if (!name) return;
+    this.closeModalWithAnimation(async () => {
+      const col = await this.favoritesService.createCollection(name);
+      if (col) { this.selectCollection(col.id); }
+      this.isCreatingCollection.set(false);
+      this.newCollectionName.set('');
+    });
+  }
+
+  startEditCollection(col: any, event: Event) {
+    event.stopPropagation();
+    this.collectionToEdit.set(col);
+    this.editCollectionName.set(col.name);
+  }
+
+  cancelEditCollection() {
+    this.closeModalWithAnimation(() => {
+      this.collectionToEdit.set(null);
+      this.editCollectionName.set('');
+    });
+  }
+
+  async saveEditCollection() {
+    const col = this.collectionToEdit();
+    const name = this.editCollectionName().trim();
+    if (col && name && name !== col.name) {
+      this.closeModalWithAnimation(async () => {
+        await this.favoritesService.renameCollection(col.id, name);
+        this.collectionToEdit.set(null);
+        this.editCollectionName.set('');
+      });
+    } else {
+      this.cancelEditCollection();
+    }
+  }
+
+  startDeleteCollection(col: any, event: Event) {
+    event.stopPropagation();
+    this.collectionToDelete.set(col);
+  }
+
+  cancelDeleteCollection() {
+    this.closeModalWithAnimation(() => {
+      this.collectionToDelete.set(null);
+    });
+  }
+
+  async confirmDeleteCollection() {
+    const col = this.collectionToDelete();
+    if (col) {
+      this.closeModalWithAnimation(async () => {
+        await this.favoritesService.deleteCollection(col.id);
+        if (this.activeCollectionId() === col.id) { this.selectCollection(null); }
+        this.collectionToDelete.set(null);
+      });
+    }
+  }
+
+  get activeCollectionName(): string {
+    const id = this.activeCollectionId();
+    if (id === null) return 'I tuoi Preferiti';
+    const col = this.favoritesService.collections().find(c => c.id === id);
+    return col ? col.name : 'I tuoi Preferiti';
   }
 }
 

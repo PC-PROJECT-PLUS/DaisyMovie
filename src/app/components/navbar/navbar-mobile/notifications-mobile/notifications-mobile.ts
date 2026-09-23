@@ -1,19 +1,13 @@
-import { Component, signal, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-export interface MobileNotification {
-  id: number;
-  title: string;
-  message: string;
-  time: string;
-  unread: boolean;
-  icon: string;
-}
+import { Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
+import { NotificationService } from '../../../../services/notification.service';
 
 @Component({
   selector: 'app-notifications-mobile',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './notifications-mobile.html',
   styleUrl: './notifications-mobile.scss',
 })
@@ -21,120 +15,56 @@ export class NotificationsMobile {
   @Input() isOpen = false;
   @Output() closeEvent = new EventEmitter<void>();
 
-  notifications: MobileNotification[] = [
-    {
-      id: 1,
-      title: 'Nuovo Episodio Disponibile',
-      message: 'L\'episodio 3 della stagione 2 di "The Bear" è ora disponibile.',
-      time: '2 ore fa',
-      unread: true,
-      icon: 'play'
-    },
-    {
-      id: 2,
-      title: 'Consigliato per te',
-      message: 'Perché hai guardato "Arcane", ti consigliamo "Cyberpunk: Edgerunners".',
-      time: 'Ieri',
-      unread: true,
-      icon: 'star'
-    },
-    {
-      id: 3,
-      title: 'Avviso di Scadenza',
-      message: '"Friends" lascerà il catalogo tra 7 giorni. Guardalo finché sei in tempo!',
-      time: '3 giorni fa',
-      unread: true,
-      icon: 'alert'
-    },
-    {
-      id: 4,
-      title: 'Nuova Serie in Arrivo',
-      message: 'Il trailer ufficiale di "Fallout" è stato rilasciato. Non perdertelo!',
-      time: '4 giorni fa',
-      unread: false,
-      icon: 'calendar'
-    },
-    {
-      id: 5,
-      title: 'Playlist Aggiornata',
-      message: 'La tua playlist "Da vedere con gli amici" è stata aggiornata con 3 nuovi titoli.',
-      time: '5 giorni fa',
-      unread: false,
-      icon: 'list'
-    },
-    {
-      id: 6,
-      title: 'Stagione 4 Disponibile',
-      message: 'Tutta la stagione 4 di "Stranger Things" è ora disponibile in streaming.',
-      time: '6 giorni fa',
-      unread: false,
-      icon: 'play'
-    },
-    {
-      id: 7,
-      title: 'Nuovo Film Consigliato',
-      message: 'Basato sui tuoi gusti: "Dune: Parte 2" potrebbe piacerti molto.',
-      time: '1 settimana fa',
-      unread: false,
-      icon: 'star'
-    },
-    {
-      id: 8,
-      title: 'Scadenza Imminente',
-      message: '"Blade Runner 2049" uscirà dal catalogo domani sera.',
-      time: '1 settimana fa',
-      unread: false,
-      icon: 'alert'
-    },
-    {
-      id: 9,
-      title: 'Evento Speciale',
-      message: 'La premiere mondiale di "The Witcher" stagione 4 è fissata per il 12 settembre.',
-      time: '10 giorni fa',
-      unread: false,
-      icon: 'calendar'
-    },
-    {
-      id: 10,
-      title: 'Lista Aggiornata',
-      message: 'Hai raggiunto 50 titoli nella tua lista "Da vedere". Ottimo progresso!',
-      time: '12 giorni fa',
-      unread: false,
-      icon: 'list'
-    },
-    {
-      id: 11,
-      title: 'Episodio Finale',
-      message: '"The Last of Us" stagione 2 si conclude questa settimana con l\'episodio 7.',
-      time: '2 settimane fa',
-      unread: false,
-      icon: 'play'
-    },
-    {
-      id: 12,
-      title: 'Nuovi Arrivi questa Settimana',
-      message: '15 nuovi film e serie sono stati aggiunti al catalogo. Scopri le novità!',
-      time: '3 settimane fa',
-      unread: false,
-      icon: 'star'
-    }
-  ];
+  notificationService = inject(NotificationService);
+  private router = inject(Router);
 
-  get hasUnread(): boolean {
-    return this.notifications.some(n => n.unread);
-  }
+  // Computed: get notifications from real service
+  notifications = computed(() => this.notificationService.notifications());
 
-  markAllAsRead() {
-    this.notifications = this.notifications.map(n => ({ ...n, unread: false }));
-  }
+  // Computed: count of unread
+  unreadCount = computed(() => this.notifications().filter(n => n.unread).length);
+  hasUnread = computed(() => this.unreadCount() > 0);
 
-  markAsRead(id: number) {
-    this.notifications = this.notifications.map(n =>
-      n.id === id ? { ...n, unread: false } : n
-    );
+  // Relative timestamp from ISO string
+  relativeTime(isoString: string): string {
+    if (!isoString || isoString === 'Poco fa') return isoString || 'Poco fa';
+
+    const now = new Date();
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return isoString; // fallback for already formatted strings
+
+    const diffMs = now.getTime() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHrs = Math.floor(diffMin / 60);
+    const diffDays = Math.floor(diffHrs / 24);
+    const diffWeeks = Math.floor(diffDays / 7);
+
+    if (diffMin < 1) return 'Adesso';
+    if (diffMin < 60) return `${diffMin} min fa`;
+    if (diffHrs < 24) return `${diffHrs} ${diffHrs === 1 ? 'ora' : 'ore'} fa`;
+    if (diffDays === 1) return 'Ieri';
+    if (diffDays < 7) return `${diffDays} giorni fa`;
+    if (diffWeeks === 1) return '1 settimana fa';
+    return `${diffWeeks} settimane fa`;
   }
 
   close() {
     this.closeEvent.emit();
+  }
+
+  async markAsRead(id: string) {
+    await this.notificationService.markAsRead(id);
+  }
+
+  async markAsReadAndNavigate(notif: any) {
+    await this.notificationService.markAsRead(notif.id);
+    if (notif.targetUrl && notif.targetUrl !== '/') {
+      this.close();
+      this.router.navigateByUrl(notif.targetUrl);
+    }
+  }
+
+  async markAllAsRead() {
+    await this.notificationService.markAllAsRead();
   }
 }

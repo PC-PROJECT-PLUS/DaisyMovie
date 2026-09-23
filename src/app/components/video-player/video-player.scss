@@ -102,15 +102,18 @@
 
 .wake-up-zone {
   position: absolute;
-  inset: 0; // Copre tutto lo schermo
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 80px; // Lasciamo spazio ai controlli nativi in basso per i click
   z-index: 45; // Sopra l'iframe, sotto i controlli
 
   .player-container:not(.controls-hidden) & {
-    pointer-events: none; // Disabilitato quando i controlli sono visibili (lascia passare i click all'iframe)
+    pointer-events: none; // Disabilitato quando i controlli sono visibili
   }
   
   .player-container.controls-hidden & {
-    pointer-events: auto; // Abilitato per catturare il primo movimento del mouse
+    pointer-events: auto; // Abilitato per catturare il primo movimento del mouse/tocco
   }
 }
 
@@ -119,9 +122,9 @@
   height: 44px;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -130,7 +133,7 @@
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
     color: #fff;
     border-color: rgba(255, 255, 255, 0.3);
     transform: scale(1.05);
@@ -138,7 +141,7 @@
 
   &.close-btn:hover {
     background: rgba(229, 9, 20, 0.8);
-    border-color: rgba(229, 9, 20, 1);
+    border-color: rgba(229, 9, 20, 0.8);
   }
 }
 

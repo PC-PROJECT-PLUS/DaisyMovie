@@ -113,12 +113,30 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
 
   goToEpisode(epNumber: number, seasonNumber?: number) {
     if (!this.config) return;
+    
+    // Save current episode progress before switching
+    if (this.lastSavedTime > 0) {
+      this.saveProgress(this.lastSavedTime);
+      this.lastSavedTime = 0;
+    }
+
     const sNum = seasonNumber || this.currentSeason();
-    this.config = { ...this.config, episode: epNumber, season: sNum };
+    // Reset startAt when navigating
+    this.config = { ...this.config, episode: epNumber, season: sNum, startAt: undefined };
     this.currentSeason.set(sNum);
     this.showEpisodesDropdown.set(false);
     this.iframeReady.set(false);
-    this.buildUrl();
+    
+    // Fetch the specific episode progress from DB
+    this.historyService.loadEpisodeProgress(this.config.id).then(progressList => {
+       const p = progressList.find(i => i.season === sNum && i.episode === epNumber);
+       if (p && p.progress_seconds > 0) {
+          this.config!.startAt = p.progress_seconds;
+       }
+       this.buildUrl();
+    }).catch(() => {
+       this.buildUrl(); // fallback if error
+    });
   }
 
   nextEpisode() {
@@ -173,6 +191,16 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
       if (!isSeries) {
         this.historyService.removeFromHistory(this.config.id, false);
       } else {
+        // Save completed state for THIS episode
+        this.historyService.saveEpisodeProgress(
+          this.config.id,
+          this.config.season || 1,
+          this.config.episode || 1,
+          this.duration, // fully completed
+          this.duration,
+          this.config.accentColor || ''
+        );
+
         const eps = this.tvEpisodes();
         const currentEp = this.config.episode || 1;
         const curSeason = this.currentSeason();
@@ -185,7 +213,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
         }
         
         if (nextEp) {
-          // Add NEXT episode with 0 progress
+          // Add NEXT episode with 0 progress to main history
           this.historyService.addToHistory(
             { id: this.config.id, isSeries: true, title, posterUrl, backdropUrl },
             0,
@@ -201,7 +229,19 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
         }
       }
     } else {
-       // Just update progress
+       if (isSeries) {
+         // Update per-episode progress
+         this.historyService.saveEpisodeProgress(
+           this.config.id,
+           this.config.season || 1,
+           this.config.episode || 1,
+           currentTime,
+           this.duration,
+           this.config.accentColor || ''
+         );
+       }
+       
+       // Just update main history progress
        this.historyService.addToHistory(
          { id: this.config.id, isSeries: isSeries, title, posterUrl, backdropUrl },
          currentTime,
@@ -246,8 +286,15 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
 
     if (!startAt) {
       const historyItem = this.historyService.getResumeProgress(id, type === 'tv');
+      // Only fallback to main history if the season and episode match
       if (historyItem && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
-        startAt = historyItem.progress_seconds;
+        if (type === 'tv') {
+          if (historyItem.season === season && historyItem.episode === episode) {
+            startAt = historyItem.progress_seconds;
+          }
+        } else {
+          startAt = historyItem.progress_seconds;
+        }
       }
     }
 
@@ -331,10 +378,44 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     this.enterTimeout = setTimeout(() => {
       this.animState.set('visible');
     }, 20); // Allow browser to paint first frame
+
+    this.lockOrientation();
+  }
+
+  private lockOrientation() {
+    if (!this.isBrowser) return;
+    // Mobile only
+    if (window.innerWidth < 768) {
+      const container = document.querySelector('.player-container');
+      if (container && container.requestFullscreen && !document.fullscreenElement) {
+        container.requestFullscreen().then(() => {
+          this.isFullscreen.set(true);
+          if (screen.orientation && 'lock' in screen.orientation) {
+            (screen.orientation as any).lock('landscape').catch((e: any) => console.log('Orientation lock failed:', e));
+          }
+        }).catch((e: any) => console.log('Fullscreen failed:', e));
+      } else if (screen.orientation && 'lock' in screen.orientation) {
+        (screen.orientation as any).lock('landscape').catch((e: any) => console.log('Orientation lock failed:', e));
+      }
+    }
+  }
+
+  private unlockOrientation() {
+    if (!this.isBrowser) return;
+    if (screen.orientation && 'unlock' in screen.orientation) {
+      try {
+        screen.orientation.unlock();
+      } catch (e) {}
+    }
+    if (this.isFullscreen() && document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+      this.isFullscreen.set(false);
+    }
   }
 
   private close() {
     this.animState.set('leaving');
+    this.unlockOrientation();
     clearTimeout(this.leaveTimeout);
     this.leaveTimeout = setTimeout(() => {
       this.animState.set('hidden');

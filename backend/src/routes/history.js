@@ -76,4 +76,51 @@ router.delete('/:mediaId', async (req, res) => {
   }
 });
 
+// GET /api/history/episodes/progress?profileId=...&mediaId=...
+router.get('/episodes/progress', async (req, res) => {
+  const { profileId, mediaId } = req.query;
+  if (!profileId || !mediaId) {
+    return res.status(400).json({ error: 'profileId e mediaId sono richiesti' });
+  }
+
+  try {
+    const result = await pool.query(
+      'SELECT season, episode, progress as progress_seconds, total_seconds, accent_color, last_watched FROM episode_progress WHERE profile_id = $1 AND media_id = $2',
+      [profileId, mediaId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching episode progress:', error);
+    res.status(500).json({ error: 'Errore nel recupero progresso episodi' });
+  }
+});
+
+// POST /api/history/episodes/progress
+router.post('/episodes/progress', async (req, res) => {
+  const { profileId, mediaId, season, episode, progressSeconds, totalSeconds, accentColor } = req.body;
+  
+  if (!profileId || !mediaId || season == null || episode == null) {
+    return res.status(400).json({ error: 'Dati mancanti per salvare progresso episodio' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO episode_progress (profile_id, media_id, season, episode, progress, total_seconds, accent_color) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) 
+       ON CONFLICT (profile_id, media_id, season, episode) 
+       DO UPDATE SET 
+         last_watched = CURRENT_TIMESTAMP, 
+         progress = EXCLUDED.progress,
+         total_seconds = EXCLUDED.total_seconds,
+         accent_color = EXCLUDED.accent_color
+       RETURNING season, episode, progress as progress_seconds, total_seconds, accent_color, last_watched`,
+      [profileId, mediaId, season, episode, progressSeconds || 0, totalSeconds || 0, accentColor || '']
+    );
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error saving episode progress:', error);
+    res.status(500).json({ error: 'Errore nel salvataggio progresso episodio' });
+  }
+});
+
 module.exports = router;

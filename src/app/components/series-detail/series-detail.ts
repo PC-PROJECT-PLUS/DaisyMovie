@@ -12,6 +12,7 @@ import { PreferencesService } from '../../services/preferences.service';
 import { CollectionsModalService } from '../../services/collections-modal.service';
 import { HistoryService } from '../../services/history.service';
 import { VideoPlayerComponent, PlayerConfig } from '../video-player/video-player';
+import { Title } from '@angular/platform-browser';
 
 export interface CastMember {
   name: string;
@@ -97,6 +98,7 @@ export class SeriesDetailComponent implements OnInit {
   preferencesService = inject(PreferencesService);
   collectionsModalService = inject(CollectionsModalService);
   private historyService = inject(HistoryService);
+  private titleService = inject(Title);
   seriesId = signal<number | null>(null);
   series = signal<SeriesDetail | null>(null);
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
@@ -131,6 +133,7 @@ export class SeriesDetailComponent implements OnInit {
   seasons = signal<number[]>([1]);
   episodesBySeason = signal<Map<number, any[]>>(new Map());
   activeEpisodes = signal<any[]>([]);
+  allEpisodesProgress = signal<any[]>([]);
   isLoadingEpisodes = signal<boolean>(false);
   episodesAnimState = signal<'idle' | 'out' | 'in'>('idle');
 
@@ -223,9 +226,12 @@ export class SeriesDetailComponent implements OnInit {
     const s = this.series();
     if (!s) return;
 
+    // Find the specific episode in the active episodes list
+    const epObj = this.activeEpisodes().find(e => e.episodeNumber === episodeNumber);
+
     let accentColor = '#E50914';
     try {
-      const imageUrl = s.backdropUrl || s.posterUrl;
+      const imageUrl = epObj?.thumbnailUrl || s.backdropUrl || s.posterUrl;
       if (imageUrl && isPlatformBrowser(this.platformId)) {
         const colors = await this.extractDominantColors(imageUrl);
         if (colors.primary.startsWith('hsl')) accentColor = colors.primary;
@@ -233,7 +239,14 @@ export class SeriesDetailComponent implements OnInit {
     } catch (e) { }
 
     let startAt = 0;
-    if (isPlatformBrowser(this.platformId)) {
+    
+    if (epObj && epObj.progressSeconds && epObj.progressSeconds > 0) {
+      startAt = epObj.progressSeconds;
+      if (epObj.accentColor) {
+        accentColor = epObj.accentColor;
+      }
+    } else if (isPlatformBrowser(this.platformId)) {
+      // Fallback to history service if not found in activeEpisodes
       const historyItem = this.historyService.getResumeProgress(s.id, true);
       if (historyItem && historyItem.season === this.activeSeason() && historyItem.episode === episodeNumber && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
         startAt = historyItem.progress_seconds;
@@ -317,7 +330,22 @@ export class SeriesDetailComponent implements OnInit {
       if (!s || !isPlatformBrowser(this.platformId)) return;
 
       const historyItem = this.historyService.getResumeProgress(s.id, true);
+      
+      // Load per-episode progress
+      if (isPlatformBrowser(this.platformId)) {
+        this.historyService.loadEpisodeProgress(s.id).then(progress => {
+          this.allEpisodesProgress.set(progress);
+          // Re-render active episodes with progress if already loaded
+          const season = this.activeSeason();
+          const cached = this.episodesBySeason().get(season);
+          if (cached) {
+            this.showEpisodesWithAnimation(cached, true);
+          }
+        });
+      }
+
       untracked(() => {
+        this.titleService.setTitle(s.title);
         if (historyItem && historyItem.progress_seconds !== undefined && historyItem.progress_seconds >= 0) {
           this.resumeProgress.set(historyItem.progress_seconds);
           this.resumeSeason.set(historyItem.season || 1);
@@ -328,6 +356,20 @@ export class SeriesDetailComponent implements OnInit {
           this.resumeText.set('');
           this.resumeSeason.set(1);
           this.resumeEpisode.set(1);
+        }
+      });
+    });
+
+    effect(() => {
+      const isVisible = this.playerVisible();
+      const s = this.series();
+      if (!isPlatformBrowser(this.platformId) || !s) return;
+
+      untracked(() => {
+        if (isVisible) {
+          this.titleService.setTitle(`Guardando: ${s.title}`);
+        } else {
+          this.titleService.setTitle(s.title);
         }
       });
     });
@@ -698,11 +740,21 @@ export class SeriesDetailComponent implements OnInit {
         // Episodes will be loaded per-season, start with empty
         data.episodes = [];
 
-        // Build real seasons list (exclude season 0 = Specials)
-        const numSeasons = data.number_of_seasons || 1;
-        const seasonList = Array.from({ length: numSeasons }, (_, i) => i + 1);
+        // Build real seasons list (exclude season 0 = Specials and empty seasons)
+        let seasonList: number[] = [];
+        if (data.seasons && Array.isArray(data.seasons)) {
+          seasonList = data.seasons
+            .filter((s: any) => s.season_number > 0 && s.episode_count > 0)
+            .map((s: any) => s.season_number);
+        } else {
+          const numSeasons = data.number_of_seasons || 1;
+          seasonList = Array.from({ length: numSeasons }, (_, i) => i + 1);
+        }
+        
+        if (seasonList.length === 0) seasonList = [1]; // Fallback
+        
         this.seasons.set(seasonList);
-        this.activeSeason.set(1);
+        this.activeSeason.set(seasonList.includes(1) ? 1 : seasonList[0]);
         this.episodesBySeason.set(new Map());
 
         // Preserve existing accentColor if we have it, else fallback to dark
@@ -755,14 +807,31 @@ export class SeriesDetailComponent implements OnInit {
     });
   }
 
-  private showEpisodesWithAnimation(episodes: any[]) {
-    if (!this.isBrowser) {
-      this.activeEpisodes.set(episodes);
+  private showEpisodesWithAnimation(episodes: any[], noAnim: boolean = false) {
+    const season = this.activeSeason();
+    const progressList = this.allEpisodesProgress();
+    
+    // Merge progress into episodes
+    const mergedEpisodes = episodes.map(ep => {
+      const p = progressList.find(i => i.season === season && i.episode === ep.episodeNumber);
+      if (p) {
+        return { 
+          ...ep, 
+          progressSeconds: p.progress_seconds, 
+          totalSeconds: p.total_seconds, 
+          accentColor: p.accent_color 
+        };
+      }
+      return { ...ep, progressSeconds: 0, totalSeconds: 0, accentColor: '' };
+    });
+
+    if (!this.isBrowser || noAnim) {
+      this.activeEpisodes.set(mergedEpisodes);
       return;
     }
     const slider = document.getElementById('episodes-slider');
     if (!slider) {
-      this.activeEpisodes.set(episodes);
+      this.activeEpisodes.set(mergedEpisodes);
       return;
     }
 
@@ -771,7 +840,7 @@ export class SeriesDetailComponent implements OnInit {
 
     setTimeout(() => {
       // Phase 2: swap data and reset scroll while invisible
-      this.activeEpisodes.set(episodes);
+      this.activeEpisodes.set(mergedEpisodes);
       slider.scrollLeft = 0;
       this.episodesAnimState.set('in');
 

@@ -48,11 +48,13 @@
       }
       @if (profiles().length < 5) {
       <div class="dsk-strip-item" (click)="createNewProfile()" style="view-transition-name: profile-new;">
-        <div class="dsk-strip-ring" style="display:flex; align-items:center; justify-content:center; border: 2px dashed rgba(255,255,255,0.4);">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: rgba(255,255,255,0.7);">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
+        <div class="dsk-strip-ring">
+          <div class="dsk-strip-avatar" style="display:flex; align-items:center; justify-content:center; border: 2px dashed rgba(255,255,255,0.4); background: rgba(255,255,255,0.05); -webkit-backdrop-filter: blur(24px) saturate(200%); backdrop-filter: blur(24px) saturate(200%); box-sizing: border-box;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: rgba(255,255,255,0.7);">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </div>
         </div>
         <span class="dsk-strip-name" style="color: rgba(255,255,255,0.7);">Nuovo</span>
       </div>
@@ -126,13 +128,15 @@
       @if (profiles().length < 5) {
       <div class="mob-card" [class.mob-active]="isActive(profiles().length)" [class.mob-prev]="profiles().length === activeIndex() - 1"
         [class.mob-next]="profiles().length === activeIndex() + 1" [class.mob-far]="profiles().length < activeIndex() - 1 || profiles().length > activeIndex() + 1"
-        (click)="selectIndex(profiles().length)" style="view-transition-name: profile-new;">
+        (click)="isActive(profiles().length) ? createNewProfile() : selectIndex(profiles().length)" style="view-transition-name: profile-new;">
         <div class="mob-card-glow" [class.visible]="isActive(profiles().length)"></div>
-        <div class="mob-avatar-ring" [class.lit]="isActive(profiles().length)" style="display:flex; align-items:center; justify-content:center; border: 2px dashed rgba(255,255,255,0.4); background: rgba(255,255,255,0.05);">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: rgba(255,255,255,0.7);">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
+        <div class="mob-avatar-ring">
+          <div class="mob-avatar" style="display:flex; align-items:center; justify-content:center; border: 2px dashed rgba(255,255,255,0.4); background: rgba(255,255,255,0.05); -webkit-backdrop-filter: blur(24px) saturate(200%); backdrop-filter: blur(24px) saturate(200%); box-sizing: border-box;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: rgba(255,255,255,0.7);">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </div>
         </div>
       </div>
       }
@@ -146,7 +150,7 @@
       <span class="mob-dot" [class.active]="isActive(i)" (click)="selectIndex(i)"></span>
       }
       @if (profiles().length < 5) {
-      <span class="mob-dot" [class.active]="isActive(profiles().length)" (click)="selectIndex(profiles().length)" style="background: none; border: 1px solid rgba(255,255,255,0.4); box-sizing: border-box;"></span>
+      <span class="mob-dot new-profile-dot" [class.active]="isActive(profiles().length)" (click)="selectIndex(profiles().length)"></span>
       }
     </div>
 
@@ -226,6 +230,37 @@
       <p class="modal-sub">Personalizza il tuo nuovo profilo.</p>
       
       <div class="avatar-selector">
+        <!-- Custom Avatar Upload -->
+        <div class="avatar-option-wrap custom-upload-wrap" 
+             [class.selected]="isCustomAvatar()" 
+             (click)="triggerFileUpload()">
+          @if (isCustomAvatar()) {
+            <img [src]="newProfileAvatar()" class="avatar-option custom-avatar-preview" alt="Custom Avatar" />
+          } @else {
+            <div class="avatar-option custom-avatar-placeholder">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+              <div class="upload-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </div>
+            </div>
+          }
+          <div class="avatar-check">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Hidden file input -->
+        <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" style="display: none;" />
+
         @for (avatar of availableAvatars; track avatar) {
           <div class="avatar-option-wrap" [class.selected]="newProfileAvatar() === avatar" (click)="newProfileAvatar.set(avatar)">
             <img [src]="avatar" class="avatar-option" alt="Avatar" />

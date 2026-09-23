@@ -301,7 +301,7 @@
             <div style="height: 350px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2);">Caricamento suggeriti...</div>
           }
 
-          <!-- REVIEWS SECTION -->
+          <!-- REVIEWS SECTION (Temporarily Disabled)
           @defer (on viewport) {
           <div class="section-block reviews-section">
             <div class="section-header">
@@ -393,6 +393,7 @@
           } @placeholder {
             <div style="height: 300px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2);">Caricamento recensioni...</div>
           }
+          -->
 
 
         </div>
@@ -401,7 +402,7 @@
     }
   </div>
   <div class="mobile-only">
-    <app-movie-detail-mobile [movie]="movie()" (play)="openPlayer()" (playTrailer)="openTrailer()"></app-movie-detail-mobile>
+    <app-movie-detail-mobile [movie]="movie()" (play)="openPlayer()" (playTrailer)="openTrailer()" (goToMovie)="goToMovie($event)"></app-movie-detail-mobile>
   </div>
   <div style="margin-top: auto; transition: opacity 0.6s ease;" [style.opacity]="pageLoaded() ? 1 : 0">
     <app-footer></app-footer>

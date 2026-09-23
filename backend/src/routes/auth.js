@@ -151,6 +151,64 @@ router.post('/login', async (req, res) => {
 });
 
 // ---------------------------------------------------------
+// 3a. Check Email (per login multi-step)
+// ---------------------------------------------------------
+router.post('/check-email', async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email obbligatoria' });
+  }
+  try {
+    const result = await pool.query('SELECT id, password_hash, is_verified FROM users WHERE email = $1', [email]);
+    if (result.rows.length === 0) {
+      return res.json({ exists: false });
+    }
+    const user = result.rows[0];
+    if (!user.is_verified) {
+      return res.status(401).json({ error: 'Account non verificato. Effettua la registrazione.' });
+    }
+    return res.json({
+      exists: true,
+      hasPassword: !!user.password_hash
+    });
+  } catch (error) {
+    console.error('Check email error:', error);
+    res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
+// ---------------------------------------------------------
+// 3b. Set Password (per utenti Google senza password)
+// ---------------------------------------------------------
+router.post('/set-password', async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email e password sono obbligatori' });
+  }
+  try {
+    const result = await pool.query('SELECT id, is_verified FROM users WHERE email = $1', [email]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Utente non trovato' });
+    }
+    const user = result.rows[0];
+    if (!user.is_verified) {
+      return res.status(401).json({ error: 'Account non verificato.' });
+    }
+
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, user.id]);
+
+    const token = jwt.sign({ userId: user.id, email }, JWT_SECRET, { expiresIn: '30d' });
+    res.json({ success: true, token, message: 'Password impostata con successo' });
+  } catch (error) {
+    console.error('Set password error:', error);
+    res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
+// ---------------------------------------------------------
 // 4. Google Login
 // ---------------------------------------------------------
 router.post('/google', async (req, res) => {

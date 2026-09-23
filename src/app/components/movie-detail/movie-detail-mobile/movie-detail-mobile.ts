@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FavoritesService } from '../../../services/favorites.service';
 import { HistoryService } from '../../../services/history.service';
+import { TmdbService } from '../../../services/tmdb.service';
 import { CastMember, Review, MovieDetail } from '../movie-detail';
 
 @Component({
@@ -17,26 +18,39 @@ export class MovieDetailMobile implements OnInit {
   private location = inject(Location);
   favoritesService = inject(FavoritesService);
   private historyService = inject(HistoryService);
+  private tmdbService = inject(TmdbService);
   private platformId = inject(PLATFORM_ID);
-  
+
   movie = input<MovieDetail | null>(null);
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
   pageLoaded = signal<boolean>(false);
-  
+
   @Output() play = new EventEmitter<void>();
   @Output() playTrailer = new EventEmitter<void>();
-  
+  @Output() goToMovie = new EventEmitter<any>();
+
   resumeProgress = signal<number>(0);
   resumeText = signal<string>('');
 
   newReviewText = signal<string>('');
   showAllReviews = signal<boolean>(false);
 
+  infiniteSuggested = signal<any[]>([]);
+  suggestedPage = signal<number>(1);
+  isLoadingMore = signal<boolean>(false);
+  hasMoreSuggested = signal<boolean>(true);
+
   constructor() {
     effect(() => {
-      if (this.movie()) {
-        const m = this.movie();
-        if (m && isPlatformBrowser(this.platformId)) {
+      const m = this.movie();
+      if (m) {
+        untracked(() => {
+          this.infiniteSuggested.set([...(m.suggested || [])]);
+          this.suggestedPage.set(1);
+          this.isLoadingMore.set(false);
+          this.hasMoreSuggested.set(true);
+        });
+        if (isPlatformBrowser(this.platformId)) {
           const historyItem = this.historyService.getResumeProgress(m.id, false);
           untracked(() => {
             if (historyItem && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
@@ -75,6 +89,47 @@ export class MovieDetailMobile implements OnInit {
     }
   }
 
+  toggleBookmarkSuggested(item: any, event: Event) {
+    event.stopPropagation();
+    this.favoritesService.toggleFavorite(item, item.isSeries);
+  }
+
+  onSliderScroll(event: Event) {
+    const el = event.target as HTMLElement;
+    if (el.scrollLeft + el.clientWidth > el.scrollWidth - 300) {
+      if (!this.isLoadingMore() && this.movie() && this.hasMoreSuggested()) {
+        this.isLoadingMore.set(true);
+        const nextPage = this.suggestedPage() + 1;
+        this.tmdbService.getRecommendations('movie', this.movie()!.id, nextPage).subscribe({
+          next: (moreSuggested) => {
+            if (moreSuggested && moreSuggested.length > 0) {
+              const current = this.infiniteSuggested();
+              
+              // Filter out duplicates
+              const currentIds = new Set(current.map(item => item.id));
+              const uniqueNew = moreSuggested.filter(item => !currentIds.has(item.id));
+              
+              if (uniqueNew.length > 0) {
+                this.infiniteSuggested.set([...current, ...uniqueNew]);
+              } else {
+                // If TMDB returns only duplicates (common edge case), fallback to stop loading
+                this.hasMoreSuggested.set(false);
+              }
+              
+              this.suggestedPage.set(nextPage);
+            } else {
+              this.hasMoreSuggested.set(false);
+            }
+            this.isLoadingMore.set(false);
+          },
+          error: () => {
+            this.isLoadingMore.set(false);
+          }
+        });
+      }
+    }
+  }
+
   toggleReviews() {
     this.showAllReviews.update(v => !v);
   }
@@ -82,7 +137,7 @@ export class MovieDetailMobile implements OnInit {
   submitReview() {
     const text = this.newReviewText().trim();
     if (!text) return;
-    
+
     const current = this.movie();
     if (current) {
       const newReview: Review = {
@@ -94,12 +149,25 @@ export class MovieDetailMobile implements OnInit {
         dislikes: 0,
         date: new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })
       };
-      
+
       if (!current.reviews) {
         current.reviews = [];
       }
       current.reviews.unshift(newReview);
       this.newReviewText.set('');
     }
+  }
+
+  toRgba(hex: string, alpha: number): string {
+    let c: any;
+    if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+      c = hex.substring(1).split('');
+      if (c.length == 3) {
+        c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+      }
+      c = '0x' + c.join('');
+      return 'rgba(' + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',') + ',' + alpha + ')';
+    }
+    return `rgba(20,20,20,${alpha})`;
   }
 }

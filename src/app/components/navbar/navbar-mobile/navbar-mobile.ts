@@ -1,4 +1,4 @@
-import { Component, signal, HostListener, ElementRef, inject } from '@angular/core';
+import { Component, signal, HostListener, ElementRef, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -24,6 +24,7 @@ export class NavbarMobile {
   private router = inject(Router);
   public categoryService = inject(CategoryService);
   private authService = inject(AuthService);
+  activeProfile = computed(() => this.authService.selectedProfile());
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {

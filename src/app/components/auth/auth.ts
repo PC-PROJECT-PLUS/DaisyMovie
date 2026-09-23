@@ -52,7 +52,7 @@ export class AuthComponent implements OnInit, AfterViewInit, OnDestroy {
     ['4LwvU9SZc8QQzW1X1FAPhNbXnEU.jpg','AnJ8IQJI23hNpYXVNaythu061Ru.jpg','59o7OyB8J37GwOAod9mhgJjhgH2.jpg','alpf5v4UqSFawPmG9RX03Or4BDk.jpg','uhzRnTW4DM13UQBvZP3eVNzQTuz.jpg','hVXjX1jLZ1ljFSNGXpjJfbTUOa7.jpg','fWVSwgjpT2D78VUh6X8UBd2rorW.jpg','sk5DjLp7x9cmi0V1423YJmIVJbC.jpg','7bOuu1SRALGwsG2fLCTvRkCmQBj.jpg'],
   ];
 
-  get mobilePosterCols() { return this.desktopPosterCols.slice(0, 6); }
+  get mobilePosterCols() { return this.desktopPosterCols; }
 
   constructor() {
     this.titleService.setTitle('DaisyMovie');
@@ -141,6 +141,8 @@ export class AuthComponent implements OnInit, AfterViewInit, OnDestroy {
     this.passwordVisible.update(v => !v);
   }
 
+  loginStep = signal<'email' | 'password' | 'set-password'>('email');
+
   openView(v: 'login' | 'register' | 'verify') {
     this.errorMsg.set('');
     this.successMsg.set('');
@@ -148,6 +150,7 @@ export class AuthComponent implements OnInit, AfterViewInit, OnDestroy {
     this.password.set('');
     this.confirmPassword.set('');
     this.verifyCode.set('');
+    this.loginStep.set('email');
     this.view.set(v);
     this.titleService.setTitle(v === 'login' ? 'DaisyMovie - Login' : (v === 'register' ? 'DaisyMovie - Register' : 'DaisyMovie - Verifica'));
   }
@@ -187,27 +190,98 @@ export class AuthComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  async submit() {
+  validatePassword(password: string): string | null {
+    if (password.length < 8) return 'La password deve contenere almeno 8 caratteri.';
+    if (!/[A-Z]/.test(password)) return 'La password deve contenere almeno una lettera maiuscola.';
+    if (!/[a-z]/.test(password)) return 'La password deve contenere almeno una lettera minuscola.';
+    if (!/[0-9]/.test(password)) return 'La password deve contenere almeno un numero.';
+    if (!/[@$!%*?&]/.test(password)) return 'La password deve contenere almeno un carattere speciale (@$!%*?&).';
+    return null;
+  }
+
+  async submitEmail() {
+    const e = this.email().trim();
+    if (!e) { this.errorMsg.set('Inserisci la tua email.'); return; }
+    
+    this.errorMsg.set('');
+    this.isLoading.set(true);
+    try {
+      const res = await this.authService.checkEmail(e);
+      if (!res.exists) {
+        this.errorMsg.set('Nessun account trovato con questa email.');
+      } else {
+        if (res.hasPassword) {
+          this.loginStep.set('password');
+        } else {
+          this.loginStep.set('set-password');
+        }
+      }
+    } catch (err: any) {
+      this.errorMsg.set(err.error?.error || 'Si è verificato un errore.');
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  async submitPassword() {
     const e = this.email().trim();
     const p = this.password();
-    if (!e || !p) { this.errorMsg.set('Compila tutti i campi.'); return; }
-    if (this.view() === 'register' && p !== this.confirmPassword()) {
-      this.errorMsg.set('Le password non coincidono.'); return;
+    if (!p) { this.errorMsg.set('Inserisci la password.'); return; }
+    
+    this.errorMsg.set('');
+    this.isLoading.set(true);
+    try {
+      await this.authService.login(e, p);
+      this.router.navigate(['/profile']);
+    } catch (err: any) {
+      this.errorMsg.set(err.error?.error || 'Password errata.');
+    } finally {
+      this.isLoading.set(false);
     }
+  }
+
+  async submitSetPassword() {
+    const e = this.email().trim();
+    const p = this.password();
+    const cp = this.confirmPassword();
+    
+    if (!p || !cp) { this.errorMsg.set('Compila tutti i campi.'); return; }
+    if (p !== cp) { this.errorMsg.set('Le password non coincidono.'); return; }
+    
+    const pwdError = this.validatePassword(p);
+    if (pwdError) { this.errorMsg.set(pwdError); return; }
+
+    this.errorMsg.set('');
+    this.isLoading.set(true);
+    try {
+      await this.authService.setPassword(e, p);
+      this.router.navigate(['/profile']);
+    } catch (err: any) {
+      this.errorMsg.set(err.error?.error || 'Errore durante l\'impostazione della password.');
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  async submitRegister() {
+    const e = this.email().trim();
+    const p = this.password();
+    const cp = this.confirmPassword();
+
+    if (!e || !p || !cp) { this.errorMsg.set('Compila tutti i campi.'); return; }
+    if (p !== cp) { this.errorMsg.set('Le password non coincidono.'); return; }
+    
+    const pwdError = this.validatePassword(p);
+    if (pwdError) { this.errorMsg.set(pwdError); return; }
+
     this.errorMsg.set('');
     this.successMsg.set('');
     this.isLoading.set(true);
     try {
-      if (this.view() === 'login') {
-        await this.authService.login(e, p);
-        this.router.navigate(['/profile']);
-      } else if (this.view() === 'register') {
-        await this.authService.register(e, p);
-        // Do not route to profiles yet, ask for code!
-        this.view.set('verify');
-        this.successMsg.set('Codice inviato. Controlla la tua email.');
-        this.startResendCountdown();
-      }
+      await this.authService.register(e, p);
+      this.view.set('verify');
+      this.successMsg.set('Codice inviato. Controlla la tua email.');
+      this.startResendCountdown();
     } catch (err: any) {
       this.errorMsg.set(err.error?.error || 'Si è verificato un errore.');
     } finally {

@@ -1,9 +1,10 @@
-import { Component, signal, OnDestroy, OnInit, AfterViewInit, inject, PLATFORM_ID, ViewChild, ElementRef, Input, Output, EventEmitter } from '@angular/core';
+import { Component, signal, OnDestroy, OnInit, AfterViewInit, OnChanges, SimpleChanges, inject, PLATFORM_ID, ViewChild, ElementRef, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, Title } from '@angular/platform-browser';
 import { Router, RouterModule } from '@angular/router';
 import { CategoryService } from '../../../services/category.service';
 import { FavoritesService } from '../../../services/favorites.service';
+import { NotificationService } from '../../../services/notification.service';
 import { CollectionsModalService } from '../../../services/collections-modal.service';
 import { HeroMovie, ContinueWatchingItem, MovieItem, LatestEpisodeItem, TopWatchedItem, DetailedMovieItem, globalColorCache } from '../home';
 
@@ -14,11 +15,12 @@ import { HeroMovie, ContinueWatchingItem, MovieItem, LatestEpisodeItem, TopWatch
   templateUrl: './home-mobile.html',
   styleUrl: './home-mobile.scss'
 })
-export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
+export class HomeMobile implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
   private categoryService = inject(CategoryService);
   favoritesService = inject(FavoritesService);
+  notificationService = inject(NotificationService);
   private collectionsModalService = inject(CollectionsModalService);
   private sanitizer = inject(DomSanitizer);
   private titleService = inject(Title);
@@ -28,6 +30,29 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
   dynamicBgColor = signal<string>('rgba(138, 43, 226, 0.35)');
 
   currentHeroIndex = signal<number>(0);
+  @Input() set heroIndex(val: number) {
+    if (this.currentHeroIndex() !== val) {
+      this.currentHeroIndex.set(val);
+      if (this.activeTheme() === 'dynamic' && this.heroMovies && this.heroMovies[val]) {
+        this.dynamicBgColor.set(this.heroMovies[val].primaryColor || '#8a2be2');
+      }
+      if (this.heroMovies && this.heroMovies[val]) {
+        if (!this.isBrowser) return; // Prevent canvas operation on SSR
+        const cached = globalColorCache.get(this.heroMovies[val].backdropUrl);
+        if (cached) {
+          this.heroButtonColor.set(cached);
+        } else {
+          // Apply primaryColor immediately so color is visible before canvas extracts
+          if (this.heroMovies[val].primaryColor) {
+            this.heroButtonColor.set(this.heroMovies[val].primaryColor);
+          }
+          this.extractDominantColor(this.heroMovies[val].backdropUrl).then(c => this.heroButtonColor.set(c));
+        }
+      }
+    }
+  }
+  @Output() heroIndexChange = new EventEmitter<number>();
+  
   heroButtonColor = signal<string>('#c026d3');
   private heroInterval: any;
 
@@ -62,20 +87,55 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
   canScrollRightActionMovies = signal<boolean>(true);
   canScrollLeftActionMovies = signal<boolean>(false);
 
-  @Input() heroMovies: HeroMovie[] = [];
+  private _heroMovies: HeroMovie[] = [];
+  @Input() set heroMovies(val: HeroMovie[]) {
+    this._heroMovies = val;
+    if (val && val.length > 0) {
+      if (!this.isBrowser) return; // Prevent canvas operation on SSR
+      const idx = this.currentHeroIndex() || 0;
+      if (val[idx]) {
+        const cached = globalColorCache.get(val[idx].backdropUrl);
+        if (cached) {
+          this.heroButtonColor.set(cached);
+        } else {
+          // Apply primaryColor immediately so the button has a color while canvas loads
+          if (val[idx].primaryColor) {
+            this.heroButtonColor.set(val[idx].primaryColor);
+          }
+          this.extractDominantColor(val[idx].backdropUrl).then(c => this.heroButtonColor.set(c));
+        }
+      }
+    }
+  }
+  get heroMovies(): HeroMovie[] {
+    return this._heroMovies;
+  }
   @Input() continueWatchingList: ContinueWatchingItem[] = [];
   @Input() trendingMovies: MovieItem[] = [];
   @Input() latestEpisodes: LatestEpisodeItem[] = [];
+  @Input() upcomingTitle: string = 'Nuovi episodi';
   @Input() newReleasesMovies: MovieItem[] = [];
   @Input() topWatchedMovies: TopWatchedItem[] = [];
+  @Input() acclaimedMovies: MovieItem[] = [];
   @Input() spotlightMovies: DetailedMovieItem[] = [];
   @Input() classicsMovies: MovieItem[] = [];
   @Input() hiddenGemsMovies: MovieItem[] = [];
-  @Input() actionMovies: MovieItem[] = [];
+  @Input() dynamicSliders: any[] = [];
+  private genreObserver: IntersectionObserver | null = null;
   @Input() isPageLoaded: boolean = false;
   @Input() isHidden: boolean = false;
 
   @Output() themeChange = new EventEmitter<'dark' | 'light' | 'dynamic'>();
+  @Output() requestLoadMore = new EventEmitter<string>();
+
+  onSliderScroll(event: Event, listName: string) {
+    if (!this.isBrowser) return;
+    const el = event.target as HTMLElement;
+    const shouldLoadMore = el.scrollLeft + el.clientWidth > el.scrollWidth - 800;
+    if (shouldLoadMore) {
+      this.requestLoadMore.emit(listName);
+    }
+  }
 
   showAllCharts = signal<boolean>(false);
 
@@ -272,6 +332,48 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
     this.startHeroAutoplay();
   }
 
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['dynamicSliders'] && this.isBrowser) {
+      // Rebuild observer whenever the sliders list changes
+      setTimeout(() => this.setupGenreObserver(), 100);
+    }
+  }
+
+  /** Sets up / updates an IntersectionObserver that triggers loading of unloaded genre sliders
+   *  as soon as their placeholder section scrolls into view on mobile.
+   *  Additive: keeps existing observer alive and only adds newly-appeared sentinels. */
+  private setupGenreObserver() {
+    if (!this.isBrowser || typeof IntersectionObserver === 'undefined') return;
+
+    // Create observer once and keep it alive (additive approach)
+    if (!this.genreObserver) {
+      this.genreObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const sliderId = entry.target.getAttribute('data-slider-id');
+            if (sliderId) {
+              this.requestLoadMore.emit(sliderId);
+              // Stop observing this sentinel — load has been triggered
+              this.genreObserver?.unobserve(entry.target);
+            }
+          }
+        });
+      }, {
+        // Preload 1500px ahead of viewport — mirrors desktop's 3000px buffer
+        // ensuring content is ready before the user reaches it
+        rootMargin: '1500px 0px',
+        threshold: 0
+      });
+    }
+
+    // Add newly-appeared unloaded sentinels to the existing observer
+    const unloaded = this.dynamicSliders.filter(s => !s.isLoaded && !s.isLoading);
+    unloaded.forEach(slider => {
+      const sentinel = document.querySelector(`[data-slider-id="${slider.id}"]`);
+      if (sentinel) this.genreObserver!.observe(sentinel);
+    });
+  }
+
   ngAfterViewInit() {
     if (!this.isBrowser) return;
     setTimeout(() => {
@@ -293,9 +395,19 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
         });
       });
 
-      // Extract hero button color for first slide
+      // Extract hero button color for first slide.
+      // Apply primaryColor immediately as a fast interim color while canvas loads.
       if (this.heroMovies && this.heroMovies.length > 0) {
-        this.extractDominantColor(this.heroMovies[0].backdropUrl).then(c => this.heroButtonColor.set(c));
+        const firstMovie = this.heroMovies[0];
+        const cached = globalColorCache.get(firstMovie.backdropUrl);
+        if (cached) {
+          this.heroButtonColor.set(cached);
+        } else {
+          if (firstMovie.primaryColor) {
+            this.heroButtonColor.set(firstMovie.primaryColor);
+          }
+          this.extractDominantColor(firstMovie.backdropUrl).then(c => this.heroButtonColor.set(c));
+        }
       }
 
       // Global capture-phase scroll listener:
@@ -359,6 +471,9 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
    * Falls back to a neutral accent if extraction fails.
    */
   extractDominantColor(imageUrl: string): Promise<string> {
+    if (!this.isBrowser || typeof document === 'undefined') {
+      return Promise.resolve('#8a2be2'); // Fallback on server
+    }
     if (globalColorCache.has(imageUrl)) {
       return Promise.resolve(globalColorCache.get(imageUrl)!);
     }
@@ -438,6 +553,7 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
     if (this.showTimer) clearTimeout(this.showTimer);
     if (this.switchTimer) clearTimeout(this.switchTimer);
     if (this.globalScrollCleanup) this.globalScrollCleanup();
+    if (this.genreObserver) { this.genreObserver.disconnect(); this.genreObserver = null; }
   }
 
   onThemeChange(theme: 'dark' | 'light' | 'dynamic') {
@@ -511,42 +627,64 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
   }
 
   nextHeroSlide() {
+    if (!this.heroMovies || this.heroMovies.length === 0) return;
     const nextIdx = (this.currentHeroIndex() + 1) % this.heroMovies.length;
     this.setHeroSlide(nextIdx);
   }
 
   prevHeroSlide() {
+    if (!this.heroMovies || this.heroMovies.length === 0) return;
     const prevIdx = (this.currentHeroIndex() - 1 + this.heroMovies.length) % this.heroMovies.length;
     this.setHeroSlide(prevIdx);
   }
 
   setHeroSlide(index: number) {
     this.currentHeroIndex.set(index);
-    if (this.activeTheme() === 'dynamic') {
-      this.dynamicBgColor.set(this.heroMovies[index].primaryColor);
+    if (this.activeTheme() === 'dynamic' && this.heroMovies && this.heroMovies[index]) {
+      this.dynamicBgColor.set(this.heroMovies[index].primaryColor || '#8a2be2');
     }
     // Extract real color from the new slide's backdrop
-    this.extractDominantColor(this.heroMovies[index].backdropUrl).then(c => this.heroButtonColor.set(c));
+    if (this.isBrowser && this.heroMovies && this.heroMovies[index]) {
+      this.extractDominantColor(this.heroMovies[index].backdropUrl).then(c => this.heroButtonColor.set(c));
+    }
     this.startHeroAutoplay(); // Reset timer to prevent quick jumps
   }
 
   onHeroScroll(event: Event) {
+    if (!this.isBrowser) return;
     const target = event.target as HTMLElement;
     const scrollLeft = target.scrollLeft;
     const width = target.clientWidth;
     const index = Math.round(scrollLeft / width);
-    if (index !== this.currentHeroIndex() && index >= 0 && index < this.heroMovies.length) {
+    if (this.heroMovies && index !== this.currentHeroIndex() && index >= 0 && index < this.heroMovies.length) {
       this.currentHeroIndex.set(index);
-      if (this.activeTheme() === 'dynamic') {
-        this.dynamicBgColor.set(this.heroMovies[index].primaryColor);
+      if (this.activeTheme() === 'dynamic' && this.heroMovies[index]) {
+        this.dynamicBgColor.set(this.heroMovies[index].primaryColor || '#8a2be2');
       }
-      this.extractDominantColor(this.heroMovies[index].backdropUrl).then(c => this.heroButtonColor.set(c));
+      if (this.heroMovies[index]) {
+        this.extractDominantColor(this.heroMovies[index].backdropUrl).then(c => this.heroButtonColor.set(c));
+      }
       this.startHeroAutoplay(); // Reset timer
     }
   }
 
   togglePlayState(item: ContinueWatchingItem) {
     item.isPlaying = !item.isPlaying;
+  }
+
+  toggleFavorite(item: any, event: Event) {
+    event.stopPropagation();
+    this.favoritesService.toggleFavorite(item, item.isSeries);
+  }
+
+  toggleNotification(ep: any, event: Event) {
+    event.stopPropagation();
+    this.notificationService.toggleUpcomingNotification(
+      ep.id,
+      ep.title,
+      ep.seasonEpisode,
+      ep.bannerUrl
+    );
   }
 
   toggleBookmark(item: any, event?: Event) {
@@ -727,8 +865,8 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy {
       isBookmarked: item.isBookmarked || false
     };
     console.log('goToMovie clicked! Navigating with state:', movieDetail);
-    const category = this.categoryService.activeCategory();
-    const route = category === 'Serie TV' ? '/series' : '/movie';
+    // Check if it's a TV series or episode based on item.isSeries
+    const route = item.isSeries ? '/series' : '/movie';
     this.router.navigate([route, item.id], { state: { data: movieDetail } }).then(success => {
       console.log('Navigation success:', success);
     }).catch(err => {

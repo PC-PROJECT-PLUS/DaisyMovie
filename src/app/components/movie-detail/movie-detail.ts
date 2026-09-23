@@ -87,6 +87,7 @@ export class MovieDetailComponent implements OnInit {
   favoritesService = inject(FavoritesService);
   preferencesService = inject(PreferencesService);
   collectionsModalService = inject(CollectionsModalService);
+  private titleService = inject(Title);
   movieId = signal<number | null>(null);
   movie = signal<MovieDetail | null>(null);
   activeTheme = signal<'dark' | 'light' | 'dynamic'>('dark');
@@ -250,12 +251,27 @@ export class MovieDetailComponent implements OnInit {
 
       const historyItem = this.historyService.getResumeProgress(m.id, false);
       untracked(() => {
+        this.titleService.setTitle(m.title);
         if (historyItem && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
           this.resumeProgress.set(historyItem.progress_seconds);
           this.resumeText.set(`Riprendi da ${this.formatTime(historyItem.progress_seconds)}`);
         } else {
           this.resumeProgress.set(0);
           this.resumeText.set('');
+        }
+      });
+    });
+
+    effect(() => {
+      const isVisible = this.playerVisible();
+      const m = this.movie();
+      if (!isPlatformBrowser(this.platformId) || !m) return;
+
+      untracked(() => {
+        if (isVisible) {
+          this.titleService.setTitle(`Guardando: ${m.title}`);
+        } else {
+          this.titleService.setTitle(m.title);
         }
       });
     });

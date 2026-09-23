@@ -48,9 +48,9 @@
 
       <!-- Footer: User, Notifications, Logout -->
       <div class="menu-footer">
-        <div class="footer-user" routerLink="/settings" (click)="toggleMenu()" style="cursor: pointer;">
-          <img src="https://i.pravatar.cc/150?img=68" alt="User" />
-          <span class="user-name">Luca</span>
+        <div class="footer-user" routerLink="/settings" (click)="toggleMenu()" style="cursor: pointer; overflow: hidden; flex: 1;">
+          <img [src]="activeProfile()?.avatar || 'https://i.pravatar.cc/150?img=68'" [alt]="activeProfile()?.name || 'User'" />
+          <span class="user-name text-truncate" [title]="activeProfile()?.name || ''">{{ activeProfile()?.name || 'User' }}</span>
         </div>
         
         <div class="footer-actions">

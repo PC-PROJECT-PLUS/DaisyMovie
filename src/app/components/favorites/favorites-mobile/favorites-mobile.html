@@ -1,8 +1,7 @@
 <div class="favorites-mobile-page" [attr.data-theme]="themeService.currentTheme()">
-  <div class="ambient-glow" [class.loaded]="pageLoaded()"></div>
 
   <!-- HERO SECTION -->
-  @if (favoriteItems().length > 0) {
+  @if (filteredItems().length > 0) {
   <section class="hero-section" [class.loaded]="pageLoaded()">
     <div class="hero-backdrop-wrapper">
       <img [src]="heroImageA()" class="hero-backdrop-img" [class.active]="activeHero() === 'a'" loading="lazy" />
@@ -12,12 +11,15 @@
   </section>
   }
 
-  <div class="mobile-container" [class.loaded]="pageLoaded()" [class.no-hero]="favoriteItems().length === 0">
+  <div class="mobile-container" [class.loaded]="pageLoaded()" [class.no-hero]="filteredItems().length === 0">
 
     <!-- HEADER -->
     <div class="header-section">
-      <h1 class="page-title">{{ heroTitle }}</h1>
+      @if (filteredItems().length > 0) {
+      <h1 class="page-title">{{ activeCollectionName }}</h1>
+      }
 
+      @if (filteredItems().length > 0) {
       <div class="controls-wrapper">
         <!-- Custom Search Bar -->
         <div class="custom-search-container" [class.focused]="isSearchFocused()">
@@ -63,12 +65,24 @@
           }
         </div>
       </div>
+      }
     </div>
 
-    @if (filteredItems().length > 0) {
+    <!-- MAIN CONTENT AREA -->
+    @if (favoriteItems().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon-wrapper">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </div>
+      <h2>Nessun preferito</h2>
+      <p>Esplora il catalogo e aggiungi i tuoi film e serie TV preferiti.</p>
+    </div>
+    } @else if (filteredItems().length > 0) {
     <div class="favorites-grid" #gridContainer>
-      @for (movie of filteredItems(); track movie.id; let idx = $index) {
-      <div class="movie-card" (click)="goToDetail(movie)" [style.animation-delay]="(idx * 0.05) + 's'"
+      @for (movie of filteredItems(); track movie.id + '-' + activeCollectionId(); let idx = $index) {
+      <div class="movie-card clean-card" (click)="goToDetail(movie)" [style.animation-delay]="(idx * 0.05) + 's'"
         [class.fade-in]="pageLoaded()">
 
         <img [src]="movie.posterUrl" [alt]="movie.title" class="movie-poster" loading="lazy" />
@@ -90,9 +104,183 @@
           <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
         </svg>
       </div>
-      <h2>Nessun risultato</h2>
-      <button class="btn-primary" (click)="searchQuery.set('')" *ngIf="searchQuery()">Rimuovi filtri</button>
+      <h2>Nessun preferito</h2>
+      <p>Esplora il catalogo e aggiungi i tuoi film e serie TV preferiti.</p>
+      @if (searchQuery()) {
+      <button class="btn-primary" (click)="searchQuery.set('')">Rimuovi filtri</button>
+      }
     </div>
     }
   </div>
-</div>
+
+  <!-- FLOATING ACTION AND SIDEBAR WRAPPER -->
+  @if (favoriteItems().length > 0) {
+  <div class="fab-wrapper">
+    <!-- SIDEBAR COLLECTIONS -->
+    <aside class="favorites-sidebar popup mobile-sidebar" [class.open]="isSidebarOpen()">
+        <!-- Drag Handle -->
+        <div class="drag-handle"></div>
+
+        <div class="sidebar-header">
+          <h2>Collezioni</h2>
+          <button class="close-sidebar-btn" (click)="isSidebarOpen.set(false)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <ul class="collections-list" style="flex: 1; min-height: 0; overflow-y: auto;">
+          <li [class.active]="activeCollectionId() === null" (click)="selectCollectionAndClose(null)">
+            <div class="icon-wrapper">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <span>Tutti i preferiti</span>
+          </li>
+          @for (col of favoritesService.collections(); track col.id) {
+          <li [class.active]="activeCollectionId() === col.id" (click)="selectCollectionAndClose(col.id)">
+            <div class="icon-wrapper">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <span class="col-name">{{ col.name }}</span>
+            <div class="col-actions">
+              <button class="col-action-btn" (click)="startEditCollection(col, $event)" title="Rinomina">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                </svg>
+              </button>
+              <button class="col-action-btn col-action-btn--delete" (click)="startDeleteCollection(col, $event)" title="Elimina">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </li>
+          }
+        </ul>
+
+        <!-- New Collection Button -->
+        <div class="new-collection-container">
+          <button class="new-collection-btn" (click)="startCreatingCollection()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Nuova collezione</span>
+          </button>
+        </div>
+    </aside>
+
+    @if (isSidebarOpen()) {
+    <div class="sidebar-backdrop" (click)="isSidebarOpen.set(false)"></div>
+    }
+
+    <!-- FLOATING ACTION BUTTON (FAB) -->
+    <button id="fab-btn" class="fab-collections" (click)="toggleSidebar()" [class.active]="isSidebarOpen()">
+      <div class="liquidGlass-text" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; z-index: 3; position: relative;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </div>
+    </button>
+  </div>
+  }
+
+  <!-- NEW COLLECTION MODAL -->
+  @if (isCreatingCollection()) {
+  <div class="logout-modal-backdrop" [class.closing]="isClosingModal()" (click)="cancelCreatingCollection()">
+    <div class="logout-modal-panel" (click)="$event.stopPropagation()">
+      <div class="logout-modal-header">
+        <div class="logout-icon-circle">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </div>
+        <h2>Crea Nuova Collezione</h2>
+        <p>Inserisci un nome per la tua nuova collezione di preferiti.</p>
+      </div>
+      <div class="logout-modal-body" style="width: 100%;">
+        <div class="input-group focus-ring-yellow" style="display: flex; width: 100%; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.2); transition: all 0.3s ease;">
+          <input type="text" [ngModel]="newCollectionName()" (ngModelChange)="newCollectionName.set($event)"
+            placeholder="Es. Film da vedere, Anime preferiti..." (keyup.enter)="saveNewCollection()" autofocus
+            style="flex: 1; padding: 14px 16px; background: transparent; border: none; color: white; font-size: 1rem; outline: none;" />
+        </div>
+      </div>
+      <div class="logout-modal-actions">
+        <button class="btn-warning" (click)="saveNewCollection()" [disabled]="!newCollectionName().trim()">
+          Crea Collezione
+        </button>
+        <button class="btn-cancel" (click)="cancelCreatingCollection()">
+          Annulla
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- DELETE COLLECTION MODAL -->
+  @if (collectionToDelete()) {
+  <div class="logout-modal-backdrop" [class.closing]="isClosingModal()" (click)="cancelDeleteCollection()">
+    <div class="logout-modal-panel" (click)="$event.stopPropagation()">
+      <div class="logout-modal-header">
+        <div class="logout-icon-circle">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </div>
+        <h2>Elimina Collezione</h2>
+        <p>Sei sicuro di voler eliminare "{{ collectionToDelete().name }}"? I preferiti al suo interno non verranno eliminati.</p>
+      </div>
+      <div class="logout-modal-actions">
+        <button class="btn-danger" (click)="confirmDeleteCollection()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Elimina
+        </button>
+        <button class="btn-cancel" (click)="cancelDeleteCollection()">Annulla</button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- RENAME COLLECTION MODAL -->
+  @if (collectionToEdit()) {
+  <div class="logout-modal-backdrop" [class.closing]="isClosingModal()" (click)="cancelEditCollection()">
+    <div class="logout-modal-panel" (click)="$event.stopPropagation()">
+      <div class="logout-modal-header">
+        <div class="logout-icon-circle">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+          </svg>
+        </div>
+        <h2>Rinomina Collezione</h2>
+        <p>Inserisci un nuovo nome per questa collezione.</p>
+      </div>
+      <div class="logout-modal-body" style="width: 100%;">
+        <div class="input-group focus-ring-yellow" style="display: flex; width: 100%; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.2); transition: all 0.3s ease;">
+          <input type="text" [ngModel]="editCollectionName()" (ngModelChange)="editCollectionName.set($event)"
+            placeholder="Nome collezione..." (keyup.enter)="saveEditCollection()" autofocus
+            style="flex: 1; padding: 14px 16px; background: transparent; border: none; color: white; font-size: 1rem; outline: none;" />
+        </div>
+      </div>
+      <div class="logout-modal-actions">
+        <button class="btn-warning" (click)="saveEditCollection()" [disabled]="!editCollectionName().trim()">
+          Conferma
+        </button>
+        <button class="btn-cancel" (click)="cancelEditCollection()">Annulla</button>
+      </div>
+    </div>
+  </div>
+  }
+
+</div>

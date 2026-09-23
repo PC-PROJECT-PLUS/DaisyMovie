@@ -84,6 +84,15 @@ export class AuthService {
     this.handleAuthSuccess(res.token, email);
   }
 
+  async checkEmail(email: string): Promise<{ exists: boolean; hasPassword?: boolean }> {
+    return await firstValueFrom(this.http.post<any>(`${this.apiUrl}/auth/check-email`, { email }));
+  }
+
+  async setPassword(email: string, password: string): Promise<void> {
+    const res = await firstValueFrom(this.http.post<any>(`${this.apiUrl}/auth/set-password`, { email, password }));
+    this.handleAuthSuccess(res.token, email);
+  }
+
   async loginWithGoogleCode(code: string): Promise<void> {
     try {
       const res = await firstValueFrom(this.http.post<any>(`${this.apiUrl}/auth/google`, { code }));

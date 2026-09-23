@@ -49,11 +49,62 @@ export class ProfileSelectComponent implements OnDestroy {
     'assets/avatar/avatar2.jpg',
     'assets/avatar/avatar3.jpg',
     'assets/avatar/avatar4.jpg',
-    'assets/avatar/avatar5.jpg'
+    'assets/avatar/avatar5.jpg',
+    'assets/avatar/avatar6.jpg',
+    'assets/avatar/avatar7.jpg',
+    'assets/avatar/avatar8.jpg',
+    'assets/avatar/avatar9.jpg'
   ];
 
   @ViewChild('pinInputDesktop') pinInputDesktop?: ElementRef<HTMLInputElement>;
   @ViewChild('pinInputMobile') pinInputMobile?: ElementRef<HTMLInputElement>;
+  @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
+
+  isCustomAvatar(): boolean {
+    const avatar = this.newProfileAvatar();
+    return !!avatar && !this.availableAvatars.includes(avatar);
+  }
+
+  triggerFileUpload() {
+    this.fileInput?.nativeElement.click();
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+
+      reader.onload = (e: any) => {
+        const img = new Image();
+        img.onload = () => {
+          // Resize and compress using Canvas
+          const canvas = document.createElement('canvas');
+          const MAX_SIZE = 200;
+          let width = img.width;
+          let height = img.height;
+
+          // Crop to square
+          const size = Math.min(width, height);
+          const startX = (width - size) / 2;
+          const startY = (height - size) / 2;
+
+          canvas.width = MAX_SIZE;
+          canvas.height = MAX_SIZE;
+          const ctx = canvas.getContext('2d');
+          
+          if (ctx) {
+            ctx.drawImage(img, startX, startY, size, size, 0, 0, MAX_SIZE, MAX_SIZE);
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+            this.newProfileAvatar.set(compressedBase64);
+          }
+        };
+        img.src = e.target.result;
+      };
+
+      reader.readAsDataURL(file);
+    }
+  }
 
   // Wheel throttle — one step per WHEEL_COOLDOWN_MS
   private lastWheelTime = 0;

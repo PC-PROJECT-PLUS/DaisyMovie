@@ -1,4 +1,4 @@
-.favorites-mobile-page {
+.history-mobile-page {
   min-height: 100vh;
   background-color: #050505;
   color: #fff;
@@ -9,12 +9,8 @@
     background-color: #f8f9fa;
     color: #111;
 
-    .ambient-glow {
-      opacity: 0.05;
-    }
-
     .hero-gradient-overlay {
-      background: linear-gradient(180deg, transparent 50%, #f8f9fa 100%);
+      background: linear-gradient(to top, #f8f9fa 0%, transparent 50%);
     }
 
     .page-title {
@@ -71,32 +67,15 @@
   }
 }
 
-.ambient-glow {
-  position: fixed;
-  top: -10%;
-  left: -10%;
-  width: 120%;
-  height: 60%;
-  background: radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.12), transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0;
-  transition: opacity 1.5s ease;
-
-  &.loaded {
-    opacity: 1;
-  }
-}
-
 /* HERO SECTION */
 .hero-section {
   position: relative;
   width: 100%;
-  height: 55vh;
-  min-height: 300px;
-  max-height: 500px;
+  height: 60vh;
+  min-height: 520px;
   opacity: 0;
   transition: opacity 1s ease;
+  z-index: 0;
 
   &.loaded {
     opacity: 1;
@@ -129,11 +108,12 @@
 
     .hero-gradient-overlay {
       position: absolute;
-      bottom: 0;
+      top: 0;
       left: 0;
       width: 100%;
-      height: 100px;
-      background: linear-gradient(180deg, transparent 0%, #050505 100%);
+      height: 100%;
+      background: linear-gradient(to top, #050505 0%, transparent 50%);
+      z-index: 3;
     }
   }
 }
@@ -141,10 +121,9 @@
 
 .mobile-container {
   padding: 0 24px 60px;
-  /* Aligned with home.scss */
   position: relative;
-  z-index: 2;
-  margin-top: -10px;
+  z-index: 5;
+  margin-top: -90px; /* Pulls content up slightly so it sits at the bottom of the hero */
 
   opacity: 0;
   transform: translateY(10px);
@@ -194,6 +173,7 @@
   display: flex;
   gap: 12px;
   width: 100%;
+  align-items: stretch;
 }
 
 /* CUSTOM SEARCH BAR (MOBILE) */
@@ -204,13 +184,17 @@
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-full);
-  padding: 8px 12px;
+  padding: 0 14px;
+  height: 44px; /* Fixed height for exact matching */
   backdrop-filter: blur(8px);
   transition: all 0.3s ease;
+  box-sizing: border-box;
 
   .search-icon {
     color: rgba(255, 255, 255, 0.6);
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
   }
 
   .search-input {
@@ -219,9 +203,13 @@
     outline: none;
     color: #fff;
     font-family: inherit;
-    font-size: 13px;
-    padding: 0 8px;
+    font-size: 14px;
+    padding: 0 10px;
     width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    line-height: normal;
 
     &::placeholder {
       color: rgba(255, 255, 255, 0.4);
@@ -234,6 +222,7 @@
     color: rgba(255, 255, 255, 0.6);
     padding: 0;
     display: flex;
+    align-items: center;
   }
 
   &.focused {
@@ -245,6 +234,8 @@
 /* CUSTOM DROPDOWN COMBOBOX (MOBILE) */
 .custom-dropdown {
   position: relative;
+  display: flex;
+  height: 44px; /* Matches search height */
 
   .dropdown-trigger {
     display: flex;
@@ -253,10 +244,14 @@
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-full);
-    padding: 8px 14px;
+    padding: 0 16px;
+    height: 100%;
     backdrop-filter: blur(8px);
     font-family: inherit;
-    font-size: 13px;
+    font-size: 14px;
+    box-sizing: border-box;
+    cursor: pointer;
+    line-height: normal;
 
     .value {
       color: #fff;
@@ -418,10 +413,6 @@
     svg {
       width: 20px;
       height: 20px;
-      fill: none;
-      &.filled {
-        fill: currentColor !important;
-      }
     }
 
     &:active {
@@ -471,3 +462,479 @@
     font-weight: 600;
   }
 }
+
+/* FAB & SIDEBAR MOBILE */
+.fab-wrapper {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+}
+
+.fab-collections {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.15);
+  backdrop-filter: blur(28px) saturate(200%) brightness(1.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  z-index: 100;
+  outline: 0;
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+
+  &.active {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    color: #eab308;
+
+    svg {
+      color: #eab308;
+      transform: scale(1.15);
+    }
+  }
+
+  svg {
+    pointer-events: none;
+    color: #ffffff;
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+}
+
+.mobile-sidebar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  max-height: 85dvh;
+  z-index: 101; /* Above backdrop */
+  padding: 0;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(28px) saturate(200%) brightness(1.15);
+  -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.15);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -4px 40px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  transform: translateY(100%);
+  visibility: hidden;
+  will-change: transform;
+  transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+              visibility 0.4s;
+
+  // Subtle top border glow
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.25),
+      transparent
+    );
+  }
+
+  &.open {
+    transform: translateY(0);
+    visibility: visible;
+    padding-bottom: 40px; // space at bottom
+  }
+
+  // Drag handle
+  .drag-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 12px auto 0;
+    flex-shrink: 0;
+  }
+
+  .sidebar-header, .collections-list {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  &.open .sidebar-header, &.open .collections-list {
+    opacity: 1;
+    pointer-events: auto;
+    transition-delay: 0.15s;
+  }
+
+  .sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px 12px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 12px;
+
+    h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+
+    .close-sidebar-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      outline: none;
+      color: rgba(255, 255, 255, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+
+      &:active {
+        background: rgba(255, 255, 255, 0.18);
+        color: #fff;
+      }
+    }
+  }
+
+  .collections-list {
+    list-style: none;
+    margin: 0;
+    padding: 10px 12px 24px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    // Thin scrollbar
+    &::-webkit-scrollbar {
+      width: 3px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border-radius: 16px;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 500;
+      font-size: 15px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s ease, transform 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+
+      &:active {
+        background: rgba(255, 255, 255, 0.05);
+        transform: scale(0.98);
+      }
+
+      .icon-wrapper {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      &.active {
+        background: rgba(234, 179, 8, 0.1); /* Yellow background */
+        color: #eab308;
+        .icon-wrapper {
+          background: rgba(234, 179, 8, 0.2);
+        }
+
+        &:active {
+          background: rgba(234, 179, 8, 0.15);
+        }
+      }
+    }
+  }
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100; /* Below sidebar, above FAB if we wanted, but FAB can stay below */
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px) saturate(150%);
+  -webkit-backdrop-filter: blur(8px) saturate(150%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease, visibility 0.35s;
+  
+  /* When isSidebarOpen() is true, Angular ngIf renders it. We don't need .open class because it's only in DOM when open. 
+     Wait, in HTML we used @if (isSidebarOpen()). So it will just pop in. */
+  animation: fadeInBackdrop 0.35s forwards;
+}
+
+@keyframes fadeInBackdrop {
+  from { opacity: 0; visibility: hidden; }
+  to { opacity: 1; visibility: visible; }
+}
+
+// Hero section fade animation on collection change
+.hero-section {
+  animation: heroFadeIn 0.5s ease forwards;
+}
+
+@keyframes heroFadeIn {
+  from { opacity: 0; transform: scale(1.03); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+// Mobile container fade when switching to/from empty state
+.mobile-container {
+  transition: opacity 0.35s ease;
+}
+
+// ── Collection action buttons inside sidebar ───────────────────────
+.col-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.col-action-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease, color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+
+  &:active {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+  }
+
+  &--delete:active {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+  }
+}
+
+// ── New collection button ──────────────────────────────────────────
+.new-collection-container {
+  padding: 12px 12px 4px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  justify-content: center;
+}
+
+.new-collection-btn {
+  width: calc(100% - 8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.25);
+  color: #eab308;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+
+  &:active {
+    background: rgba(234, 179, 8, 0.22);
+    transform: scale(0.98);
+  }
+}
+
+// ── Modals (reuse desktop logout-modal style) ──────────────────────
+.logout-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modalFadeIn 0.25s ease forwards;
+
+  &.closing {
+    animation: modalFadeOut 0.3s ease forwards;
+  }
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modalFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.logout-modal-panel {
+  background: rgba(20, 20, 20, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: modalSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.logout-modal-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.5;
+  }
+}
+
+.logout-icon-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #eab308;
+}
+
+.logout-modal-body {
+  width: 100%;
+}
+
+.logout-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .btn-warning {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    background: #eab308;
+    color: #000;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+
+    &:active { background: #ca8a04; transform: scale(0.98); }
+    &:disabled { opacity: 0.4; cursor: not-allowed; }
+  }
+
+  .btn-danger {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s ease, transform 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+
+    &:active { background: rgba(239, 68, 68, 0.25); transform: scale(0.98); }
+  }
+
+  .btn-cancel {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+
+    &:active { background: rgba(255, 255, 255, 0.12); transform: scale(0.98); }
+  }
+}

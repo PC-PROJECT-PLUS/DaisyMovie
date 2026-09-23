@@ -865,6 +865,32 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 36px;
+  position: relative;
+  width: 100%;
+}
+
+.mob-add-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+
+  &:active {
+    transform: scale(0.92);
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+  }
 }
 
 .mob-logo {
@@ -1350,13 +1376,12 @@
 
 .avatar-selector {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
   margin-bottom: 24px;
-  overflow-x: auto;
   padding: 6px;
   padding-bottom: 14px;
-  scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
 }
 
 .avatar-option-wrap {
@@ -1391,6 +1416,69 @@
   object-fit: cover;
   opacity: 0.5;
   transition: all 0.3s ease;
+}
+
+.custom-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+  border: 1.5px dashed rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.7);
+  box-sizing: border-box;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.02);
+
+  svg {
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), color 0.4s ease;
+  }
+}
+
+.avatar-option-wrap.custom-upload-wrap:hover .custom-avatar-placeholder {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+  border-color: rgba(234, 179, 8, 0.6);
+  color: #eab308;
+  box-shadow: 0 0 15px rgba(234, 179, 8, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.05);
+
+  svg {
+    transform: scale(1.1);
+  }
+}
+
+.upload-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  background: #eab308;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a1a2e;
+  border: 2px solid #1a1a2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), background 0.4s ease;
+}
+
+.avatar-option-wrap.custom-upload-wrap:hover .upload-badge {
+  transform: scale(1.1);
+  background: #fde047;
+}
+
+.custom-avatar-preview {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  opacity: 0.8;
+  transition: all 0.4s ease;
 }
 
 .avatar-check {

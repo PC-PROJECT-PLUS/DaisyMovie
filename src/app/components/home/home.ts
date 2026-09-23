@@ -24,6 +24,7 @@ export interface HeroMovie {
   synopsis: string;
   backdropUrl: string;
   primaryColor: string;
+  accentColor?: string;
   isBookmarked?: boolean;
   isSeries?: boolean;
 }
@@ -445,7 +446,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       // We intentionally do not clear arrays here so the old content remains visible while fading out.
 
 
-      this.tmdbService.getGenreList(cat).subscribe(genres => {
+      this.tmdbService.getGenreList(cat).subscribe({ next: genres => {
         let filtered = genres.filter(g => g.id !== 28 && g.id !== 9648 && g.id !== 14);
 
         if (cat === 'Animazione' || cat === 'Anime') {
@@ -522,12 +523,13 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           isLoading: false
         };
 
-        const shuffledOthers = [...standardSliders, ...thematicSliders].sort(() => Math.random() - 0.5);
+        // Ordina i generi alfabeticamente invece che a caso, così desktop e mobile coincidono sempre.
+        const shuffledOthers = [...standardSliders, ...thematicSliders].sort((a, b) => a.title.localeCompare(b.title));
         this.dynamicSliders = [topPicksSlider, ...shuffledOthers];
         setTimeout(() => this.checkVerticalSliders(), 500);
-      });
+      }, error: err => console.error('Error fetching genre list:', err) });
 
-      this.tmdbService.getHomeData(cat, '1').subscribe(data1 => {
+      this.tmdbService.getHomeData(cat, '1').subscribe({ next: data1 => {
 
         
         const finishPhase1 = () => {
@@ -569,10 +571,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         } else {
           executePhase1();
         }
-      });
+      }, error: err => console.error('Error fetching home data phase 1:', err) });
 
       // Fase 2: il resto della pagina (avviato in parallelo alla Fase 1)
-      this.tmdbService.getHomeData(cat, '2').subscribe(data2 => {
+      this.tmdbService.getHomeData(cat, '2').subscribe({ next: data2 => {
         if (data2.newReleasesMovies) this.newReleasesMovies = data2.newReleasesMovies;
 
         // Initial load for Top 10
@@ -591,7 +593,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         if (data2.acclaimedMovies) this.acclaimedMovies = data2.acclaimedMovies;
         
         setTimeout(() => this.checkAllStaticSlidersScroll(), 300);
-      });
+      }, error: err => console.error('Error fetching home data phase 2:', err) });
     }, { injector: this.injector });
   }
 
@@ -600,7 +602,19 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     const viewportBottom = window.innerHeight;
     for (const slider of this.dynamicSliders) {
       if (!slider.isLoaded && !slider.isLoading) {
-        const el = document.getElementById(slider.id);
+        // Cerca tutti gli elementi con l'id (potrebbero esserci sia per desktop che mobile se usiamo lo stesso ID)
+        // Oppure usiamo querySelectorAll per un selettore specifico
+        const elements = document.querySelectorAll(`[id="${slider.id}"]`);
+        let el = null;
+        for (let i = 0; i < elements.length; i++) {
+          const currentEl = elements[i] as HTMLElement;
+          // Controlla se l'elemento è visibile
+          if (currentEl.offsetWidth > 0 && currentEl.offsetHeight > 0) {
+            el = currentEl;
+            break;
+          }
+        }
+        
         if (el) {
           const rect = el.getBoundingClientRect();
           if (rect.top < viewportBottom + 3000) {
@@ -628,6 +642,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
             slider.movies = data;
             slider.isLoaded = true;
             slider.isLoading = false;
+            // Reassign array reference so ngOnChanges fires in HomeMobile
+            // (needed to re-register IntersectionObserver for remaining sliders)
+            this.dynamicSliders = [...this.dynamicSliders];
             setTimeout(() => this.checkScrollState(slider.id), 200);
           } else {
             this.dynamicSliders = this.dynamicSliders.filter(s => s.id !== slider.id);
@@ -646,6 +663,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           slider.movies = data;
           slider.isLoaded = true;
           slider.isLoading = false;
+          // Reassign array reference so ngOnChanges fires in HomeMobile
+          this.dynamicSliders = [...this.dynamicSliders];
           setTimeout(() => this.checkScrollState(slider.id), 200);
         } else {
           this.dynamicSliders = this.dynamicSliders.filter(s => s.id !== slider.id);
@@ -656,6 +675,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       }
     });
   }
+
 
   checkAllStaticSlidersScroll() {
     if (!this.isBrowser) return;
@@ -833,8 +853,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           }
 
           if (count === 0 && totalCount > 0) {
-            // Fallback to overall average if no vivid pixels found
-            rSum = rTotal; gSum = gTotal; bSum = bTotal; count = totalCount;
+            // Se non ci sono pixel vividi, lasciamo che count rimanga 0
+            // così scatterà il fallback ai colori accesi (#8a2be2 o #6366f1)
+            // invece di fare una media scura e poco attraente.
           }
 
           if (count > 0) {
@@ -1068,6 +1089,64 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
               this.loadingPages[sliderObj.genreId!] = false;
             });
           }
+        }
+      }
+    }
+  }
+
+  handleMobileLoadMore(listName: string) {
+    const listMap: any = {
+      'trending': 'trending',
+      'newReleases': 'newReleases',
+      'spotlight': 'spotlight',
+      'classics': 'classics',
+      'hiddenGems': 'hiddenGems',
+      'acclaimed': 'acclaimed'
+    };
+    if (listMap[listName]) {
+      this.loadMore(listMap[listName]);
+    } else if (listName.startsWith('genre-') || listName.startsWith('theme-') || listName.startsWith('top-picks-slider')) {
+      const sliderObj = this.dynamicSliders.find(s => s.id === listName);
+      if (!sliderObj) return;
+
+      // ── Initial load (triggered by IntersectionObserver on mobile) ──
+      if (!sliderObj.isLoaded && !sliderObj.isLoading) {
+        this.loadDynamicSlider(sliderObj);
+        return;
+      }
+
+      // ── Pagination (triggered when scrolled to end of an already-loaded slider) ──
+      if (sliderObj && !this.loadingPages[sliderObj.genreId]) {
+        this.loadingPages[sliderObj.genreId] = true;
+        sliderObj.page = (sliderObj.page || 1) + 1;
+        
+        if (sliderObj.genreId === 'top-picks') {
+          const profile = this.authService.selectedProfile();
+          if (profile) {
+            this.tmdbService.getTopPicks(this.categoryService.activeCategory(), sliderObj.page, profile.id).subscribe(data => {
+              if (data && data.length > 0) {
+                const filterNew = (existing: any[], incoming: any[]) => {
+                  const existingIds = new Set(existing.map(i => i.id));
+                  return [...existing, ...incoming.filter(i => !existingIds.has(i.id))];
+                };
+                sliderObj.movies = filterNew(sliderObj.movies, data);
+              }
+              this.loadingPages[sliderObj.genreId!] = false;
+            });
+          } else {
+             this.loadingPages[sliderObj.genreId!] = false;
+          }
+        } else {
+          this.tmdbService.getCategoryPage(sliderObj.genreId.toString(), this.categoryService.activeCategory(), sliderObj.page).subscribe(data => {
+            if (data && data.length > 0) {
+              const filterNew = (existing: any[], incoming: any[]) => {
+                const existingIds = new Set(existing.map(i => i.id));
+                return [...existing, ...incoming.filter(i => !existingIds.has(i.id))];
+              };
+              sliderObj.movies = filterNew(sliderObj.movies, data);
+            }
+            this.loadingPages[sliderObj.genreId!] = false;
+          });
         }
       }
     }

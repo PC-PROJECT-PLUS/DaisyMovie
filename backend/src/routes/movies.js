@@ -116,9 +116,11 @@ router.get('/trending-top10', async (req, res) => {
     const combinedResults = [...(page1.data.results || []), ...(page2.data.results || [])];
 
     const foreignRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\u0400-\u04FF\u0E00-\u0E7F\u0600-\u06FF\u0900-\u097F]/;
+    const excludeAnimation = category !== 'Animazione' && category !== 'Anime' && category !== 'Kids';
 
     const items = combinedResults
       .filter(i => i.poster_path && i.backdrop_path && i.overview && i.overview.trim().length > 10)
+      .filter(i => !(excludeAnimation && i.genre_ids && i.genre_ids.includes(16)))
       .filter(i => !foreignRegex.test(i.title || i.name || ''))
       .slice(0, 10)
       .map(item => mapMovieItem(item, isSeries));
@@ -168,6 +170,10 @@ router.get('/home', async (req, res) => {
     if (category === 'Animazione') langFilter = '&without_original_language=ja';
     if (category === 'Anime') langFilter = '&with_original_language=ja';
     let genreFilterStr = genreFilter ? `&with_genres=${genreFilter}` : '';
+    const excludeAnimation = category !== 'Animazione' && category !== 'Anime' && category !== 'Kids';
+    if (excludeAnimation) {
+      genreFilterStr += '&without_genres=16';
+    }
     let discoverBase = `${TMDB_BASE_URL}/discover/${contentType}?${lang}${langFilter}`;
     let discoverPastBase = `${discoverBase}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${today}`;
 
@@ -183,7 +189,7 @@ router.get('/home', async (req, res) => {
       `${discoverPastBase}&sort_by=popularity.desc${genreFilterStr}` :
       `${TMDB_BASE_URL}/trending/${contentType}/week?${lang}`;
 
-    let topRatedUrl = genreFilter || langFilter ?
+    let topRatedUrl = genreFilter || langFilter || excludeAnimation ?
       `${discoverPastBase}&sort_by=vote_average.desc&vote_count.gte=500${genreFilterStr}` :
       `${TMDB_BASE_URL}/${contentType}/top_rated?${lang}`;
 
@@ -196,7 +202,10 @@ router.get('/home', async (req, res) => {
 
     let voteCountThreshold = category === 'Anime' ? 200 : 3000;
     let classicsUrl = `${discoverBase}&sort_by=vote_average.desc&vote_count.gte=${voteCountThreshold}&${isSeries ? 'first_air_date.lte' : 'primary_release_date.lte'}=2005-01-01${genreFilterStr}`;
-    let recentReleasesUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${pastThreeMonthsDate}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${today}${genreFilterStr}`;
+    
+    // Aggiungo with_release_type=2|3 per evitare film fake/cancellati e avere veri film usciti al cinema
+    let releaseTypeFilter = contentType === 'movie' ? '&with_release_type=2|3' : '';
+    let recentReleasesUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${twoMonthsDate}${genreFilterStr}${releaseTypeFilter}`;
 
     let dramaGenre = 18;
     let mysteryGenre = 9648;
@@ -267,7 +276,6 @@ router.get('/home', async (req, res) => {
     const results = await Promise.all(requests);
     const data = results.map(r => r.data.results);
 
-    const excludeAnimation = category !== 'Animazione' && category !== 'Anime' && category !== 'Kids';
     const isAnimeCategory = category === 'Anime';
     const isAnimazioneCategory = category === 'Animazione';
 
@@ -367,9 +375,15 @@ router.get('/page', async (req, res) => {
     if (category === 'Animazione') langFilter = '&without_original_language=ja';
     if (category === 'Anime') langFilter = '&with_original_language=ja';
     let genreFilterStr = genreFilter ? `&with_genres=${genreFilter}` : '';
+    const excludeAnimation = category !== 'Animazione' && category !== 'Anime' && category !== 'Kids';
+    if (excludeAnimation) {
+      genreFilterStr += '&without_genres=16';
+    }
+
     let discoverBase = `${TMDB_BASE_URL}/discover/${contentType}?${lang}${langFilter}`;
     let discoverPastBase = `${discoverBase}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${today}`;
-    let recentReleasesUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${pastThreeMonthsDate}&${isSeries ? 'air_date.lte' : 'primary_release_date.lte'}=${today}${genreFilterStr}`;
+    let releaseTypeFilter = contentType === 'movie' ? '&with_release_type=2|3' : '';
+    let recentReleasesUrl = `${discoverBase}&sort_by=popularity.desc&${isSeries ? 'air_date.gte' : 'primary_release_date.gte'}=${twoMonthsDate}${genreFilterStr}${releaseTypeFilter}`;
 
     let url = '';
 
@@ -386,8 +400,8 @@ router.get('/page', async (req, res) => {
       let fantasyGenre = isSeries ? 10765 : 14;
       let actionGenre = isSeries ? 10759 : 28;
 
-      if (listName === 'trending') url = genreFilter || langFilter ? `${discoverPastBase}&sort_by=popularity.desc${genreFilterStr}&page=${page}` : `${TMDB_BASE_URL}/trending/${contentType}/week?${lang}&page=${page}`;
-      else if (listName === 'topWatched') url = genreFilter || langFilter ? `${discoverPastBase}&sort_by=vote_average.desc&vote_count.gte=500${genreFilterStr}&page=${page}` : `${TMDB_BASE_URL}/${contentType}/top_rated?${lang}&page=${page}`;
+      if (listName === 'trending') url = genreFilter || langFilter || excludeAnimation ? `${discoverPastBase}&sort_by=popularity.desc${genreFilterStr}&page=${page}` : `${TMDB_BASE_URL}/trending/${contentType}/week?${lang}&page=${page}`;
+      else if (listName === 'topWatched') url = genreFilter || langFilter || excludeAnimation ? `${discoverPastBase}&sort_by=vote_average.desc&vote_count.gte=500${genreFilterStr}&page=${page}` : `${TMDB_BASE_URL}/${contentType}/top_rated?${lang}&page=${page}`;
       else if (listName === 'classics') url = `${discoverBase}&page=${page}&sort_by=vote_average.desc&vote_count.gte=${voteCountThreshold}&${isSeries ? 'first_air_date.lte' : 'primary_release_date.lte'}=2005-01-01${genreFilterStr}`;
       else if (listName === 'newReleases') url = `${recentReleasesUrl}&page=${page}`;
       else if (listName === 'episodes') {
@@ -404,7 +418,6 @@ router.get('/page', async (req, res) => {
 
     const response = await axios.get(url, { headers: HEADERS });
 
-    const excludeAnimation = category !== 'Animazione' && category !== 'Anime' && category !== 'Kids';
     const isAnimeCategory = category === 'Anime';
     const isAnimazioneCategory = category === 'Animazione';
 
@@ -623,8 +636,15 @@ router.get('/recommendations/:type/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid type' });
     }
 
-    const detailUrl = `${TMDB_BASE_URL}/${type}/${id}/recommendations?language=it-IT&page=${page}`;
-    const response = await axios.get(detailUrl, { headers: HEADERS });
+    let detailUrl = `${TMDB_BASE_URL}/${type}/${id}/recommendations?language=it-IT&page=${page}`;
+    let response = await axios.get(detailUrl, { headers: HEADERS });
+    
+    // Fallback to similar if recommendations for this page are exhausted
+    if (response.data.results.length === 0) {
+      detailUrl = `${TMDB_BASE_URL}/${type}/${id}/similar?language=it-IT&page=${page}`;
+      response = await axios.get(detailUrl, { headers: HEADERS });
+    }
+
     const isSeries = type === 'tv';
 
     const items = response.data.results

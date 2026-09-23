@@ -26,6 +26,15 @@ export interface HistoryItem {
   matchScore?: string;
 }
 
+export interface EpisodeProgress {
+  season: number;
+  episode: number;
+  progress_seconds: number;
+  total_seconds: number;
+  accent_color: string;
+  last_watched: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class HistoryService {
   private platformId = inject(PLATFORM_ID);
@@ -128,6 +137,37 @@ export class HistoryService {
     } catch (err) {
       console.error('Failed to remove from history', err);
       this.loadHistory(profile.id);
+    }
+  }
+
+  // --- EPISODE-SPECIFIC PROGRESS METHODS ---
+
+  async loadEpisodeProgress(mediaId: number): Promise<EpisodeProgress[]> {
+    const profile = this.authService.selectedProfile();
+    if (!profile) return [];
+    try {
+      return await firstValueFrom(this.http.get<EpisodeProgress[]>(`${this.apiUrl}/history/episodes/progress?profileId=${profile.id}&mediaId=${mediaId}`));
+    } catch (err) {
+      console.error('Failed to load episode progress', err);
+      return [];
+    }
+  }
+
+  async saveEpisodeProgress(mediaId: number, season: number, episode: number, progressSeconds: number, totalSeconds: number, accentColor: string) {
+    const profile = this.authService.selectedProfile();
+    if (!profile) return;
+    try {
+      await firstValueFrom(this.http.post(`${this.apiUrl}/history/episodes/progress`, {
+        profileId: profile.id,
+        mediaId,
+        season,
+        episode,
+        progressSeconds,
+        totalSeconds,
+        accentColor
+      }));
+    } catch (err) {
+      console.error('Failed to save episode progress', err);
     }
   }
 }
