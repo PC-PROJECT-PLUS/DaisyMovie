@@ -3,6 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { TmdbService } from '../../services/tmdb.service';
 import { HistoryService } from '../../services/history.service';
+import { PreferencesService } from '../../services/preferences.service';
 
 export interface PlayerConfig {
   id: number;
@@ -41,6 +42,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
   controlsVisible = signal(true);
 
   private tmdbService = inject(TmdbService);
+  private preferencesService = inject(PreferencesService, { optional: true });
   tvEpisodes = signal<any[]>([]);
   showEpisodesDropdown = signal(false);
   totalSeasons = signal<number>(1);
@@ -113,7 +115,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
 
   goToEpisode(epNumber: number, seasonNumber?: number) {
     if (!this.config) return;
-    
+
     // Save current episode progress before switching
     if (this.lastSavedTime > 0) {
       this.saveProgress(this.lastSavedTime);
@@ -126,16 +128,16 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     this.currentSeason.set(sNum);
     this.showEpisodesDropdown.set(false);
     this.iframeReady.set(false);
-    
+
     // Fetch the specific episode progress from DB
     this.historyService.loadEpisodeProgress(this.config.id).then(progressList => {
-       const p = progressList.find(i => i.season === sNum && i.episode === epNumber);
-       if (p && p.progress_seconds > 0) {
-          this.config!.startAt = p.progress_seconds;
-       }
-       this.buildUrl();
+      const p = progressList.find(i => i.season === sNum && i.episode === epNumber);
+      if (p && p.progress_seconds > 0) {
+        this.config!.startAt = p.progress_seconds;
+      }
+      this.buildUrl();
     }).catch(() => {
-       this.buildUrl(); // fallback if error
+      this.buildUrl(); // fallback if error
     });
   }
 
@@ -144,7 +146,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     const eps = this.tvEpisodes();
     const currentEp = this.config.episode || 1;
     const curSeason = this.currentSeason();
-    
+
     // Check if there is a next episode in the current season
     if (eps.find(e => e.episodeNumber === currentEp + 1)) {
       this.goToEpisode(currentEp + 1, curSeason);
@@ -158,7 +160,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     if (!this.config || this.config.type !== 'tv') return;
     const currentEp = this.config.episode || 1;
     const curSeason = this.currentSeason();
-    
+
     if (currentEp > 1) {
       this.goToEpisode(currentEp - 1, curSeason);
     } else if (curSeason > 1) {
@@ -176,17 +178,17 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
 
   private saveProgress(currentTime: number) {
     if (!this.config || !this.historyService) return;
-    
+
     // Check tolerance (60 seconds)
     const isCompleted = this.duration > 0 && (this.duration - currentTime <= 60);
     const isSeries = this.config.type === 'tv';
-    
+
     // Get existing history item for title/posters, or fallback to config
     const existing = this.historyService.getResumeProgress(this.config.id, isSeries);
     const title = existing?.title || this.config.title || '';
     const posterUrl = existing?.poster_url || this.config.posterUrl || '';
     const backdropUrl = existing?.backdrop_url || this.config.backdropUrl || '';
-    
+
     if (isCompleted) {
       if (!isSeries) {
         this.historyService.removeFromHistory(this.config.id, false);
@@ -204,14 +206,14 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
         const eps = this.tvEpisodes();
         const currentEp = this.config.episode || 1;
         const curSeason = this.currentSeason();
-        
+
         let nextEp = null;
         if (eps.find(e => e.episodeNumber === currentEp + 1)) {
           nextEp = { s: curSeason, e: currentEp + 1 };
         } else if (curSeason < this.totalSeasons()) {
           nextEp = { s: curSeason + 1, e: 1 };
         }
-        
+
         if (nextEp) {
           // Add NEXT episode with 0 progress to main history
           this.historyService.addToHistory(
@@ -229,28 +231,28 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
         }
       }
     } else {
-       if (isSeries) {
-         // Update per-episode progress
-         this.historyService.saveEpisodeProgress(
-           this.config.id,
-           this.config.season || 1,
-           this.config.episode || 1,
-           currentTime,
-           this.duration,
-           this.config.accentColor || ''
-         );
-       }
-       
-       // Just update main history progress
-       this.historyService.addToHistory(
-         { id: this.config.id, isSeries: isSeries, title, posterUrl, backdropUrl },
-         currentTime,
-         isSeries,
-         this.config.season,
-         this.config.episode,
-         this.duration,
-         this.config.accentColor || ''
-       );
+      if (isSeries) {
+        // Update per-episode progress
+        this.historyService.saveEpisodeProgress(
+          this.config.id,
+          this.config.season || 1,
+          this.config.episode || 1,
+          currentTime,
+          this.duration,
+          this.config.accentColor || ''
+        );
+      }
+
+      // Just update main history progress
+      this.historyService.addToHistory(
+        { id: this.config.id, isSeries: isSeries, title, posterUrl, backdropUrl },
+        currentTime,
+        isSeries,
+        this.config.season,
+        this.config.episode,
+        this.duration,
+        this.config.accentColor || ''
+      );
     }
   }
 
@@ -265,7 +267,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     clearTimeout(this.enterTimeout);
     clearTimeout(this.idleTimeout);
     this.unlockBodyScroll();
-    
+
     // Final save on destroy
     if (this.lastSavedTime > 0) {
       this.saveProgress(this.lastSavedTime);
@@ -278,7 +280,25 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     let startAt = this.config.startAt;
 
     if (this.config.isTrailer && this.config.trailerKey) {
-      const url = `https://www.youtube.com/embed/${this.config.trailerKey}?autoplay=1&rel=0&modestbranding=1`;
+      const prefs = this.preferencesService;
+      let url = `https://www.youtube.com/embed/${this.config.trailerKey}?rel=0&modestbranding=1`;
+      
+      if (prefs) {
+        if (prefs.trailerAutoplay()) url += '&autoplay=1';
+        if (prefs.trailerMute()) url += '&mute=1';
+        if (prefs.trailerCaptions()) {
+          url += '&cc_load_policy=1';
+          if (prefs.trailerCaptionLang() !== 'original') {
+            url += `&cc_lang_pref=${prefs.trailerCaptionLang()}`;
+          }
+        }
+        if (!prefs.trailerControls()) {
+          url += '&controls=0';
+        }
+      } else {
+        url += '&autoplay=1';
+      }
+
       console.log('[VideoPlayer] Opening Trailer URL:', url);
       this.safeUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
       return;
@@ -318,13 +338,23 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     const s = season ?? 1;
     const e = episode ?? 1;
 
+    // Use preferences
+    const prefs = this.preferencesService;
+
+    // Fallback to true if prefs service not available for some reason
+    const shouldAutoplay = true;
+
+    const language = type === 'movie'
+      ? (prefs ? prefs.defaultFilmLanguage() : 'it')
+      : (prefs ? prefs.defaultSeriesLanguage() : 'it');
+
     switch (provider) {
       case 'vixsrc':
         // VixSrc (Supporta Colori, Sottotitoli, Minutaggio e PostMessage!)
         base = type === 'movie' ? `https://vixsrc.to/movie/${id}` : `https://vixsrc.to/tv/${id}/${s}/${e}`;
-        params.set('autoplay', 'true');
+        params.set('autoplay', shouldAutoplay ? 'true' : 'false');
         params.set('primaryColor', hex);
-        params.set('lang', 'it');
+        if (language !== 'original') params.set('lang', language);
         if (startAt && startAt > 0) {
           params.set('startAt', String(startAt));
         }
@@ -333,24 +363,24 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
       case 'vidlink':
         // VidLink (Ottimo aggregatore alternativo)
         base = type === 'movie' ? `https://vidlink.pro/movie/${id}` : `https://vidlink.pro/tv/${id}/${s}/${e}`;
-        params.set('autoplay', 'true');
+        params.set('autoplay', shouldAutoplay ? 'true' : 'false');
         params.set('primaryColor', hex);
         break;
 
       case 'vidsrc':
         // VidSrc Ufficiale (ID nel percorso, con stanghetta finale)
         base = type === 'movie' ? `https://vidsrc.sbs/embed/movie/${id}` : `https://vidsrc.sbs/embed/tv/${id}/${s}/${e}/`;
-        params.set('autoplay', '1');
+        params.set('autoplay', shouldAutoplay ? '1' : '0');
         params.set('color', hex);
-        params.set('sub', 'it');
+        if (language !== 'original') params.set('sub', language);
         break;
 
       case 'vidcore':
         // VidCore (Niente ads, ma meno opzioni per i sottotitoli)
         base = type === 'movie' ? `https://vidcore.org/embed/movie/${id}` : `https://vidcore.org/embed/tv/${id}/${s}/${e}`;
-        params.set('autoplay', 'true');
+        params.set('autoplay', shouldAutoplay ? 'true' : 'false');
         params.set('theme', hex);
-        params.set('lang', 'it');
+        if (language !== 'original') params.set('lang', language);
         break;
     }
 
@@ -405,10 +435,10 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     if (screen.orientation && 'unlock' in screen.orientation) {
       try {
         screen.orientation.unlock();
-      } catch (e) {}
+      } catch (e) { }
     }
     if (this.isFullscreen() && document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {});
+      document.exitFullscreen().catch(() => { });
       this.isFullscreen.set(false);
     }
   }
@@ -433,7 +463,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
   @HostListener('document:keydown.escape')
   requestClose() {
     if (this.isFullscreen() && document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {});
+      document.exitFullscreen().catch(() => { });
       this.isFullscreen.set(false);
     }
     this.closed.emit();
@@ -453,7 +483,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     } else {
       document.exitFullscreen().then(() => {
         this.isFullscreen.set(false);
-      }).catch(err => {});
+      }).catch(err => { });
     }
   }
 
@@ -479,7 +509,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
             if (vixData.event === 'timeupdate') {
               const currentTime = Math.floor(vixData.currentTime);
               this.duration = Math.floor(vixData.duration || 0);
-              
+
               if (currentTime > 0 && this.config?.id) {
                 // Save time to local storage
                 const key = this.config.type === 'movie'
@@ -493,7 +523,9 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
                 this.lastSavedTime = currentTime;
                 this.saveProgress(currentTime);
               }
-            } else if (vixData.event === 'pause' || vixData.event === 'ended') {
+            } else if (vixData.event === 'pause') {
+              this.saveProgress(Math.floor(vixData.currentTime || 0));
+            } else if (vixData.event === 'ended') {
               this.saveProgress(Math.floor(vixData.currentTime || 0));
             }
           }
@@ -552,5 +584,10 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
   }
   get currentEpisodeNumber(): number | undefined {
     return this.config?.episode;
+  }
+
+  get hasTrailerControls(): boolean {
+    if (!this.config?.isTrailer) return false;
+    return this.preferencesService ? this.preferencesService.trailerControls() : true;
   }
 }

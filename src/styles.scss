@@ -1,6 +1,10 @@
 // Fonts loaded non-blocking via <link rel="preload"> in index.html
 // Fallback to system fonts while web fonts load
 
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 :root {
   --bg-primary: #0b0c10;
   --bg-secondary: #121319;

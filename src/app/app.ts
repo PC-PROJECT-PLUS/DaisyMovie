@@ -7,6 +7,7 @@ import { LogoutModalComponent } from './components/shared/logout-modal/logout-mo
 import { CollectionsModalComponent } from './components/collections-modal/collections-modal';
 import { LoaderService } from './services/loader.service';
 import { AuthService } from './services/auth.service';
+import { PreferencesService } from './services/preferences.service';
 import { filter } from 'rxjs/operators';
 
 // Routes where the navbar should be hidden
@@ -24,6 +25,7 @@ export class App implements AfterViewInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   public loaderService = inject(LoaderService);
   public auth = inject(AuthService);
+  public preferencesService = inject(PreferencesService);
 
   showNavbar = signal(true);
   private minLoadingTime: number = 0;
@@ -42,6 +44,36 @@ export class App implements AfterViewInit, OnDestroy {
       if (this.loaderService.isRouteReady()) {
         this.checkIfDone();
       }
+    });
+
+    // Apply global CSS variables from preferences
+    effect(() => {
+      if (!isPlatformBrowser(this.platformId)) return;
+      
+      const root = document.documentElement;
+      
+      // Theme
+      root.setAttribute('data-theme', this.preferencesService.theme());
+      
+      // Colors
+      const secColor = this.preferencesService.secondaryColor();
+      if (secColor === 'yellow') {
+        root.style.setProperty('--accent-secondary', '#eab308');
+        root.style.setProperty('--accent-secondary-glow', 'rgba(234, 179, 8, 0.4)');
+      } else if (secColor === 'orange') {
+        root.style.setProperty('--accent-secondary', '#f97316');
+        root.style.setProperty('--accent-secondary-glow', 'rgba(249, 115, 22, 0.4)');
+      } else if (secColor === 'red') {
+        root.style.setProperty('--accent-secondary', '#ef4444');
+        root.style.setProperty('--accent-secondary-glow', 'rgba(239, 68, 68, 0.4)');
+      }
+
+      // Glass settings
+      root.style.setProperty('--glass-blur-amount', `${this.preferencesService.glassBlur()}px`);
+      root.style.setProperty('--glass-bg-opacity', `${this.preferencesService.glassOpacity() / 100}`);
+      
+      root.style.setProperty('--popup-glass-blur', `${this.preferencesService.popupGlassBlur()}px`);
+      root.style.setProperty('--popup-glass-opacity', `${this.preferencesService.popupGlassOpacity() / 100}`);
     });
   }
 
@@ -96,16 +128,8 @@ export class App implements AfterViewInit, OnDestroy {
 
   private checkIfDone() {
     if (this.pendingImages.size === 0 && this.loaderService.isRouteReady()) {
-      const elapsed = Date.now() - this.minLoadingTime;
-      const remaining = Math.max(0, 800 - elapsed);
-
-      setTimeout(() => {
-        // Double check no new images were added in the timeout, or if we hit the failsafe
-        if ((this.pendingImages.size === 0 && this.loaderService.isRouteReady()) || !this.loaderService.isPageLoading()) {
-          this.loaderService.isPageLoading.set(false);
-          clearTimeout(this.failsafeTimeout);
-        }
-      }, remaining);
+      this.loaderService.isPageLoading.set(false);
+      clearTimeout(this.failsafeTimeout);
     }
   }
 

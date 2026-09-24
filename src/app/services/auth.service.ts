@@ -17,6 +17,8 @@ export interface User {
   email: string;
   name: string;
   profiles: UserProfile[];
+  created_at?: string;
+  formatted_created_at?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -38,11 +40,17 @@ export class AuthService {
         if (token) {
           this.isLoggedIn.set(true);
           const payload = JSON.parse(atob(token.split('.')[1]));
+          const dateObj = payload.created_at ? new Date(payload.created_at) : null;
+          const formatted = dateObj ? dateObj.toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+          
           this.currentUser.set({
             email: payload.email,
             name: payload.email.split('@')[0],
+            created_at: payload.created_at,
+            formatted_created_at: formatted,
             profiles: []
           });
+          this.fetchUserInfo();
           this.fetchProfiles();
         }
         
@@ -120,6 +128,7 @@ export class AuthService {
       name: email.split('@')[0],
       profiles: []
     });
+    this.fetchUserInfo();
     this.fetchProfiles();
   }
 
@@ -138,7 +147,30 @@ export class AuthService {
       localStorage.removeItem('daisy_token');
       sessionStorage.removeItem('daisy_profile');
     }
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/auth']);
+  }
+
+  async fetchUserInfo(): Promise<void> {
+    try {
+      const info = await firstValueFrom(this.http.get<any>(`${this.apiUrl}/auth/me`));
+      this.currentUser.update(u => {
+        if (!u) return u;
+        const dateObj = info.created_at ? new Date(info.created_at) : null;
+        const formatted = dateObj ? dateObj.toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+        return {
+          ...u,
+          created_at: info.created_at,
+          formatted_created_at: formatted
+        };
+      });
+    } catch (e) {
+      console.error('Failed to fetch user info', e);
+    }
+  }
+
+  async deleteAccount(): Promise<void> {
+    await firstValueFrom(this.http.delete(`${this.apiUrl}/auth/me`));
+    this.logout();
   }
 
   async fetchProfiles(): Promise<void> {
@@ -158,5 +190,17 @@ export class AuthService {
 
   getProfiles(): UserProfile[] {
     return this.currentUser()?.profiles ?? [];
+  }
+
+  async updateProfile(id: string, name: string, avatarUrl: string): Promise<UserProfile> {
+    const p = await firstValueFrom(this.http.put<UserProfile>(`${this.apiUrl}/profiles/${id}`, { name, avatar: avatarUrl }));
+    this.currentUser.update(u => {
+      if (!u) return null;
+      return { ...u, profiles: u.profiles.map(existing => existing.id === id ? p : existing) };
+    });
+    if (this.selectedProfile()?.id === id) {
+      this.selectProfile(p);
+    }
+    return p;
   }
 }

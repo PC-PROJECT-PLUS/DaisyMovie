@@ -21,10 +21,13 @@ const processDailyReleases = async () => {
     // Trova tutti i media seguiti la cui data di uscita è OGGI, unendo i dati dell'utente per l'email
     // NOTA: Usiamo CURRENT_DATE. In un test manuale possiamo cambiare la release_date nel db.
     const result = await client.query(`
-      SELECT fm.profile_id, fm.media_id, fm.media_type, fm.title, p.name as profile_name, u.email as user_email 
+      SELECT fm.profile_id, fm.media_id, fm.media_type, fm.title, p.name as profile_name, u.email as user_email,
+             COALESCE(pref.notify_bell, TRUE) as notify_bell, 
+             COALESCE(pref.notify_upcoming, TRUE) as notify_upcoming
       FROM followed_media fm
       JOIN profiles p ON fm.profile_id = p.id
       JOIN users u ON p.user_id = u.id
+      LEFT JOIN preferences pref ON p.id = pref.profile_id
       WHERE fm.release_date = CURRENT_DATE
     `);
 
@@ -39,18 +42,23 @@ const processDailyReleases = async () => {
     console.log(`[CRON] Trovati ${releases.length} media in uscita oggi.`);
 
     for (const release of releases) {
-      const { profile_id, media_id, title, profile_name, user_email } = release;
+      const { profile_id, media_id, title, profile_name, user_email, notify_bell, notify_upcoming } = release;
+      
+      if (!notify_bell || !notify_upcoming) {
+        console.log(`[CRON] Notifiche disabilitate per il profilo ${profile_name}. Salto l'invio.`);
+        continue;
+      }
+
       const messageText = `Il titolo "${title}" che stavi aspettando è ora disponibile! Vai subito su Daisy Movie per guardarlo.`;
 
       // 1. Crea la notifica nel DB per l'app
       await client.query(
         `INSERT INTO notifications (profile_id, media_id, media_type, title, message)
          VALUES ($1, $2, $3, $4, $5)`,
-        [profile_id, media_id, media_type, 'Novità in Catalogo!', messageText]
+        [profile_id, media_id, media_type, 'Film in uscita: Ora disponibile', messageText]
       );
 
-      // 2. Invia Email Reale (se l'utente ha il digest email abilitato, ma per ora lo mandiamo a tutti)
-      // Se BREVO_API_KEY non è configurata, verrà solo simulata in console (come scritto in emailService.js)
+      // 2. Invia Email Reale
       await sendNotificationEmail(user_email, profile_name, `Daisy Movie - ${title} è ora disponibile!`, messageText);
     }
     

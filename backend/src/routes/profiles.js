@@ -51,4 +51,30 @@ router.post('/', async (req, res) => {
   }
 });
 
+// PUT /api/profiles/:id - Aggiorna il profilo esistente
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, avatar } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: 'Il nome del profilo è obbligatorio' });
+  }
+
+  try {
+    const result = await pool.query(
+      'UPDATE profiles SET name = $1, avatar_url = $2 WHERE id = $3 AND user_id = $4 RETURNING id, name, avatar_url as avatar, (maturity_rating = \'Kids\') as "isKids"',
+      [name, avatar, id, req.user.userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Profilo non trovato o non autorizzato' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ error: 'Errore durante l\'aggiornamento del profilo' });
+  }
+});
+
 module.exports = router;

@@ -1,8 +1,9 @@
-import { Injectable, signal, PLATFORM_ID, inject, effect } from '@angular/core';
+import { Injectable, signal, PLATFORM_ID, inject, effect, computed } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
+import { PreferencesService } from './preferences.service';
 import { firstValueFrom } from 'rxjs';
 
 export interface AppNotification {
@@ -22,18 +23,50 @@ export interface AppNotification {
 export class NotificationService {
   private platformId = inject(PLATFORM_ID);
   
-  notifications = signal<AppNotification[]>([]);
+  rawNotifications = signal<AppNotification[]>([]);
+  notifications = computed(() => {
+    if (!this.preferencesService.showOldBell()) {
+      return [];
+    }
+    return this.rawNotifications().filter(n => {
+      const title = n.title.toLowerCase();
+      
+      // Novità Preferiti
+      if (title.includes('nuovo episodio') || title.includes('novità in arrivo') || title.includes('novità preferiti')) {
+        return this.preferencesService.showOldFavorites();
+      }
+      // Promemoria Cronologia
+      if (title.includes('continua a guardare') || title.includes('promemoria cronologia') || title.includes('metà')) {
+        return this.preferencesService.showOldHistory();
+      }
+      // Raccomandazioni
+      if (title.includes('consigliato') || title.includes('nuova aggiunta') || title.includes('raccomandazioni')) {
+        return this.preferencesService.showOldRecommendations();
+      }
+      // Film in uscita (Campanella Home)
+      if (title.includes('novità in catalogo') || title.includes('in uscita') || title.includes('ora disponibile') || title.includes('film in uscita')) {
+        return this.preferencesService.showOldUpcoming();
+      }
+      
+      return true;
+    });
+  });
+
   upcomingNotifiedIds = signal<Set<number>>(new Set<number>());
   emailDigestEnabled = signal<boolean>(true);
   
   private http = inject(HttpClient);
   private authService = inject(AuthService);
+  private preferencesService = inject(PreferencesService);
   private apiUrl = environment.apiUrl;
+  
+  private pollingInterval: any;
   
   async fetchNotifications(profileId: string) {
     try {
       const data = await firstValueFrom(this.http.get<any[]>(`${this.apiUrl}/notifications?profileId=${profileId}`));
-      this.notifications.set(data);
+      
+      this.rawNotifications.set(data);
     } catch (error) {
       console.error('Error fetching notifications from DB:', error);
     }
@@ -59,10 +92,26 @@ export class NotificationService {
         const profile = this.authService.selectedProfile();
         if (profile) {
           this.fetchNotifications(profile.id);
+          this.startPolling(profile.id);
         } else {
-          this.notifications.set([]);
+          this.rawNotifications.set([]);
+          this.stopPolling();
         }
       });
+    }
+  }
+
+  private startPolling(profileId: string) {
+    this.stopPolling();
+    this.pollingInterval = setInterval(() => {
+      this.fetchNotifications(profileId);
+    }, 30000); // Poll every 30 seconds
+  }
+
+  private stopPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
     }
   }
 
@@ -86,11 +135,12 @@ export class NotificationService {
   public generateDynamicNotifications(favorites: any[], history: any[]) {
     // We only generate once if we don't have many unread
     if (!isPlatformBrowser(this.platformId)) return;
+    if (!this.preferencesService.notifyBell()) return; // Disabilita tutto se disattivata la campanella principale
     
     let newNotifs: AppNotification[] = [];
     
     // 1. Check favorites for 'New Episodes' or 'News'
-    if (favorites && favorites.length > 0) {
+    if (this.preferencesService.notifyFavorites() && favorites && favorites.length > 0) {
       const randomFav = favorites[Math.floor(Math.random() * favorites.length)];
       if (randomFav.media_type === 'tv' || randomFav.isSeries) {
         newNotifs.push({
@@ -116,7 +166,7 @@ export class NotificationService {
     }
 
     // 2. Recommendations based on history
-    if (history && history.length > 0) {
+    if (this.preferencesService.notifyHistory() && history && history.length > 0) {
       const randomHist = history[Math.floor(Math.random() * history.length)];
       newNotifs.push({
         id: 'dyn_' + Date.now() + '_3',
@@ -127,7 +177,7 @@ export class NotificationService {
         icon: 'star',
         targetUrl: '/' // Should ideally point to a search/category or specific movie
       });
-    } else {
+    } else if (this.preferencesService.notifyRecommendations()) {
       // Random if no history
       newNotifs.push({
         id: 'dyn_' + Date.now() + '_4',
@@ -141,21 +191,21 @@ export class NotificationService {
     }
 
     // Merge with existing, avoiding duplicates by title for simplicity
-    const current = this.notifications();
+    const current = this.rawNotifications();
     const toAdd = newNotifs.filter(n => !current.find(c => c.title === n.title));
     
     if (toAdd.length > 0) {
-      this.notifications.update(curr => [...toAdd, ...curr].slice(0, 15)); // Keep max 15
+      this.rawNotifications.update(curr => [...toAdd, ...curr].slice(0, 15)); // Keep max 15
     }
   }
 
   public async markAsRead(id: string) {
-    const notifs = this.notifications();
+    const notifs = this.rawNotifications();
     const index = notifs.findIndex(n => n.id === id);
     if (index !== -1 && notifs[index].unread) {
       const newNotifs = [...notifs];
       newNotifs[index].unread = false;
-      this.notifications.set(newNotifs);
+      this.rawNotifications.set(newNotifs);
       
       try {
         await firstValueFrom(this.http.put(`${this.apiUrl}/notifications/${id}/read`, {}));
@@ -167,8 +217,8 @@ export class NotificationService {
 
   async markAllAsRead() {
     const profile = this.authService.selectedProfile();
-    const newNotifs = this.notifications().map(n => ({ ...n, unread: false }));
-    this.notifications.set(newNotifs);
+    const newNotifs = this.rawNotifications().map(n => ({ ...n, unread: false }));
+    this.rawNotifications.set(newNotifs);
     
     if (profile) {
       try {

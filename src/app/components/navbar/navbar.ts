@@ -33,7 +33,7 @@ export class Navbar implements AfterViewInit {
   isUserMenuOpen = signal<boolean>(false);
   isNotificationMenuOpen = signal<boolean>(false);
 
-  unreadCount = computed(() => this.notificationService.notifications().filter(n => n.unread).length);
+  unreadCount = computed(() => this.notificationService.notifications().filter((n: any) => n.unread).length);
 
   navItems = ['Film', 'Serie TV', 'Animazione', 'Anime'];
 

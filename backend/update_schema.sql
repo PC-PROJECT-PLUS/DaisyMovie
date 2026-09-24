@@ -29,6 +29,21 @@ CREATE TABLE IF NOT EXISTS profiles (
 CREATE TABLE IF NOT EXISTS preferences (
     profile_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
     theme VARCHAR(20) DEFAULT 'dynamic',
+    secondary_color VARCHAR(20) DEFAULT 'yellow',
+    glass_blur INTEGER DEFAULT 15,
+    glass_opacity INTEGER DEFAULT 15,
+    popup_glass_blur INTEGER DEFAULT 25,
+    popup_glass_opacity INTEGER DEFAULT 45,
+    global_background_url VARCHAR(255),
+    
+    default_collection_id INTEGER,
+    collection_hero_modes JSONB DEFAULT '{}'::jsonb,
+    
+    notify_bell BOOLEAN DEFAULT TRUE,
+    notify_favorites BOOLEAN DEFAULT TRUE,
+    notify_history BOOLEAN DEFAULT TRUE,
+    notify_recommendations BOOLEAN DEFAULT TRUE,
+    
     history_hero_movie_id INTEGER,
     favorites_hero_movie_id INTEGER,
     video_quality VARCHAR(20) DEFAULT 'Auto',

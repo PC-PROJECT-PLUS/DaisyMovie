@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const { sendVerificationCodeEmail } = require('../services/emailService');
 const { OAuth2Client } = require('google-auth-library');
+const authenticateToken = require('../middleware/authMiddleware');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key';
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
@@ -102,7 +103,7 @@ router.post('/verify', async (req, res) => {
     }
 
     // Genera JWT
-    const token = jwt.sign({ userId: user.id, email }, JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ userId: user.id, email, created_at: user.created_at }, JWT_SECRET, { expiresIn: '30d' });
 
     res.json({ success: true, token, message: 'Account verificato con successo' });
   } catch (error) {
@@ -141,7 +142,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Email o password errati' });
     }
 
-    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ userId: user.id, email: user.email, created_at: user.created_at }, JWT_SECRET, { expiresIn: '30d' });
 
     res.json({ success: true, token });
   } catch (error) {
@@ -200,7 +201,7 @@ router.post('/set-password', async (req, res) => {
 
     await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, user.id]);
 
-    const token = jwt.sign({ userId: user.id, email }, JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ userId: user.id, email, created_at: user.created_at }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ success: true, token, message: 'Password impostata con successo' });
   } catch (error) {
     console.error('Set password error:', error);
@@ -260,12 +261,38 @@ router.post('/google', async (req, res) => {
     }
 
     // Genera JWT
-    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ userId: user.id, email: user.email, created_at: user.created_at }, JWT_SECRET, { expiresIn: '30d' });
 
     res.json({ success: true, token });
   } catch (error) {
     console.error('Google login error:', error);
     res.status(500).json({ error: 'Errore durante il login con Google' });
+  }
+});
+
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, email, created_at, is_verified FROM users WHERE id = $1', [req.user.userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Utente non trovato' });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching user info:', error);
+    res.status(500).json({ error: 'Errore interno del server' });
+  }
+});
+
+router.delete('/me', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [req.user.userId]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Utente non trovato' });
+    }
+    res.json({ success: true, message: 'Account eliminato con successo' });
+  } catch (error) {
+    console.error('Error deleting user account:', error);
+    res.status(500).json({ error: 'Errore durante l\'eliminazione dell\'account' });
   }
 });
 

@@ -37,15 +37,24 @@ async function runRecommendationProcess() {
   console.log('[CRON] Inizio processo di raccomandazioni (Newsletter)');
   const client = await pool.connect();
   try {
-    // 1. Recupera tutti i profili attivi con la loro email
+    // 1. Recupera tutti i profili attivi con la loro email e preferenze
     const usersRes = await client.query(`
-      SELECT p.id as profile_id, p.name as profile_name, u.email as user_email
+      SELECT p.id as profile_id, p.name as profile_name, u.email as user_email,
+             COALESCE(pref.notify_bell, TRUE) as notify_bell,
+             COALESCE(pref.notify_recommendations, TRUE) as notify_recommendations
       FROM profiles p
       JOIN users u ON p.user_id = u.id
+      LEFT JOIN preferences pref ON p.id = pref.profile_id
     `);
 
     for (const profile of usersRes.rows) {
-      const { profile_id, profile_name, user_email } = profile;
+      const { profile_id, profile_name, user_email, notify_bell, notify_recommendations } = profile;
+      
+      if (!notify_bell || !notify_recommendations) {
+        console.log(`[CRON] Notifiche raccomandazioni disabilitate per ${profile_name}. Salto.`);
+        continue;
+      }
+      
       let mediaToRecommend = null;
 
       // 2. Trova l'ultimo preferito di questo profilo

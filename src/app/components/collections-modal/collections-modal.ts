@@ -97,10 +97,7 @@ export class CollectionsModalComponent {
       const next = { ...s, [key]: isNowChecked };
       
       if (collectionId !== null) {
-        if (isNowChecked) {
-          // Aggiunta a custom collection -> spunta visivamente anche i preferiti
-          next['general'] = true;
-        } else {
+        if (!isNowChecked) {
           // Rimozione da custom collection
           // Se non è in nessun'altra collezione e prima era "nascosto" dai preferiti generali, 
           // togliamo ottimisticamente anche la spunta ai preferiti
@@ -202,7 +199,7 @@ export class CollectionsModalComponent {
         }
         
         // Optimistically update the UI for the newly created collection
-        this.localState.update(s => ({ ...s, [`col_${newCol.id}`]: true, 'general': true }));
+        this.localState.update(s => ({ ...s, [`col_${newCol.id}`]: true }));
       }
     }
 

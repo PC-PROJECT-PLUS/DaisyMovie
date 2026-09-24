@@ -2,7 +2,7 @@
   [class.leaving]="animState() === 'leaving'" [class.hidden]="animState() === 'hidden'"
   (click)="onBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Video Player">
 
-  <div class="player-container" [style.--accent]="accentGlow" [class.is-trailer]="config?.isTrailer" [class.controls-hidden]="!controlsVisible()">
+  <div class="player-container" [style.--accent]="accentGlow" [class.is-trailer-with-controls]="hasTrailerControls" [class.controls-hidden]="!controlsVisible()">
 
     <!-- Floating Controls Top Right -->
     <div class="player-top-controls">
@@ -43,7 +43,7 @@
       }
 
       <!-- TV Series Episodes Overlay -->
-      @if (config?.type === 'tv' && tvEpisodes().length > 0) {
+      @if (config?.type === 'tv' && !config?.isTrailer && tvEpisodes().length > 0) {
       <div class="episodes-overlay" (click)="$event.stopPropagation()"
            (mouseenter)="showEpisodesDropdown.set(true)" 
            (mouseleave)="showEpisodesDropdown.set(false)">

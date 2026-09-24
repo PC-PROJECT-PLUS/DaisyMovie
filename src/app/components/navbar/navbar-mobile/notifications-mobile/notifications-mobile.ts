@@ -22,7 +22,7 @@ export class NotificationsMobile {
   notifications = computed(() => this.notificationService.notifications());
 
   // Computed: count of unread
-  unreadCount = computed(() => this.notifications().filter(n => n.unread).length);
+  unreadCount = computed(() => this.notifications().filter((n: any) => n.unread).length);
   hasUnread = computed(() => this.unreadCount() > 0);
 
   // Relative timestamp from ISO string

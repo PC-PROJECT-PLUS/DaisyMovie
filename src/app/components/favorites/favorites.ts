@@ -174,7 +174,29 @@ export class Favorites implements OnInit {
     const items = this.filteredItems();
     if (items.length === 0) return this.heroImage;
 
-    const heroMovie = items[0];
+    const activeColId = this.activeCollectionId();
+    const modes = this.preferencesService.collectionHeroModes();
+    
+    let mode = 'dynamic';
+    let fixedMediaId = null;
+    
+    if (activeColId === null) {
+      mode = modes['all']?.mode || 'dynamic';
+      fixedMediaId = modes['all']?.mediaId || null;
+    } else {
+      mode = modes[activeColId]?.mode || 'dynamic';
+      fixedMediaId = modes[activeColId]?.mediaId || null;
+    }
+
+    let heroMovie = items[0];
+    
+    if (mode === 'fixed' && fixedMediaId !== null) {
+      const fixedMovie = items.find(m => m.id === fixedMediaId);
+      if (fixedMovie) {
+        heroMovie = fixedMovie;
+      }
+    }
+
     const url = heroMovie.backdropUrl || heroMovie.posterUrl;
     return url ? url.replace('w=500', 'w=1920') : this.heroImage;
   });
@@ -193,10 +215,10 @@ export class Favorites implements OnInit {
         items = [];
       }
     } else {
-      // General list: hide items the user has explicitly unchecked from "Tutti i preferiti"
+      // General list: only show items that are NOT in any custom collection
+      const customCols = this.favoritesService.collections();
       items = items.filter(item => {
-        const mediaKey = `${item.isSeries ? 'tv' : 'movie'}_${item.id}`;
-        return !this.preferencesService.isHiddenFromGeneral(mediaKey);
+        return !customCols.some(c => c.items.includes((item as any).favoriteId));
       });
     }
 
@@ -253,6 +275,7 @@ export class Favorites implements OnInit {
   }
 
   ngOnInit() {
+    this.activeCollectionId.set(this.preferencesService.defaultCollectionId());
     this.titleService.setTitle('Preferiti');
     if (isPlatformBrowser(this.platformId)) {
       this.checkScreenSize();

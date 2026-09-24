@@ -1,546 +1,787 @@
-@if (responsiveService.isMobile()) {
-    <app-settings-mobile 
-      [activeTab]="activeTab()" 
-      [profiles]="profiles()"
-      [selectedProfileId]="selectedProfileId()"
-      [selectedProfile]="selectedProfile"
-      [avatars]="avatars"
-      [accountPlan]="accountPlan"
-      [playbackPrefs]="playbackPrefs"
-      [languagePrefs]="languagePrefs"
-      [themeService]="themeService" 
-      (onTabChange)="setTab($event)"
-      (onProfileChange)="selectProfile($event)"
-      (onDeleteProfile)="deleteProfile()">
-    </app-settings-mobile>
-  } @else {
-  <div class="settings-page" [attr.data-theme]="themeService.currentTheme()" (click)="closeDropdowns()">
-    <!-- <div class="ambient-glow"></div> -->
-    <div class="settings-desktop-container ">
-      <div class="settings-sidebar glass-panel">
-        <h1 class="sidebar-title">Impostazioni</h1>
-        
-        <ul class="sidebar-nav">
-          <li [class.active]="activeTab() === 'account'" (click)="setTab('account')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            Account
-          </li>
-          <li [class.active]="activeTab() === 'profile'" (click)="setTab('profile')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            Profili
-          </li>
-          <li [class.active]="activeTab() === 'playback'" (click)="setTab('playback')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            Riproduzione
-          </li>
-          <li [class.active]="activeTab() === 'language'" (click)="setTab('language')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            Lingua e Sottotitoli
-          </li>
-          <li [class.active]="activeTab() === 'appearance'" (click)="setTab('appearance')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-            Aspetto
-          </li>
-          <li [class.active]="activeTab() === 'family'" (click)="setTab('family')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            Filtro Famiglia
-          </li>
-        </ul>
+<div class="settings-page"
+  [style.background-image]="preferencesService.globalBackgroundUrl() ? 'url(' + preferencesService.globalBackgroundUrl() + ')' : null"
+  [class.has-bg]="!!preferencesService.globalBackgroundUrl()">
+
+  <!-- Desktop Version -->
+  <div class="settings-desktop-container" *ngIf="!responsiveService.isMobile()">
+    <aside class="settings-sidebar glass-panel">
+      <h1 class="sidebar-title">Impostazioni</h1>
+      <ul class="sidebar-nav">
+        <li [class.active]="activeTab() === 'account'" (click)="activeTab.set('account')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          Account
+        </li>
+        <li [class.active]="activeTab() === 'profiles'" (click)="activeTab.set('profiles')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          Profilo
+        </li>
+        <li [class.active]="activeTab() === 'playback'" (click)="activeTab.set('playback')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="10 8 16 12 10 16 10 8"></polygon>
+          </svg>
+          Riproduzione
+        </li>
+        <li [class.active]="activeTab() === 'favorites'" (click)="activeTab.set('favorites')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+            </path>
+          </svg>
+          Preferiti
+        </li>
+        <li [class.active]="activeTab() === 'notifications'" (click)="activeTab.set('notifications')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          Notifiche
+        </li>
+        <li [class.active]="activeTab() === 'appearance'" (click)="activeTab.set('appearance')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <path
+              d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4">
+            </path>
+          </svg>
+          Aspetto
+        </li>
+      </ul>
+    </aside>
+
+    <main class="settings-content glass-panel">
+      <!-- 1. FAVORITES TAB -->
+      <div class="tab-pane" [class.active]="activeTab() === 'favorites'">
+        <h2 class="section-title">Preferiti</h2>
+        <p class="section-desc">Personalizza il comportamento delle tue liste e collezioni.</p>
+
+        <div class="settings-group">
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Collezione Predefinita</h3>
+              <p>Scegli quale collezione si apre di default quando vai nei Preferiti.</p>
+            </div>
+            <div class="custom-select-wrapper">
+              <button class="custom-select-btn" [class.open]="isDefaultCollectionDropdownOpen()"
+                (click)="isDefaultCollectionDropdownOpen.set(!isDefaultCollectionDropdownOpen()); $event.stopPropagation()">
+                {{ defaultCollectionLabel }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  class="chevron">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="custom-select-dropdown popup-glass" [class.show]="isDefaultCollectionDropdownOpen()">
+                <div class="select-option" (click)="setDefaultCollection(null)">Tutti i preferiti (default)</div>
+                <div class="select-option" *ngFor="let c of collections()" (click)="setDefaultCollection(c.id)">
+                  {{ c.name }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Impostazioni Copertine</h3>
+              <p>Scegli un'immagine fissa per ogni collezione o lasciala dinamica.</p>
+            </div>
+            <button class="btn-glass-reset" (click)="setAllCollectionsDynamic()">
+              Ripristina a Dinamico
+            </button>
+          </div>
+
+          <div class="collection-hero-manager">
+            <!-- Tutti i preferiti -->
+            <div class="collection-hero-block glass-panel" style="padding: 24px; margin-bottom: 16px;">
+              <div class="setting-item" style="border-bottom: none; padding: 0;"
+                [style.cursor]="isCollectionEmpty('all') ? 'default' : 'pointer'"
+                [style.opacity]="isCollectionEmpty('all') ? '0.5' : '1'"
+                (click)="!isCollectionEmpty('all') && toggleCollectionHeroMode('all')">
+                <div class="setting-info">
+                  <h4>Tutti i preferiti (Generale)</h4>
+                  <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 4px;">{{
+                    isCollectionEmpty('all') ? 'Nessun film in questa collezione' : (getCollectionHeroMode('all') ===
+                    'fixed' ? 'Immagine Fissa' : 'Dinamica (Ultimo aggiunto)') }}</p>
+                </div>
+                <label class="switch" style="pointer-events: none;">
+                  <input type="checkbox" [checked]="getCollectionHeroMode('all') === 'fixed'"
+                    [disabled]="isCollectionEmpty('all')">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="hero-selector-wrapper" [class.open]="getCollectionHeroMode('all') === 'fixed'">
+                <div class="hero-selector mt-4" (mouseenter)="checkScrollButtons($event)">
+                  <button class="section-arrow-btn left" style="opacity: 0; pointer-events: none;"
+                    (click)="scrollSelector($event, 'left')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+                  <div class="history-hero-selector" (scroll)="checkScrollButtons($event)">
+                    <div class="hero-option" *ngFor="let item of itemsPerCollection().get('all') || []"
+                      [class.selected]="getCollectionFixedMediaId('all') === item.media_id"
+                      (click)="setCollectionFixedMediaId('all', item.media_id)">
+                      <div class="poster-placeholder" *ngIf="!item.poster_url"><span>{{ item.title }}</span></div>
+                      <img *ngIf="item.poster_url" [src]="item.poster_url" [alt]="item.title">
+                    </div>
+                  </div>
+                  <button class="section-arrow-btn right" style="opacity: 0; pointer-events: none;"
+                    (click)="scrollSelector($event, 'right')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Custom collections -->
+            <div class="collection-hero-block glass-panel" style="padding: 24px; margin-bottom: 16px;"
+              *ngFor="let c of collections()">
+              <div class="setting-item" style="border-bottom: none; padding: 0;"
+                [style.cursor]="isCollectionEmpty(c.id) ? 'default' : 'pointer'"
+                [style.opacity]="isCollectionEmpty(c.id) ? '0.5' : '1'"
+                (click)="!isCollectionEmpty(c.id) && toggleCollectionHeroMode(c.id)">
+                <div class="setting-info">
+                  <h4>{{ c.name }}</h4>
+                  <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 4px;">{{
+                    isCollectionEmpty(c.id) ? 'Nessun film in questa collezione' : (getCollectionHeroMode(c.id) ===
+                    'fixed' ? 'Immagine Fissa' : 'Dinamica (Ultimo aggiunto)') }}</p>
+                </div>
+                <label class="switch" style="pointer-events: none;">
+                  <input type="checkbox" [checked]="getCollectionHeroMode(c.id) === 'fixed'"
+                    [disabled]="isCollectionEmpty(c.id)">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="hero-selector-wrapper" [class.open]="getCollectionHeroMode(c.id) === 'fixed'">
+                <div class="hero-selector mt-4" (mouseenter)="checkScrollButtons($event)">
+                  <button class="section-arrow-btn left" style="opacity: 0; pointer-events: none;"
+                    (click)="scrollSelector($event, 'left')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+                  <div class="history-hero-selector" (scroll)="checkScrollButtons($event)">
+                    <div class="hero-option" *ngFor="let item of itemsPerCollection().get(c.id) || []"
+                      [class.selected]="getCollectionFixedMediaId(c.id) === item.media_id"
+                      (click)="setCollectionFixedMediaId(c.id, item.media_id)">
+                      <div class="poster-placeholder" *ngIf="!item.poster_url"><span>{{ item.title }}</span></div>
+                      <img *ngIf="item.poster_url" [src]="item.poster_url" [alt]="item.title">
+                    </div>
+                  </div>
+                  <button class="section-arrow-btn right" style="opacity: 0; pointer-events: none;"
+                    (click)="scrollSelector($event, 'right')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="settings-content-wrapper glass-panel">
-        <div class="settings-content">
-        
-        <!-- ACCOUNT E PIANO -->
-        @if (activeTab() === 'account') {
-          <div class="tab-pane fade-in">
-            <h2 style="margin-bottom: 24px;">Account</h2>
-            
-            <div class="bento-grid">
-              
-              <!-- Dettagli Personali -->
-              <div class="bento-item " style="animation-delay: 0.1s;">
-                <div class="bento-header">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                  <h3>Dettagli Personali</h3>
-                </div>
-                <div class="bento-row">
-                  <div class="bento-label">Nome</div>
-                  <div class="bento-value">Luca Rossi</div>
-                </div>
-                <div class="bento-row">
-                  <div class="bento-label">Data di Nascita</div>
-                  <div class="bento-value">15/04/1995</div>
-                </div>
-                <div class="bento-row">
-                  <div class="bento-label">Genere</div>
-                  <div class="bento-value">Uomo</div>
-                </div>
-                <div class="mt-4">
-                  <button class="btn-text-link">Modifica Dati</button>
-                </div>
-              </div>
-
-              <!-- Accesso e Sicurezza -->
-              <div class="bento-item " style="animation-delay: 0.2s;">
-                <div class="bento-header">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                  <h3>Accesso e Sicurezza</h3>
-                </div>
-                <div class="bento-row">
-                  <div class="bento-label">Email</div>
-                  <div class="bento-value">{{ profiles()[0].email }}</div>
-                </div>
-                <div class="bento-row">
-                  <div class="bento-label">Telefono</div>
-                  <div class="bento-value">+39 340 123 4567</div>
-                </div>
-                <div class="bento-row">
-                  <div class="bento-label">Password</div>
-                  <div class="bento-value">********</div>
-                </div>
-                <div class="mt-4 flex-row" style="justify-content: space-between;">
-                  <button class="btn-text-link">Aggiorna Password</button>
-                  <label class="toggle-switch">
-                    <input type="checkbox" checked>
-                    <span class="slider"></span>
-                  </label>
-                  <span class="bento-label" style="font-size: 12px; margin-left: -16px;">2FA</span>
-                </div>
-              </div>
-
-              <!-- Dispositivi Connessi -->
-              <div class="bento-item " style="animation-delay: 0.3s;">
-                <div class="bento-header">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                  <h3>Dispositivi Recenti</h3>
-                </div>
-                <div class="device-item">
-                  <div class="device-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
-                  </div>
-                  <div class="device-info">
-                    <div class="device-name">Smart TV Salotto</div>
-                    <div class="device-meta">Attivo ora • Milano, IT</div>
-                  </div>
-                </div>
-                <div class="device-item">
-                  <div class="device-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
-                  </div>
-                  <div class="device-info">
-                    <div class="device-name">iPhone 14 Pro</div>
-                    <div class="device-meta">Ieri alle 14:30 • Roma, IT</div>
-                  </div>
-                </div>
-                <div class="mt-4">
-                  <button class="btn-text-link">Disconnetti tutti i dispositivi</button>
-                </div>
-              </div>
-
-              <!-- Comunicazioni e Danger Zone -->
-              <div class="bento-item " style="animation-delay: 0.4s;">
-                  <div class="bento-header">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                    <h3>Preferenze Email</h3>
-                  </div>
-                  <div class="bento-row">
-                    <div class="bento-label">Riassunto Giornaliero Notifiche</div>
-                    <label class="toggle-switch">
-                      <input type="checkbox" [checked]="notificationService.emailDigestEnabled()" (change)="toggleEmailDigest()">
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-                  <div class="bento-row" style="margin-top: 1rem;">
-                    <button class="primary-btn" style="width: 100%;" (click)="generateTestNotification()">
-                      Genera Notifica di Prova
-                    </button>
-                  </div>
-                  <div class="bento-row">
-                    <div class="bento-label">Consigli su misura</div>
-                    <label class="toggle-switch">
-                      <input type="checkbox" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-                </div>
-
-                <div class="bento-item danger-zone " style="animation-delay: 0.5s;">
-                  <div class="bento-header">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                    <h3>Zona Pericolosa</h3>
-                  </div>
-                  <p class="bento-label mb-4">Questa azione è irreversibile. Tutti i tuoi dati, i profili e le tue preferenze verranno cancellati in modo permanente.</p>
-                  <button class="btn-danger-outline w-full" style="justify-content: center;">Elimina Definitivamente Account</button>
-                </div>
-
+      <!-- 2. NOTIFICATIONS TAB -->
+      <div class="tab-pane" [class.active]="activeTab() === 'notifications'">
+        <h2 class="section-title">Notifiche</h2>
+        <p class="section-desc">Gestisci le comunicazioni (Campanella ed Email).</p>
+        <div class="settings-group">
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Notifiche Generali (Campanella)</h3>
+              <p>Attiva o disattiva il sistema di notifiche integrato nell'app.</p>
             </div>
+            <label class="switch">
+              <input type="checkbox" [ngModel]="notifyBell" (ngModelChange)="notifyBell = $event">
+              <span class="slider"></span>
+            </label>
           </div>
-        }
-        
-        <!-- PROFILO -->
-        @if (activeTab() === 'profile') {
-          <div class="tab-pane fade-in">
-            <div class="centered-content-box">
-              <h2 class="text-center">Gestione Profili</h2>
-              
-              <div class="profile-selector-container mt-4">
-                <div class="profile-selector">
-                  @for (p of profiles(); track p.id) {
-                    <div class="profile-item" [class.active]="p.id === selectedProfileId()" (click)="selectProfile(p.id)">
-                      <img [src]="p.avatar" alt="Avatar">
-                      <span>{{ p.name }}</span>
-                    </div>
-                  }
-                </div>
-              </div>
-
-              <div class="setting-group-card mt-5 fade-in p-0">
-                <div class="profile-editor-layout p-5">
-                  <div class="profile-left-col">
-                    <img [src]="selectedProfile.avatar" alt="Avatar" class="mb-4" style="width: 160px; height: 160px; border-radius: 50%; object-fit: cover; border: 4px solid rgba(255,255,255,0.1); box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
-                    <h4 class="mb-3 font-medium">Scegli Avatar</h4>
-                    <div class="avatar-grid justify-center">
-                      @for (av of avatars; track av) {
-                        <img [src]="av" class="mini-avatar" [class.selected]="av === selectedProfile.avatar" (click)="selectedProfile.avatar = av">
-                      }
-                    </div>
-                  </div>
-                  
-                  <div class="profile-right-col">
-                    <div class="form-group">
-                      <label>Nome Utente</label>
-                      <input type="text" [(ngModel)]="selectedProfile.name" class="glass-input">
-                    </div>
-                    <div class="form-group">
-                      <label>Biografia / Descrizione</label>
-                      <textarea [(ngModel)]="selectedProfile.bio" class="glass-input textarea" rows="3"></textarea>
-                    </div>
-                    
-                    <div class="form-group mt-2">
-                      <label>Lingua App</label>
-                      <div class="custom-select" (click)="toggleDropdown('appLanguage'); $event.stopPropagation()">
-                        <div class="select-header">
-                          <span>{{ getOptionLabel(audioOptions, 'it') }}</span>
-                          <svg class="chevron" [class.rotated]="openDropdown() === 'appLanguage'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                        </div>
-                        @if (openDropdown() === 'appLanguage') {
-                          <div class="select-options fade-in-down">
-                            <div class="option selected" (click)="closeDropdowns(); $event.stopPropagation()">Italiano</div>
-                            <div class="option" (click)="closeDropdowns(); $event.stopPropagation()">Inglese</div>
-                          </div>
-                        }
-                      </div>
-                    </div>
-                    
-                    <div class="flex-row gap-4 mt-4">
-                      <button class="btn-primary flex-1">Salva Profilo</button>
-                      <button class="btn-danger-outline" (click)="deleteProfile()">Elimina Profilo</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <div class="setting-item" [class.disabled]="!notifyBell">
+            <div class="setting-info">
+              <h3>Novità Preferiti</h3>
+              <p>Notifiche ed Email quando escono nuovi episodi o stagioni dei tuoi preferiti.</p>
             </div>
+            <label class="switch">
+              <input type="checkbox" [ngModel]="notifyFavorites" (ngModelChange)="notifyFavorites = $event"
+                [disabled]="!notifyBell">
+              <span class="slider"></span>
+            </label>
           </div>
-        }
-
-        <!-- RIPRODUZIONE -->
-        @if (activeTab() === 'playback') {
-          <div class="tab-pane fade-in">
-            <div class="centered-content-box">
-              <h2 style="margin-bottom: 24px;">Impostazioni di Riproduzione</h2>
-              
-              <div class="setting-group-card mt-4">
-                <div class="form-group">
-                  <label>Qualità Video Predefinita</label>
-                  <div class="custom-select" (click)="toggleDropdown('quality'); $event.stopPropagation()">
-                    <div class="select-header">
-                      <span>{{ getOptionLabel(qualityOptions, playbackPrefs.quality) }}</span>
-                      <svg class="chevron" [class.rotated]="openDropdown() === 'quality'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </div>
-                    @if (openDropdown() === 'quality') {
-                      <div class="select-options fade-in-down">
-                        @for (opt of qualityOptions; track opt.value) {
-                          <div class="option" [class.selected]="playbackPrefs.quality === opt.value" (click)="playbackPrefs.quality = opt.value; closeDropdowns(); $event.stopPropagation()">
-                            {{ opt.label }}
-                          </div>
-                        }
-                      </div>
-                    }
-                  </div>
-                  <p class="helper-text mt-2">Uso dati stimato in 4K: circa 7GB per ora.</p>
-                </div>
-
-                <div class="preference-item mt-4 pt-4 border-top">
-                  <div class="pref-info">
-                    <h3>Riproduzione Automatica Episodi</h3>
-                    <p>Avvia l'episodio successivo senza pause.</p>
-                  </div>
-                  <label class="toggle-switch">
-                    <input type="checkbox" [(ngModel)]="playbackPrefs.autoplayNext">
-                    <span class="slider"></span>
-                  </label>
-                </div>
-
-                <div class="preference-item">
-                  <div class="pref-info">
-                    <h3>Anteprime e Trailer</h3>
-                    <p>Riproduci trailer automaticamente durante la navigazione.</p>
-                  </div>
-                  <label class="toggle-switch">
-                    <input type="checkbox" [(ngModel)]="playbackPrefs.autoplayTrailers">
-                    <span class="slider"></span>
-                  </label>
-                </div>
-
-                <div class="preference-item">
-                  <div class="pref-info">
-                    <h3>Salta Intro Automaticamente</h3>
-                    <p>Nasconde le sigle iniziali delle serie TV.</p>
-                  </div>
-                  <label class="toggle-switch">
-                    <input type="checkbox" [(ngModel)]="playbackPrefs.skipIntro">
-                    <span class="slider"></span>
-                  </label>
-                </div>
-              </div>
+          <div class="setting-item" [class.disabled]="!notifyBell">
+            <div class="setting-info">
+              <h3>Promemoria Cronologia</h3>
+              <p>Notifiche ed Email per ricordarti di continuare a guardare i tuoi film a metà.</p>
             </div>
+            <label class="switch">
+              <input type="checkbox" [ngModel]="notifyHistory" (ngModelChange)="notifyHistory = $event"
+                [disabled]="!notifyBell">
+              <span class="slider"></span>
+            </label>
           </div>
-        }
-
-        <!-- LINGUA E SOTTOTITOLI -->
-        @if (activeTab() === 'language') {
-          <div class="tab-pane fade-in">
-            <div class="centered-content-box">
-              <h2 style="margin-bottom: 24px;">Lingua e Sottotitoli</h2>
-              
-              <div class="setting-group-card">
-                <div class="flex-row gap-4">
-                  <div class="form-group flex-1">
-                    <label>Audio Predefinito</label>
-                    <div class="custom-select" (click)="toggleDropdown('audio'); $event.stopPropagation()">
-                    <div class="select-header">
-                      <span>{{ getOptionLabel(audioOptions, languagePrefs.audio) }}</span>
-                      <svg class="chevron" [class.rotated]="openDropdown() === 'audio'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </div>
-                    @if (openDropdown() === 'audio') {
-                      <div class="select-options fade-in-down">
-                        @for (opt of audioOptions; track opt.value) {
-                          <div class="option" [class.selected]="languagePrefs.audio === opt.value" (click)="languagePrefs.audio = opt.value; closeDropdowns(); $event.stopPropagation()">
-                            {{ opt.label }}
-                          </div>
-                        }
-                      </div>
-                    }
-                  </div>
-                  </div>
-                  
-                  <div class="form-group flex-1">
-                    <label>Sottotitoli Predefiniti</label>
-                    <div class="custom-select" (click)="toggleDropdown('subtitle'); $event.stopPropagation()">
-                    <div class="select-header">
-                      <span>{{ getOptionLabel(subtitleOptions, languagePrefs.subtitle) }}</span>
-                      <svg class="chevron" [class.rotated]="openDropdown() === 'subtitle'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </div>
-                    @if (openDropdown() === 'subtitle') {
-                      <div class="select-options fade-in-down">
-                        @for (opt of subtitleOptions; track opt.value) {
-                          <div class="option" [class.selected]="languagePrefs.subtitle === opt.value" (click)="languagePrefs.subtitle = opt.value; closeDropdowns(); $event.stopPropagation()">
-                            {{ opt.label }}
-                          </div>
-                        }
-                      </div>
-                    }
-                  </div>
-                  </div>
-                </div>
-
-                <div class="preference-item mt-3">
-                  <div class="pref-info">
-                    <h3>Mostra sempre Sottotitoli</h3>
-                    <p>Attiva i sottotitoli ogni volta che avvii un video.</p>
-                  </div>
-                  <label class="toggle-switch">
-                    <input type="checkbox" [(ngModel)]="languagePrefs.alwaysShowSubs">
-                    <span class="slider"></span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="setting-group-card mt-4">
-                <h3 class="group-title">Aspetto Sottotitoli</h3>
-                
-                <div class="subtitle-preview mt-3" [attr.data-size]="languagePrefs.subSize" [attr.data-style]="languagePrefs.subStyle">
-                  <div class="preview-bg"></div>
-                  <span class="sub-text">Così appariranno i sottotitoli a schermo.</span>
-                </div>
-
-                <div class="flex-row gap-4 mt-4">
-                  <div class="form-group flex-1">
-                    <label>Dimensione Testo</label>
-                    <div class="custom-select" (click)="toggleDropdown('subSize'); $event.stopPropagation()">
-                    <div class="select-header">
-                      <span>{{ getOptionLabel(sizeOptions, languagePrefs.subSize) }}</span>
-                      <svg class="chevron" [class.rotated]="openDropdown() === 'subSize'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </div>
-                    @if (openDropdown() === 'subSize') {
-                      <div class="select-options fade-in-down">
-                        @for (opt of sizeOptions; track opt.value) {
-                          <div class="option" [class.selected]="languagePrefs.subSize === opt.value" (click)="languagePrefs.subSize = opt.value; closeDropdowns(); $event.stopPropagation()">
-                            {{ opt.label }}
-                          </div>
-                        }
-                      </div>
-                    }
-                  </div>
-                  </div>
-                  
-                  <div class="form-group flex-1">
-                    <label>Stile Testo</label>
-                    <div class="custom-select" (click)="toggleDropdown('subStyle'); $event.stopPropagation()">
-                    <div class="select-header">
-                      <span>{{ getOptionLabel(styleOptions, languagePrefs.subStyle) }}</span>
-                      <svg class="chevron" [class.rotated]="openDropdown() === 'subStyle'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </div>
-                    @if (openDropdown() === 'subStyle') {
-                      <div class="select-options fade-in-down">
-                        @for (opt of styleOptions; track opt.value) {
-                          <div class="option" [class.selected]="languagePrefs.subStyle === opt.value" (click)="languagePrefs.subStyle = opt.value; closeDropdowns(); $event.stopPropagation()">
-                            {{ opt.label }}
-                          </div>
-                        }
-                      </div>
-                    }
-                  </div>
-                  </div>
-                </div>
-              </div>
+          <div class="setting-item" [class.disabled]="!notifyBell">
+            <div class="setting-info">
+              <h3>Raccomandazioni</h3>
+              <p>Notifiche ed Email con consigli personalizzati basati sui tuoi gusti.</p>
             </div>
+            <label class="switch">
+              <input type="checkbox" [ngModel]="notifyRecommendations" (ngModelChange)="notifyRecommendations = $event"
+                [disabled]="!notifyBell">
+              <span class="slider"></span>
+            </label>
           </div>
-        }
-
-        <!-- ASPETTO -->
-        @if (activeTab() === 'appearance') {
-          <div class="tab-pane fade-in">
-            <div class="centered-content-box">
-              <h2>Aspetto dell'App</h2>
-              <p class="subtitle mb-4">Scegli il tema preferito per DaisyMovie. L'impostazione "Dinamico" adatterà i colori in base al film in evidenza.</p>
-              
-              <div class="theme-cards mt-4">
-                <div class="theme-card" [class.active]="themeService.currentTheme() === 'dark'" (click)="setTheme('dark')">
-                  <div class="preview dark-preview"></div>
-                  <span>Scuro</span>
-                </div>
-                <div class="theme-card" [class.active]="themeService.currentTheme() === 'light'" (click)="setTheme('light')">
-                  <div class="preview light-preview"></div>
-                  <span>Chiaro</span>
-                </div>
-                <div class="theme-card" [class.active]="themeService.currentTheme() === 'dynamic'" (click)="setTheme('dynamic')">
-                  <div class="preview dynamic-preview"></div>
-                  <span>Dinamico</span>
-                </div>
-              </div>
-
-              <div style="border-top: 1px solid var(--border-color); margin-top: 48px; padding-top: 32px;">
-                <h3 class="mb-2" style="color: var(--text-color); font-size: 1.1rem; font-weight: 500;">Copertina Cronologia</h3>
-                <p class="subtitle mb-3">Scegli il film da visualizzare come immagine in evidenza nella pagina Cronologia.</p>
-                
-                <div class="history-hero-selector">
-                  <div class="hero-option" [class.selected]="preferencesService.historyHeroMovieId() === null" (click)="selectHistoryHero(null)">
-                    <div class="poster-placeholder">
-                      <span>Predefinito<br><small>(Ultimo Visto)</small></span>
-                    </div>
-                  </div>
-                  
-                  @for (movie of availableHistoryItems; track movie.id) {
-                    <div class="hero-option" [class.selected]="preferencesService.historyHeroMovieId() === movie.id" (click)="selectHistoryHero(movie.id)" [title]="movie.title">
-                      <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy">
-                    </div>
-                  }
-                </div>
-              </div>
-
-              <div class="mt-5 pt-4" style="border-top: 1px solid var(--border-color);">
-                <h3 class="mb-2" style="color: var(--text-color); font-size: 1.1rem; font-weight: 500;">Copertina Preferiti</h3>
-                <p class="subtitle mb-3">Scegli il film da visualizzare come immagine in evidenza nella pagina Preferiti.</p>
-                
-                <div class="history-hero-selector">
-                  <div class="hero-option" [class.selected]="preferencesService.favoritesHeroMovieId() === null" (click)="selectFavoritesHero(null)">
-                    <div class="poster-placeholder">
-                      <span>Predefinito<br><small>(Notte Stellata)</small></span>
-                    </div>
-                  </div>
-                  
-                  @for (movie of availableFavoritesItems; track movie.media_id) {
-                    <div class="hero-option" [class.selected]="preferencesService.favoritesHeroMovieId() === movie.media_id" (click)="selectFavoritesHero(movie.media_id)" [title]="movie.title">
-                      <img [src]="movie.poster_url" [alt]="movie.title" loading="lazy">
-                    </div>
-                  }
-                </div>
-              </div>
+          <div class="setting-item" [class.disabled]="!notifyBell">
+            <div class="setting-info">
+              <h3>Film in uscita (Campanella Home)</h3>
+              <p>Ricevi una notifica per i film e le serie in uscita di cui hai attivato il promemoria nella Home.</p>
             </div>
+            <label class="switch">
+              <input type="checkbox" [ngModel]="notifyUpcoming" (ngModelChange)="notifyUpcoming = $event"
+                [disabled]="!notifyBell">
+              <span class="slider"></span>
+            </label>
           </div>
-        }
-
-        <!-- FILTRO FAMIGLIA -->
-        @if (activeTab() === 'family') {
-          <div class="tab-pane fade-in">
-            <div class="centered-content-box">
-              <h2 class="text-center">Filtro Famiglia e Sicurezza</h2>
-              
-              <div class="profile-selector-container mt-4">
-                <div class="profile-selector">
-                  @for (p of profiles(); track p.id) {
-                    <div class="profile-item" [class.active]="p.id === selectedProfileId()" (click)="selectProfile(p.id)">
-                      <img [src]="p.avatar" alt="Avatar">
-                      <span>{{ p.name }}</span>
-                    </div>
-                  }
-                </div>
-              </div>
-
-              <div class="setting-group-card mt-5 fade-in">
-                <div class="card-header border-none pb-0">
-                  <h3 class="group-title">Limiti di Età per {{ selectedProfile.name }}</h3>
-                  <p class="helper-text mb-4">Imposta il limite massimo di età per i contenuti visibili da questo profilo.</p>
-                </div>
-                
-                <div class="rating-selector mt-2">
-                  <div class="rating-btn" [class.active]="selectedProfile.familyControls.maturityRating === 'Tutti'" (click)="selectedProfile.familyControls.maturityRating = 'Tutti'">Tutti</div>
-                  <div class="rating-btn" [class.active]="selectedProfile.familyControls.maturityRating === '7+'" (click)="selectedProfile.familyControls.maturityRating = '7+'">7+</div>
-                  <div class="rating-btn" [class.active]="selectedProfile.familyControls.maturityRating === '13+'" (click)="selectedProfile.familyControls.maturityRating = '13+'">13+</div>
-                  <div class="rating-btn" [class.active]="selectedProfile.familyControls.maturityRating === '16+'" (click)="selectedProfile.familyControls.maturityRating = '16+'">16+</div>
-                  <div class="rating-btn adult" [class.active]="selectedProfile.familyControls.maturityRating === '18+'" (click)="selectedProfile.familyControls.maturityRating = '18+'">18+</div>
-                </div>
-
-                <div class="preference-item mt-5 pt-4 border-top">
-                  <div class="pref-info">
-                    <h3>Blocco Profilo con PIN</h3>
-                    <p>Richiedi un PIN a 4 cifre per accedere a questo profilo.</p>
-                  </div>
-                  <label class="toggle-switch">
-                    <input type="checkbox" [(ngModel)]="selectedProfile.familyControls.pinRequired">
-                    <span class="slider"></span>
-                  </label>
-                </div>
-                
-                @if (selectedProfile.familyControls.pinRequired) {
-                  <div class="form-group mt-3 fade-in">
-                    <label>PIN (4 cifre)</label>
-                    <div class="pin-input-container">
-                      <input type="password" maxlength="1" class="pin-box" id="pin-0" [value]="pin()[0]" (input)="onPinInput($event, 0)" (keydown)="onPinKeydown($event, 0)">
-                      <input type="password" maxlength="1" class="pin-box" id="pin-1" [value]="pin()[1]" (input)="onPinInput($event, 1)" (keydown)="onPinKeydown($event, 1)">
-                      <input type="password" maxlength="1" class="pin-box" id="pin-2" [value]="pin()[2]" (input)="onPinInput($event, 2)" (keydown)="onPinKeydown($event, 2)">
-                      <input type="password" maxlength="1" class="pin-box" id="pin-3" [value]="pin()[3]" (input)="onPinInput($event, 3)" (keydown)="onPinKeydown($event, 3)">
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
-        }
         </div>
+
+        <h2 class="section-title" style="margin-top: 3rem;">Mantieni nello Storico</h2>
+        <p class="section-desc">Scegli quali notifiche mostrare nel pannello (anche se disabiliti l'invio e la ricezione
+          di nuove email).</p>
+        <div class="settings-group">
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Mostra Storico (Generale)</h3>
+              <p>Permetti di visualizzare le notifiche passate salvate nel database.</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" [ngModel]="showOldBell" (ngModelChange)="showOldBell = $event">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item" [class.disabled]="!showOldBell">
+            <div class="setting-info">
+              <h3>Mostra Storico: Novità Preferiti</h3>
+            </div>
+            <label class="switch">
+              <input type="checkbox" [ngModel]="showOldFavorites" (ngModelChange)="showOldFavorites = $event"
+                [disabled]="!showOldBell">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item" [class.disabled]="!showOldBell">
+            <div class="setting-info">
+              <h3>Mostra Storico: Promemoria Cronologia</h3>
+            </div>
+            <label class="switch">
+              <input type="checkbox" [ngModel]="showOldHistory" (ngModelChange)="showOldHistory = $event"
+                [disabled]="!showOldBell">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item" [class.disabled]="!showOldBell">
+            <div class="setting-info">
+              <h3>Mostra Storico: Raccomandazioni</h3>
+            </div>
+            <label class="switch">
+              <input type="checkbox" [ngModel]="showOldRecommendations"
+                (ngModelChange)="showOldRecommendations = $event" [disabled]="!showOldBell">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item" [class.disabled]="!showOldBell">
+            <div class="setting-info">
+              <h3>Mostra Storico: Film in uscita</h3>
+            </div>
+            <label class="switch">
+              <input type="checkbox" [ngModel]="showOldUpcoming" (ngModelChange)="showOldUpcoming = $event"
+                [disabled]="!showOldBell">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. APPEARANCE TAB -->
+      <div class="tab-pane" [class.active]="activeTab() === 'appearance'">
+        <h2 class="section-title">Aspetto</h2>
+        <p class="section-desc">Personalizza il design dell'interfaccia con un effetto vetro su misura.</p>
+
+        <div class="settings-group">
+          <!-- Colore Secondario -->
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Colore Secondario</h3>
+              <p>Scegli il colore di accento per bottoni e componenti attivi.</p>
+            </div>
+            <div class="color-picker">
+              <div class="color-swatch yellow" [class.active]="selectedSecondaryColor === 'yellow'"
+                (click)="setSecondaryColor('yellow')"></div>
+              <div class="color-swatch orange" [class.active]="selectedSecondaryColor === 'orange'"
+                (click)="setSecondaryColor('orange')"></div>
+              <div class="color-swatch red" [class.active]="selectedSecondaryColor === 'red'"
+                (click)="setSecondaryColor('red')"></div>
+            </div>
+          </div>
+
+          <!-- Glass Blur -->
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Sfocatura Vetro (Blur)</h3>
+              <p>Regola l'intensità della sfocatura per i pannelli principali.</p>
+            </div>
+            <input type="range" min="0" max="50" [ngModel]="glassBlur" (ngModelChange)="glassBlur = $event"
+              class="slider-input">
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Opacità Vetro</h3>
+              <p>Regola la trasparenza dello sfondo dei pannelli.</p>
+            </div>
+            <input type="range" min="0" max="100" [ngModel]="glassOpacity" (ngModelChange)="glassOpacity = $event"
+              class="slider-input">
+          </div>
+
+          <!-- Popup Glass Blur -->
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Sfocatura Popup</h3>
+              <p>Regola l'intensità della sfocatura per i popup scuri.</p>
+            </div>
+            <input type="range" min="0" max="50" [ngModel]="popupGlassBlur" (ngModelChange)="popupGlassBlur = $event"
+              class="slider-input">
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Opacità Popup</h3>
+              <p>Regola la trasparenza dello sfondo dei popup scuri.</p>
+            </div>
+            <input type="range" min="0" max="100" [ngModel]="popupGlassOpacity"
+              (ngModelChange)="popupGlassOpacity = $event" class="slider-input">
+          </div>
+
+          <div class="action-row">
+            <button class="btn btn-primary" (click)="resetAppearance()">Ripristina Default</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. PROFILE TAB -->
+      <div class="tab-pane" [class.active]="activeTab() === 'profiles'">
+        <h2 class="section-title">Profilo</h2>
+
+        <!-- File input nascosto -->
+        <input type="file" #profileFileInput (change)="onProfileFileSelected($event)" accept="image/*"
+          style="display:none">
+
+        <div class="profile-edit-container">
+
+          <!-- Current avatar preview + name + auto-save status -->
+          <div class="profile-hero">
+            <div class="profile-hero-avatar" (click)="triggerProfileFileUpload()" title="Cambia immagine">
+              <img [src]="profileAvatarInput() || 'assets/avatar/avatar1.jpg'" alt="Avatar corrente">
+              <div class="profile-hero-avatar-overlay">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </div>
+            </div>
+            <div class="profile-hero-info">
+              <div class="profile-hero-name">{{ profileNameInput() || 'Nome profilo' }}</div>
+              <div class="profile-hero-sub">Profilo attivo</div>
+            </div>
+            <!-- Auto-save status in alto a destra -->
+            <div class="autosave-status">
+              <span class="autosave-saving" *ngIf="isSavingProfile()">
+                <span class="btn-loader-dark"></span> Salvataggio...
+              </span>
+              <span class="autosave-saved" [class.visible]="saveSuccess()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Salvato
+              </span>
+            </div>
+          </div>
+
+          <!-- Avatar Picker -->
+          <div class="avatar-selector">
+            <h3 class="subsection-title">Scegli avatar</h3>
+            <div class="avatars-row">
+              <!-- Slot immagine custom dal dispositivo (primo) -->
+              <div class="avatar-option avatar-upload-slot" (click)="triggerProfileFileUpload()">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </div>
+
+              <div class="avatar-option" *ngFor="let av of availableAvatars"
+                [class.selected]="profileAvatarInput() === av" (click)="selectAvatar(av)">
+                <img [src]="av" alt="Avatar">
+                <div class="avatar-check" *ngIf="profileAvatarInput() === av">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Name input (auto-save) -->
+          <div class="info-editor">
+            <h3 class="subsection-title" style="margin-bottom: 0.9rem;">Nome del profilo</h3>
+            <input type="text" class="glass-input modern-input" [ngModel]="profileNameInput()"
+              (ngModelChange)="onNameChange($event)" placeholder="Inserisci il tuo nome">
+          </div>
+
+        </div>
+
+        <!-- Profile Stats Grid -->
+        <div class="profile-stats-grid">
+          <div class="profile-stat-card glass-card">
+            <div class="pstat-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div class="pstat-value">{{ profileStats().timeLabel }}</div>
+            <div class="pstat-label">Tempo visto</div>
+          </div>
+          <div class="profile-stat-card glass-card">
+            <div class="pstat-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                <line x1="7" y1="2" x2="7" y2="22"></line>
+                <line x1="17" y1="2" x2="17" y2="22"></line>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <line x1="2" y1="7" x2="7" y2="7"></line>
+                <line x1="2" y1="17" x2="7" y2="17"></line>
+                <line x1="17" y1="17" x2="22" y2="17"></line>
+                <line x1="17" y1="7" x2="22" y2="7"></line>
+              </svg>
+            </div>
+            <div class="pstat-value">{{ profileStats().movies }}</div>
+            <div class="pstat-label">Film</div>
+          </div>
+          <div class="profile-stat-card glass-card">
+            <div class="pstat-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+                <polyline points="17 2 12 7 7 2"></polyline>
+              </svg>
+            </div>
+            <div class="pstat-value">{{ profileStats().series }}</div>
+            <div class="pstat-label">Serie</div>
+          </div>
+          <div class="profile-stat-card glass-card">
+            <div class="pstat-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path
+                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                </path>
+              </svg>
+            </div>
+            <div class="pstat-value">{{ profileStats().favorites }}</div>
+            <div class="pstat-label">Preferiti</div>
+          </div>
+        </div>
+
+
+      </div>
+
+
+
+      <!-- 5. ACCOUNT TAB -->
+      <div class="tab-pane" [class.active]="activeTab() === 'account'">
+        <!-- SECTION 1: Informazioni Account -->
+        <h2 class="section-title">Informazioni dell'account</h2>
+        <p class="section-desc" style="margin-bottom: 1.5rem;">Dettagli principali del tuo profilo.</p>
+        
+        <div class="settings-group">
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Email</h3>
+              <p>{{authService.currentUser()?.email || 'Nessuna email'}}</p>
+            </div>
+          </div>
+          <div class="setting-item" *ngIf="authService.currentUser()?.formatted_created_at">
+            <div class="setting-info">
+              <h3>Data di registrazione</h3>
+              <p>{{authService.currentUser()?.formatted_created_at}}</p>
+            </div>
+          </div>
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3 style="color: #ef4444;">Elimina Account</h3>
+              <p>Azione irreversibile. Tutti i tuoi dati andranno persi.</p>
+            </div>
+            <button class="btn btn-danger" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);" (click)="isDeleteAccountModalOpen.set(true)">
+              Elimina
+            </button>
+          </div>
+        </div>
+
+        <!-- SECTION 2: Statistiche -->
+        <h2 class="section-title" style="margin-top: 3.5rem;">Statistiche</h2>
+        <p class="section-desc" style="margin-bottom: 1.5rem;">Riepilogo delle tue visioni e preferiti.</p>
+
+        <div class="stats-row">
+          <div class="stat-card glass-card">
+            <div class="stat-value">{{accountStats().totalWatched}}</div>
+            <div class="stat-label">Titoli Visti</div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-value">{{accountStats().totalTimeLabel}}</div>
+            <div class="stat-label">Tempo Totale</div>
+          </div>
+        </div>
+
+        <div class="stats-breakdown-grid" style="margin-top: 1.5rem;">
+          
+          <div class="stat-breakdown-card glass-card">
+            <div class="sbc-header">Film</div>
+            <div class="sbc-body">
+              <div class="sbc-item">
+                <span class="sbc-val">{{accountStats().film.timeLabel}}</span>
+                <span class="sbc-lab">visti</span>
+              </div>
+              <div class="sbc-item">
+                <span class="sbc-val">{{accountStats().film.favs}}</span>
+                <span class="sbc-lab">preferiti</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-breakdown-card glass-card">
+            <div class="sbc-header">Serie TV</div>
+            <div class="sbc-body">
+              <div class="sbc-item">
+                <span class="sbc-val">{{accountStats().serie.timeLabel}}</span>
+                <span class="sbc-lab">viste</span>
+              </div>
+              <div class="sbc-item">
+                <span class="sbc-val">{{accountStats().serie.favs}}</span>
+                <span class="sbc-lab">preferite</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-breakdown-card glass-card">
+            <div class="sbc-header">Animazione</div>
+            <div class="sbc-body">
+              <div class="sbc-item">
+                <span class="sbc-val">{{accountStats().animazione.timeLabel}}</span>
+                <span class="sbc-lab">vista</span>
+              </div>
+              <div class="sbc-item">
+                <span class="sbc-val">{{accountStats().animazione.favs}}</span>
+                <span class="sbc-lab">preferita</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-breakdown-card glass-card">
+            <div class="sbc-header">Anime</div>
+            <div class="sbc-body">
+              <div class="sbc-item">
+                <span class="sbc-val">{{accountStats().anime.timeLabel}}</span>
+                <span class="sbc-lab">visti</span>
+              </div>
+              <div class="sbc-item">
+                <span class="sbc-val">{{accountStats().anime.favs}}</span>
+                <span class="sbc-lab">preferiti</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 6. PLAYBACK TAB -->
+      <div class="tab-pane" [class.active]="activeTab() === 'playback'">
+        <h2 class="section-title">Riproduzione</h2>
+        <p class="section-desc">Gestisci le impostazioni audio e video.</p>
+
+        <div class="settings-group">
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Lingua Predefinita Generale</h3>
+              <p>Scegli la lingua per interfaccia e default.</p>
+            </div>
+            <div class="custom-select-wrapper">
+              <button class="custom-select-btn" [class.open]="isLanguageDropdownOpen()"
+                (click)="isLanguageDropdownOpen.set(!isLanguageDropdownOpen()); $event.stopPropagation()">
+                {{ languageLabel }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  class="chevron">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="custom-select-dropdown popup-glass" [class.show]="isLanguageDropdownOpen()">
+                <div class="select-option" *ngFor="let o of languageOptions" (click)="setLanguage(o.value)">
+                  {{ o.label }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Lingua Predefinita (Serie)</h3>
+              <p>Scegli la lingua audio predefinita per le serie.</p>
+            </div>
+            <div class="custom-select-wrapper">
+              <button class="custom-select-btn" [class.open]="isSeriesLanguageDropdownOpen()"
+                (click)="isSeriesLanguageDropdownOpen.set(!isSeriesLanguageDropdownOpen()); $event.stopPropagation()">
+                {{ defaultSeriesLanguageLabel }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  class="chevron">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="custom-select-dropdown popup-glass" [class.show]="isSeriesLanguageDropdownOpen()">
+                <div class="select-option" *ngFor="let o of languageOptions" (click)="setDefaultSeriesLanguage(o.value)">
+                  {{ o.label }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Lingua Predefinita (Film)</h3>
+              <p>Scegli la lingua audio predefinita per i film.</p>
+            </div>
+            <div class="custom-select-wrapper">
+              <button class="custom-select-btn" [class.open]="isFilmLanguageDropdownOpen()"
+                (click)="isFilmLanguageDropdownOpen.set(!isFilmLanguageDropdownOpen()); $event.stopPropagation()">
+                {{ defaultFilmLanguageLabel }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  class="chevron">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="custom-select-dropdown popup-glass" [class.show]="isFilmLanguageDropdownOpen()">
+                <div class="select-option" *ngFor="let o of languageOptions" (click)="setDefaultFilmLanguage(o.value)">
+                  {{ o.label }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="section-title" style="margin-top: 3rem;">Trailer</h2>
+        <p class="section-desc">Impostazioni specifiche per la riproduzione dei trailer (YouTube).</p>
+        
+        <div class="settings-group">
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Autoplay Trailer</h3>
+              <p>Avvia automaticamente i trailer.</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" [ngModel]="trailerAutoplay" (ngModelChange)="trailerAutoplay = $event">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Audio Muto di Default (Trailer)</h3>
+              <p>Fai partire i trailer in modalità muta.</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" [ngModel]="trailerMute" (ngModelChange)="trailerMute = $event">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Sottotitoli Automatici (Trailer)</h3>
+              <p>Abilita i sottotitoli di default nei trailer.</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" [ngModel]="trailerCaptions" (ngModelChange)="trailerCaptions = $event">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item" [class.disabled]="!trailerCaptions">
+            <div class="setting-info">
+              <h3>Lingua Sottotitoli (Trailer)</h3>
+              <p>Scegli la lingua per i sottotitoli dei trailer.</p>
+            </div>
+            <div class="custom-select-wrapper">
+              <button class="custom-select-btn" [class.open]="isTrailerLanguageDropdownOpen()"
+                (click)="isTrailerLanguageDropdownOpen.set(!isTrailerLanguageDropdownOpen()); $event.stopPropagation()"
+                [disabled]="!trailerCaptions">
+                {{ trailerCaptionLangLabel }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  class="chevron">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="custom-select-dropdown popup-glass" [class.show]="isTrailerLanguageDropdownOpen()">
+                <div class="select-option" *ngFor="let o of languageOptions" (click)="setTrailerCaptionLang(o.value)">
+                  {{ o.label }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Barra dei Controlli (Trailer)</h3>
+              <p>Mostra i controlli di riproduzione nel trailer.</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" [ngModel]="trailerControls" (ngModelChange)="trailerControls = $event">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Mobile Version Overlay -->
+  <app-settings-mobile *ngIf="responsiveService.isMobile()"></app-settings-mobile>
+
+  <!-- Modale Eliminazione Account -->
+  <div class="logout-modal-backdrop" *ngIf="isDeleteAccountModalOpen()" [class.closing]="isClosingModal()" (click)="closeDeleteModal()">
+    <div class="logout-modal-panel" (click)="$event.stopPropagation()">
+      <div class="logout-modal-header">
+        <div class="logout-icon-circle" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </div>
+        <h2>Elimina Account</h2>
+        <p>Sei sicuro di voler eliminare definitivamente il tuo account? Tutti i tuoi profili, preferiti, statistiche e recensioni andranno persi e niente sarà più recuperabile.</p>
+      </div>
+      
+      <div class="logout-modal-actions">
+        <button class="btn-danger" (click)="deleteAccount()" [disabled]="isDeletingAccount()">
+          <span *ngIf="!isDeletingAccount()">Elimina Definitivamente</span>
+          <span *ngIf="isDeletingAccount()">Eliminazione...</span>
+        </button>
+        <button class="btn-cancel" (click)="closeDeleteModal()">Annulla</button>
       </div>
     </div>
   </div>
-}
+</div>

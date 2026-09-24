@@ -13,6 +13,7 @@ const favoritesRouter = require('./src/routes/favorites');
 const historyRouter = require('./src/routes/history');
 const notificationsRouter = require('./src/routes/notifications');
 const followingRouter = require('./src/routes/following');
+const preferencesRouter = require('./src/routes/preferences');
 
 // Middleware
 app.use(cors());
@@ -26,6 +27,7 @@ app.use('/api/favorites', favoritesRouter);
 app.use('/api/history', historyRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/following', followingRouter);
+app.use('/api/preferences', preferencesRouter);
 
 // Configurazione Database PostgreSQL
 const pool = require('./src/db');

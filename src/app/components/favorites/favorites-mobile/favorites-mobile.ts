@@ -141,10 +141,10 @@ export class FavoritesMobile implements OnInit {
         items = [];
       }
     } else {
-      // General list: hide items the user has explicitly unchecked from "Tutti i preferiti"
+      // General list: only show items that are NOT in any custom collection
+      const customCols = this.favoritesService.collections();
       items = items.filter(item => {
-        const mediaKey = `${item.isSeries ? 'tv' : 'movie'}_${item.id}`;
-        return !this.preferencesService.isHiddenFromGeneral(mediaKey);
+        return !customCols.some(c => c.items.includes((item as any).favoriteId));
       });
     }
 
