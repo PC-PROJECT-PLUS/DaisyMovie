@@ -34,19 +34,20 @@ export class PreferencesService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private apiUrl = environment.apiUrl;
-  
+
   historyHeroMovieId = signal<number | null>(null);
   favoritesHeroMovieId = signal<number | null>(null);
   hiddenFromGeneral = signal<string[]>([]); // Array of "{mediaType}_{mediaId}"
-  
+
   // Nuove preferenze DB
-  theme = signal<'dark'|'light'|'dynamic'>('dynamic');
+  theme = signal<'dark' | 'light' | 'dynamic'>('dynamic');
   secondaryColor = signal<string>('yellow');
-  glassBlur = signal<number>(15);
-  glassOpacity = signal<number>(15);
-  popupGlassBlur = signal<number>(25);
-  popupGlassOpacity = signal<number>(45);
+  glassBlur = signal<number>(28);
+  glassOpacity = signal<number>(10);
+  popupGlassBlur = signal<number>(24);
+  popupGlassOpacity = signal<number>(8);
   globalBackgroundUrl = signal<string | null>(null);
+  settingsBackgroundUrl = signal<string | null>(null);
   defaultCollectionId = signal<number | null>(null);
   collectionHeroModes = signal<Record<string, any>>({});
   notifyBell = signal<boolean>(true);
@@ -54,7 +55,7 @@ export class PreferencesService {
   notifyHistory = signal<boolean>(true);
   notifyRecommendations = signal<boolean>(true);
   notifyUpcoming = signal<boolean>(true);
-  
+
   showOldBell = signal<boolean>(true);
   showOldFavorites = signal<boolean>(true);
   showOldHistory = signal<boolean>(true);
@@ -85,7 +86,7 @@ export class PreferencesService {
       if (savedHidden) {
         try {
           this.hiddenFromGeneral.set(JSON.parse(savedHidden));
-        } catch(e) {}
+        } catch (e) { }
       }
     }
   }
@@ -96,11 +97,12 @@ export class PreferencesService {
       if (prefs) {
         this.theme.set(prefs.theme || 'dynamic');
         this.secondaryColor.set(prefs.secondary_color || 'yellow');
-        this.glassBlur.set(prefs.glass_blur !== undefined ? prefs.glass_blur : 15);
-        this.glassOpacity.set(prefs.glass_opacity !== undefined ? prefs.glass_opacity : 15);
-        this.popupGlassBlur.set(prefs.popup_glass_blur !== undefined ? prefs.popup_glass_blur : 25);
-        this.popupGlassOpacity.set(prefs.popup_glass_opacity !== undefined ? prefs.popup_glass_opacity : 45);
+        this.glassBlur.set(prefs.glass_blur !== undefined ? prefs.glass_blur : 28);
+        this.glassOpacity.set(prefs.glass_opacity !== undefined ? prefs.glass_opacity : 10);
+        this.popupGlassBlur.set(prefs.popup_glass_blur !== undefined ? prefs.popup_glass_blur : 24);
+        this.popupGlassOpacity.set(prefs.popup_glass_opacity !== undefined ? prefs.popup_glass_opacity : 8);
         this.globalBackgroundUrl.set(prefs.global_background_url || null);
+        this.settingsBackgroundUrl.set(prefs.settings_background_url || null);
         this.defaultCollectionId.set(prefs.default_collection_id || null);
         this.collectionHeroModes.set(prefs.collection_hero_modes || {});
         this.notifyBell.set(prefs.notify_bell !== undefined ? prefs.notify_bell : true);
@@ -142,6 +144,7 @@ export class PreferencesService {
         popup_glass_blur: this.popupGlassBlur(),
         popup_glass_opacity: this.popupGlassOpacity(),
         global_background_url: this.globalBackgroundUrl(),
+        settings_background_url: this.settingsBackgroundUrl(),
         default_collection_id: this.defaultCollectionId(),
         collection_hero_modes: this.collectionHeroModes(),
         notify_bell: this.notifyBell(),

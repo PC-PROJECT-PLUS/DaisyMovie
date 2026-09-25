@@ -1,6 +1,6 @@
 <div class="settings-page"
-  [style.background-image]="preferencesService.globalBackgroundUrl() ? 'url(' + preferencesService.globalBackgroundUrl() + ')' : null"
-  [class.has-bg]="!!preferencesService.globalBackgroundUrl()">
+  [style.background-image]="displayBgUrl ? 'url(' + displayBgUrl + ')' : null"
+  [class.has-bg]="!!displayBgUrl">
 
   <!-- Desktop Version -->
   <div class="settings-desktop-container" *ngIf="!responsiveService.isMobile()">
@@ -314,22 +314,6 @@
         <p class="section-desc">Personalizza il design dell'interfaccia con un effetto vetro su misura.</p>
 
         <div class="settings-group">
-          <!-- Colore Secondario -->
-          <div class="setting-item">
-            <div class="setting-info">
-              <h3>Colore Secondario</h3>
-              <p>Scegli il colore di accento per bottoni e componenti attivi.</p>
-            </div>
-            <div class="color-picker">
-              <div class="color-swatch yellow" [class.active]="selectedSecondaryColor === 'yellow'"
-                (click)="setSecondaryColor('yellow')"></div>
-              <div class="color-swatch orange" [class.active]="selectedSecondaryColor === 'orange'"
-                (click)="setSecondaryColor('orange')"></div>
-              <div class="color-swatch red" [class.active]="selectedSecondaryColor === 'red'"
-                (click)="setSecondaryColor('red')"></div>
-            </div>
-          </div>
-
           <!-- Glass Blur -->
           <div class="setting-item">
             <div class="setting-info">
@@ -349,27 +333,126 @@
               class="slider-input">
           </div>
 
-          <!-- Popup Glass Blur -->
+          <div class="setting-item" style="border-bottom: none;">
+            <div class="setting-info">
+              <h3>Ripristina Effetto Vetro</h3>
+              <p>Reimposta sfocatura e opacità ai valori predefiniti.</p>
+            </div>
+            <button class="btn-glass-reset" (click)="resetAppearance()">
+              Ripristina
+            </button>
+          </div>
+        </div>
+
+        <h2 class="section-title" style="margin-top: 2rem;">Sfondo App</h2>
+        <p class="section-desc">Imposta uno sfondo personalizzato visibile in tutte le sezioni dell'app.</p>
+        
+        <div class="settings-group">
           <div class="setting-item">
             <div class="setting-info">
-              <h3>Sfocatura Popup</h3>
-              <p>Regola l'intensità della sfocatura per i popup scuri.</p>
+              <h3>Nessuno Sfondo</h3>
+              <p>Rimuovi lo sfondo per usare il tema dinamico standard.</p>
             </div>
-            <input type="range" min="0" max="50" [ngModel]="popupGlassBlur" (ngModelChange)="popupGlassBlur = $event"
-              class="slider-input">
+            <button class="btn-glass-reset" (click)="setGlobalBackgroundUrl(null)">
+              Rimuovi Sfondo
+            </button>
           </div>
 
           <div class="setting-item">
             <div class="setting-info">
-              <h3>Opacità Popup</h3>
-              <p>Regola la trasparenza dello sfondo dei popup scuri.</p>
+              <h3>Sfondo Impostazioni Personale</h3>
+              <p>Imposta un'immagine esclusiva per questa pagina.</p>
             </div>
-            <input type="range" min="0" max="100" [ngModel]="popupGlassOpacity"
-              (ngModelChange)="popupGlassOpacity = $event" class="slider-input">
+            <div style="display: flex; gap: 12px;">
+              <button class="btn-glass-reset" *ngIf="settingsBackgroundUrl" (click)="removeSettingsBackground()">
+                Rimuovi
+              </button>
+              <button class="btn-glass-reset" (click)="settingsBgInput.click()">
+                {{ settingsBackgroundUrl ? 'Cambia Immagine' : 'Carica Immagine' }}
+              </button>
+              <input type="file" accept="image/*" #settingsBgInput style="display: none" (change)="onSettingsBackgroundSelected($event)">
+            </div>
+          </div>
+        </div>
+
+        <div class="collection-hero-manager">
+          <h3 class="subsection-title" style="margin-top: 1.5rem; margin-bottom: 1rem;">Scegli tra i Preferiti</h3>
+          <div class="collection-hero-block glass-panel" style="padding: 16px; margin-top: 12px; border-radius: 16px;">
+            <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+              <div class="custom-select-wrapper" style="width: 100%;">
+                <button class="custom-select-btn" [class.open]="isGlobalBgCollectionDropdownOpen()" style="width: 100%"
+                  (click)="isGlobalBgCollectionDropdownOpen.set(!isGlobalBgCollectionDropdownOpen()); $event.stopPropagation()">
+                  {{ globalBgCollectionLabel }}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                <div class="custom-select-dropdown popup-glass" [class.show]="isGlobalBgCollectionDropdownOpen()">
+                  <div class="select-option" (click)="setGlobalBgCollection(null); isGlobalBgCollectionDropdownOpen.set(false)">
+                    Tutti i preferiti (default)
+                  </div>
+                  <div class="select-option" *ngFor="let c of collections()"
+                    (click)="setGlobalBgCollection(c.id); isGlobalBgCollectionDropdownOpen.set(false)">
+                    {{ c.name }}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="hero-selector-wrapper open" style="width: 100%;">
+                <div class="hero-selector mt-4" (mouseenter)="checkScrollButtons($event)">
+                  <button class="section-arrow-btn left" style="opacity: 0; pointer-events: none;"
+                    (click)="scrollSelector($event, 'left')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+                  <div class="history-hero-selector" (scroll)="checkScrollButtons($event)">
+                    <div class="hero-option backdrop-option" *ngFor="let item of (globalBgCollectionId() ? (itemsPerCollection().get(globalBgCollectionId() || 'all') || []) : (itemsPerCollection().get('all') || []))"
+                      [class.selected]="globalBackgroundUrl === item.backdrop_url"
+                      (click)="setGlobalBackgroundUrl(item.backdrop_url)">
+                      <div class="poster-placeholder" *ngIf="!item.backdrop_url"><span>{{ item.title }}</span></div>
+                      <img *ngIf="item.backdrop_url" [src]="item.backdrop_url" [alt]="item.title">
+                    </div>
+                  </div>
+                  <button class="section-arrow-btn right" style="opacity: 0; pointer-events: none;"
+                    (click)="scrollSelector($event, 'right')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="action-row">
-            <button class="btn btn-primary" (click)="resetAppearance()">Ripristina Default</button>
+          <h3 class="subsection-title" style="margin-top: 1.5rem; margin-bottom: 1rem;">Scegli dalla Cronologia</h3>
+          <div class="collection-hero-block glass-panel" style="padding: 16px; margin-top: 12px; border-radius: 16px;">
+            <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+              <div class="hero-selector-wrapper open" style="width: 100%;">
+                <div class="hero-selector mt-4" (mouseenter)="checkScrollButtons($event)">
+                  <button class="section-arrow-btn left" style="opacity: 0; pointer-events: none;"
+                    (click)="scrollSelector($event, 'left')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+                  <div class="history-hero-selector" (scroll)="checkScrollButtons($event)">
+                    <div class="hero-option backdrop-option" *ngFor="let item of recentHistoryItems()"
+                      [class.selected]="globalBackgroundUrl === item.backdrop_url"
+                      (click)="setGlobalBackgroundUrl(item.backdrop_url)">
+                      <div class="poster-placeholder" *ngIf="!item.backdrop_url"><span>{{ item.title }}</span></div>
+                      <img *ngIf="item.backdrop_url" [src]="item.backdrop_url" [alt]="item.title">
+                    </div>
+                  </div>
+                  <button class="section-arrow-btn right" style="opacity: 0; pointer-events: none;"
+                    (click)="scrollSelector($event, 'right')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

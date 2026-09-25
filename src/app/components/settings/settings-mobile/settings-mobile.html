@@ -1,6 +1,6 @@
 <div class="settings-mobile-container"
-  [style.background-image]="parent.preferencesService.globalBackgroundUrl() ? 'url(' + parent.preferencesService.globalBackgroundUrl() + ')' : null"
-  [class.has-bg]="!!parent.preferencesService.globalBackgroundUrl()">
+  [style.background-image]="parent.displayBgUrl ? 'url(' + parent.displayBgUrl + ')' : null"
+  [class.has-bg]="!!parent.displayBgUrl">
 
   <div class="mobile-header">
     <h1 class="page-title">Impostazioni</h1>
@@ -266,20 +266,10 @@
     <!-- 3. APPEARANCE TAB -->
     <div class="tab-pane" [class.active]="parent.activeTab() === 'appearance'">
       <div class="settings-group">
-        <div class="setting-item flex-col-start">
-          <div class="setting-info mb-2">
-            <h3>Colore Secondario</h3>
-          </div>
-          <div class="color-picker">
-            <div class="color-swatch yellow" [class.active]="parent.selectedSecondaryColor === 'yellow'"
-              (click)="parent.setSecondaryColor('yellow')"></div>
-            <div class="color-swatch orange" [class.active]="parent.selectedSecondaryColor === 'orange'"
-              (click)="parent.setSecondaryColor('orange')"></div>
-            <div class="color-swatch red" [class.active]="parent.selectedSecondaryColor === 'red'"
-              (click)="parent.setSecondaryColor('red')"></div>
-          </div>
+        <div class="settings-group-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 class="section-title" style="margin: 0 0 4px 0; font-size: 20px;">Aspetto</h2>
+          <p class="section-desc" style="margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 14px;">Personalizza il design dell'interfaccia con un effetto vetro su misura.</p>
         </div>
-
         <div class="setting-item flex-col-start">
           <div class="setting-info mb-2">
             <h3>Sfocatura Vetro (Blur)</h3>
@@ -296,25 +286,112 @@
             (ngModelChange)="parent.glassOpacity = $event" class="slider-input">
         </div>
 
+
+
+        <div class="setting-item flex-col-start" style="border-bottom: none;">
+          <div class="setting-info mb-2">
+            <h3>Ripristina Effetto Vetro</h3>
+            <p>Reimposta sfocatura e opacità ai valori predefiniti.</p>
+          </div>
+          <button class="btn-glass-reset" style="width: 100%; justify-content: center;" (click)="parent.resetAppearance()">Ripristina</button>
+        </div>
+      </div>
+
+      <div class="settings-group" style="margin-top: 1rem;">
+        <div class="settings-group-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 class="section-title" style="margin: 0 0 4px 0; font-size: 20px;">Sfondo App</h2>
+          <p class="section-desc" style="margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 14px;">Imposta uno sfondo personalizzato visibile in tutte le sezioni dell'app.</p>
+        </div>
+        
         <div class="setting-item flex-col-start">
           <div class="setting-info mb-2">
-            <h3>Sfocatura Popup</h3>
+            <h3>Nessuno Sfondo</h3>
+            <p>Rimuovi lo sfondo per usare il tema dinamico standard.</p>
           </div>
-          <input type="range" min="0" max="50" [ngModel]="parent.popupGlassBlur"
-            (ngModelChange)="parent.popupGlassBlur = $event" class="slider-input">
+          <button class="btn-glass-reset" style="width: 100%; justify-content: center;" (click)="parent.setGlobalBackgroundUrl(null)">
+            Rimuovi Sfondo
+          </button>
         </div>
 
-        <div class="setting-item flex-col-start">
+        <div class="setting-item flex-col-start" style="border-bottom: none;">
           <div class="setting-info mb-2">
-            <h3>Opacità Popup</h3>
+            <h3>Sfondo Impostazioni Personale</h3>
+            <p>Imposta un'immagine esclusiva per questa pagina.</p>
           </div>
-          <input type="range" min="0" max="100" [ngModel]="parent.popupGlassOpacity"
-            (ngModelChange)="parent.popupGlassOpacity = $event" class="slider-input">
+          <div style="display: flex; width: 100%; gap: 12px; margin-top: 0;">
+            <button class="btn-glass-reset" style="flex: 1; justify-content: center;" *ngIf="parent.settingsBackgroundUrl" (click)="parent.removeSettingsBackground()">
+              Rimuovi
+            </button>
+            <button class="btn-glass-reset" style="flex: 1; justify-content: center;" (click)="mobileSettingsBgInput.click()">
+              {{ parent.settingsBackgroundUrl ? 'Cambia' : 'Carica' }}
+            </button>
+            <input type="file" accept="image/*" #mobileSettingsBgInput style="display: none" (change)="parent.onSettingsBackgroundSelected($event)">
+          </div>
+        </div>
+      </div>
+
+      <div class="collection-hero-manager">
+        <div class="collection-hero-block glass-panel" style="padding: 16px; margin-top: 12px; border-radius: 16px;">
+          <div style="display: flex; flex-direction: column; width: 100%; gap: 12px;">
+            <div class="setting-info mb-2">
+              <h3>Scegli tra i Preferiti</h3>
+              <p>Seleziona un'immagine dalle tue collezioni.</p>
+            </div>
+            
+            <div class="custom-select-wrapper" style="width: 100%;">
+              <button class="custom-select-btn" [class.open]="parent.isGlobalBgCollectionDropdownOpen()" style="width: 100%"
+                (click)="parent.isGlobalBgCollectionDropdownOpen.set(!parent.isGlobalBgCollectionDropdownOpen()); $event.stopPropagation()">
+                {{ parent.globalBgCollectionLabel }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="custom-select-dropdown popup-glass" [class.show]="parent.isGlobalBgCollectionDropdownOpen()">
+                <div class="select-option" (click)="parent.setGlobalBgCollection(null); parent.isGlobalBgCollectionDropdownOpen.set(false)">
+                  Tutti i preferiti (default)
+                </div>
+                <div class="select-option" *ngFor="let c of parent.collections()"
+                  (click)="parent.setGlobalBgCollection(c.id); parent.isGlobalBgCollectionDropdownOpen.set(false)">
+                  {{ c.name }}
+                </div>
+              </div>
+            </div>
+            
+            <div class="hero-selector-wrapper open" style="width: 100%;">
+              <div class="hero-selector mt-4">
+                <div class="history-hero-selector">
+                  <div class="hero-option backdrop-option" *ngFor="let item of (parent.globalBgCollectionId() ? (parent.itemsPerCollection().get(parent.globalBgCollectionId() || 'all') || []) : (parent.itemsPerCollection().get('all') || []))"
+                    [class.selected]="parent.globalBackgroundUrl === item.backdrop_url"
+                    (click)="parent.setGlobalBackgroundUrl(item.backdrop_url)">
+                    <div class="poster-placeholder" *ngIf="!item.backdrop_url"><span>{{ item.title }}</span></div>
+                    <img *ngIf="item.backdrop_url" [src]="item.backdrop_url" [alt]="item.title">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="action-row">
-          <button class="btn btn-primary" style="width: 100%" (click)="parent.resetAppearance()">Ripristina
-            Default</button>
+        <div class="collection-hero-block glass-panel" style="padding: 16px; margin-top: 12px; border-radius: 16px;">
+          <div style="display: flex; flex-direction: column; width: 100%; gap: 12px;">
+            <div class="setting-info mb-2">
+              <h3>Scegli dalla Cronologia</h3>
+              <p>Seleziona un'immagine dai tuoi titoli più recenti.</p>
+            </div>
+            
+            <div class="hero-selector-wrapper open" style="width: 100%;">
+              <div class="hero-selector mt-4">
+                <div class="history-hero-selector">
+                  <div class="hero-option backdrop-option" *ngFor="let item of parent.recentHistoryItems()"
+                    [class.selected]="parent.globalBackgroundUrl === item.backdrop_url"
+                    (click)="parent.setGlobalBackgroundUrl(item.backdrop_url)">
+                    <div class="poster-placeholder" *ngIf="!item.backdrop_url"><span>{{ item.title }}</span></div>
+                    <img *ngIf="item.backdrop_url" [src]="item.backdrop_url" [alt]="item.title">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -70,36 +70,115 @@ export class Settings implements OnInit {
     this.isLanguageDropdownOpen.set(false);
     this.isSeriesLanguageDropdownOpen.set(false);
     this.isFilmLanguageDropdownOpen.set(false);
+    this.isGlobalBgCollectionDropdownOpen.set(false);
   }
 
   // --- APPEARANCE ---
-  get selectedSecondaryColor() {
-    return this.preferencesService.secondaryColor();
-  }
-  setSecondaryColor(color: string) {
-    this.preferencesService.secondaryColor.set(color);
-    this.preferencesService.savePreferences();
-  }
-
   get glassBlur() { return this.preferencesService.glassBlur(); }
   set glassBlur(val: number) { this.preferencesService.glassBlur.set(val); this.preferencesService.savePreferences(); }
 
   get glassOpacity() { return this.preferencesService.glassOpacity(); }
   set glassOpacity(val: number) { this.preferencesService.glassOpacity.set(val); this.preferencesService.savePreferences(); }
 
-  get popupGlassBlur() { return this.preferencesService.popupGlassBlur(); }
-  set popupGlassBlur(val: number) { this.preferencesService.popupGlassBlur.set(val); this.preferencesService.savePreferences(); }
-
-  get popupGlassOpacity() { return this.preferencesService.popupGlassOpacity(); }
-  set popupGlassOpacity(val: number) { this.preferencesService.popupGlassOpacity.set(val); this.preferencesService.savePreferences(); }
-
   resetAppearance() {
-    this.preferencesService.secondaryColor.set('yellow');
-    this.preferencesService.glassBlur.set(15);
-    this.preferencesService.glassOpacity.set(15);
-    this.preferencesService.popupGlassBlur.set(25);
-    this.preferencesService.popupGlassOpacity.set(45);
+    this.preferencesService.glassBlur.set(28);
+    this.preferencesService.glassOpacity.set(10);
     this.preferencesService.theme.set('dynamic');
+    this.preferencesService.savePreferences();
+  }
+
+  get globalBackgroundUrl() { return this.preferencesService.globalBackgroundUrl(); }
+  setGlobalBackgroundUrl(url: string | null) {
+    // Quando si seleziona uno sfondo globale, puliamo lo sfondo specifico delle impostazioni 
+    // così l'utente vede immediatamente il risultato della sua scelta.
+    if (url !== null) {
+      this.tempSettingsBgUrl = null;
+      this.preferencesService.settingsBackgroundUrl.set(null);
+    }
+    
+    this.preferencesService.globalBackgroundUrl.set(url);
+    this.preferencesService.savePreferences();
+  }
+
+  isGlobalBgCollectionDropdownOpen = signal(false);
+  globalBgCollectionId = signal<number | null>(null);
+
+  get globalBgCollectionLabel() {
+    if (!this.globalBgCollectionId()) return 'Tutti i preferiti (default)';
+    const c = this.collections().find((x: any) => x.id === this.globalBgCollectionId());
+    return c ? c.name : 'Tutti i preferiti (default)';
+  }
+
+  setGlobalBgCollection(id: number | null) {
+    this.globalBgCollectionId.set(id);
+  }
+
+  get settingsBackgroundUrl() { return this.preferencesService.settingsBackgroundUrl(); }
+
+  tempSettingsBgUrl: string | null = null;
+
+  get displayBgUrl() {
+    return this.tempSettingsBgUrl || this.preferencesService.settingsBackgroundUrl() || this.preferencesService.globalBackgroundUrl();
+  }
+
+  onSettingsBackgroundSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      
+      // Imposta subito un object URL per un'animazione CSS fluida
+      this.tempSettingsBgUrl = URL.createObjectURL(file);
+      
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const MAX_WIDTH = 1280;
+          const MAX_HEIGHT = 720;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            let quality = 0.7;
+            let compressed = canvas.toDataURL('image/jpeg', quality);
+            
+            // Loop per abbassare la qualità finché la stringa base64 è < 90KB (~120000 char)
+            // Questo previene l'errore 413 Payload Too Large dal backend Express (limite default 100KB)
+            while (compressed.length > 90000 && quality > 0.1) {
+              quality -= 0.1;
+              compressed = canvas.toDataURL('image/jpeg', quality);
+            }
+            
+            this.preferencesService.settingsBackgroundUrl.set(compressed);
+            this.preferencesService.savePreferences();
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  removeSettingsBackground() {
+    this.tempSettingsBgUrl = null;
+    this.preferencesService.settingsBackgroundUrl.set(null);
     this.preferencesService.savePreferences();
   }
 
@@ -239,14 +318,14 @@ export class Settings implements OnInit {
     const all = this.availableFavoritesItems();
     const customCols = this.collections();
     const map = new Map<number | 'all', any[]>();
-    
+
     // Create Sets for O(1) lookup instead of O(N) array includes
     const customColSets = customCols.map(c => new Set(c.items));
     const allCustomItems = new Set<string>();
     for (const s of customColSets) {
       s.forEach(id => allCustomItems.add(id));
     }
-    
+
     map.set('all', all.filter(item => {
       if (!item.id) return true;
       return !allCustomItems.has(item.id as string);
@@ -479,7 +558,7 @@ export class Settings implements OnInit {
     const categorize = (item: any) => {
       const isAnime = item.genres?.some((g: string) => g.toLowerCase().includes('anime'));
       const isAnim = item.genres?.some((g: string) => g.toLowerCase().includes('animazione') || g.toLowerCase().includes('animation'));
-      
+
       if (isAnime) return 'anime';
       if (isAnim) return 'animazione';
       if (item.media_type === 'movie') return 'film';

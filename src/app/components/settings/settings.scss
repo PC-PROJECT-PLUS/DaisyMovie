@@ -37,9 +37,9 @@
 }
 
 .glass-panel {
-  background: rgba(255, 255, 255, var(--glass-bg-opacity, 0.05));
-  backdrop-filter: blur(var(--glass-blur-amount, 15px));
-  -webkit-backdrop-filter: blur(var(--glass-blur-amount, 15px));
+  background: rgba(255, 255, 255, var(--glass-bg-opacity, 0.1));
+  backdrop-filter: blur(var(--glass-blur-amount, 28px)) saturate(200%) brightness(1.15);
+  -webkit-backdrop-filter: blur(var(--glass-blur-amount, 28px)) saturate(200%) brightness(1.15);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
   padding: 32px;
@@ -48,9 +48,9 @@
 }
 
 .popup-glass {
-  background: rgba(10, 10, 15, var(--popup-glass-opacity, 0.45));
-  backdrop-filter: blur(var(--popup-glass-blur, 25px));
-  -webkit-backdrop-filter: blur(var(--popup-glass-blur, 25px));
+  background: rgba(255, 255, 255, var(--popup-glass-opacity, 0.08));
+  backdrop-filter: blur(var(--popup-glass-blur, 24px)) saturate(200%);
+  -webkit-backdrop-filter: blur(var(--popup-glass-blur, 24px)) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
@@ -272,6 +272,11 @@
         background: rgba(0, 0, 0, 0.3);
         box-sizing: border-box;
         border: 2px solid transparent;
+
+        &.backdrop-option {
+          width: 160px;
+          height: 90px;
+        }
 
         img {
           width: 100%;
@@ -1252,7 +1257,7 @@
 
   &.closing {
     animation: fadeOut 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-    
+
     .logout-modal-panel {
       animation: slideDown 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
@@ -1295,7 +1300,7 @@
     justify-content: center;
     color: #fff;
     margin-bottom: 8px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   }
 
   h2 {
@@ -1335,13 +1340,13 @@
       background: rgba(239, 68, 68, 0.1);
       color: #ef4444;
       border: 1px solid rgba(239, 68, 68, 0.2);
-      
+
       &:hover {
         background: rgba(239, 68, 68, 0.15);
         border-color: rgba(239, 68, 68, 0.3);
         transform: translateY(-2px);
       }
-      
+
       &:active {
         transform: translateY(1px);
         background: rgba(239, 68, 68, 0.2);
@@ -1358,7 +1363,7 @@
     padding: 8px;
     cursor: pointer;
     transition: color 0.2s ease;
-    
+
     &:hover {
       color: #fff;
     }
@@ -1366,21 +1371,49 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; backdrop-filter: blur(0px); }
-  to { opacity: 1; backdrop-filter: blur(8px); }
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
 }
 
 @keyframes fadeOut {
-  from { opacity: 1; backdrop-filter: blur(8px); }
-  to { opacity: 0; backdrop-filter: blur(0px); }
+  from {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+
+  to {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes slideDown {
-  from { opacity: 1; transform: translateY(0) scale(1); }
-  to { opacity: 0; transform: translateY(15px) scale(0.95); }
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(15px) scale(0.95);
+  }
 }
