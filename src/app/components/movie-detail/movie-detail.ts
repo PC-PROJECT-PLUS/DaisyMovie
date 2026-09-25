@@ -191,7 +191,19 @@ export class MovieDetailComponent implements OnInit {
 
   onPlayerClosed() {
     this.playerVisible.set(false);
-    // Progress is now saved by VideoPlayerComponent internally via HistoryService
+    
+    // Refresh progress from history service
+    const m = this.movie();
+    if (m && isPlatformBrowser(this.platformId)) {
+      const historyItem = this.historyService.getResumeProgress(m.id, false);
+      if (historyItem && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
+        this.resumeProgress.set(historyItem.progress_seconds);
+        this.resumeText.set(`Riprendi da ${this.formatTime(historyItem.progress_seconds)}`);
+      } else {
+        this.resumeProgress.set(0);
+        this.resumeText.set('');
+      }
+    }
   }
 
   async openTrailer() {

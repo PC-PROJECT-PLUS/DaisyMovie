@@ -1,4 +1,4 @@
-import { Component, signal, inject, HostListener, ElementRef } from '@angular/core';
+import { Component, signal, inject, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Settings } from '../settings';
@@ -14,7 +14,13 @@ export class SettingsMobile {
   // We can just inject the parent Settings component to share all its logic!
   parent = inject(Settings);
   
+  @ViewChild('profileFileInput') profileFileInput?: ElementRef<HTMLInputElement>;
+  
   openDropdown = signal<string | null>(null);
+
+  triggerProfileFileUpload() {
+    this.profileFileInput?.nativeElement.click();
+  }
 
   toggleDropdown(dropdownName: string) {
     if (this.openDropdown() === dropdownName) {

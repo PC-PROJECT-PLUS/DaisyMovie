@@ -2,7 +2,7 @@
   [style.background-image]="parent.preferencesService.globalBackgroundUrl() ? 'url(' + parent.preferencesService.globalBackgroundUrl() + ')' : null"
   [class.has-bg]="!!parent.preferencesService.globalBackgroundUrl()">
 
-  <div class="mobile-header popup-glass">
+  <div class="mobile-header">
     <h1 class="page-title">Impostazioni</h1>
 
     <div class="mobile-tabs-scroll">
@@ -38,15 +38,20 @@
   <div class="mobile-content">
 
     <!-- 1. FAVORITES TAB -->
+    <!-- 1. FAVORITES TAB -->
     <div class="tab-pane" [class.active]="parent.activeTab() === 'favorites'">
       <div class="settings-group">
-        <div class="setting-item">
-          <div class="setting-info">
+        <div class="settings-group-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 class="section-title" style="margin: 0 0 4px 0; font-size: 20px;">Preferiti</h2>
+          <p class="section-desc" style="margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 14px;">Gestisci i tuoi preferiti e personalizza le copertine delle tue collezioni.</p>
+        </div>
+        <div class="setting-item flex-col-start">
+          <div class="setting-info mb-2">
             <h3>Collezione Predefinita</h3>
             <p>Scegli quale collezione si apre di default.</p>
           </div>
-          <div class="custom-select-wrapper">
-            <button class="custom-select-btn" [class.open]="openDropdown() === 'defaultCol'"
+          <div class="custom-select-wrapper" style="width: 100%;">
+            <button class="custom-select-btn" [class.open]="openDropdown() === 'defaultCol'" style="width: 100%"
               (click)="toggleDropdown('defaultCol'); $event.stopPropagation()">
               {{ parent.defaultCollectionLabel }}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -55,8 +60,7 @@
               </svg>
             </button>
             <div class="custom-select-dropdown popup-glass" [class.show]="openDropdown() === 'defaultCol'">
-              <div class="select-option" (click)="parent.setDefaultCollection(null); closeDropdowns()">Tutti i preferiti
-                (default)</div>
+              <div class="select-option" (click)="parent.setDefaultCollection(null); closeDropdowns()">Tutti i preferiti (default)</div>
               <div class="select-option" *ngFor="let c of parent.collections()"
                 (click)="parent.setDefaultCollection(c.id); closeDropdowns()">
                 {{ c.name }}
@@ -64,99 +68,73 @@
             </div>
           </div>
         </div>
-
-        <div class="setting-item">
-          <div class="setting-info">
+        <div class="setting-item flex-col-start" style="border-bottom: none;">
+          <div class="setting-info mb-2">
             <h3>Impostazioni Copertine</h3>
             <p>Scegli un'immagine fissa per ogni collezione o lasciala dinamica.</p>
           </div>
-          <button class="btn-glass-reset" (click)="parent.setAllCollectionsDynamic()">
+          <button class="btn-glass-reset" style="width: 100%; margin-top: 0.5rem; justify-content: center;" (click)="parent.setAllCollectionsDynamic()">
             Ripristina
           </button>
         </div>
+      </div>
 
-        <div class="collection-hero-manager">
-          <!-- Tutti i preferiti -->
-          <div class="collection-hero-block glass-panel" style="padding: 16px; margin-bottom: 12px; margin-top: 12px;">
-            <div class="setting-item" style="border-bottom: none; padding: 0;"
-              [style.cursor]="parent.isCollectionEmpty('all') ? 'default' : 'pointer'"
-              [style.opacity]="parent.isCollectionEmpty('all') ? '0.5' : '1'"
-              (click)="!parent.isCollectionEmpty('all') && parent.toggleCollectionHeroMode('all')">
-              <div class="setting-info">
-                <h4>Tutti i preferiti</h4>
-                <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 4px;">{{
-                  parent.isCollectionEmpty('all') ? 'Vuota' : (parent.getCollectionHeroMode('all') === 'fixed' ? 'Immagine Fissa' : 'Dinamica') }}</p>
-              </div>
-              <label class="switch" style="pointer-events: none;">
-                <input type="checkbox" [checked]="parent.getCollectionHeroMode('all') === 'fixed'" [disabled]="parent.isCollectionEmpty('all')">
-                <span class="slider"></span>
-              </label>
+      <div class="collection-hero-manager">
+        <!-- Tutti i preferiti -->
+        <div class="collection-hero-block glass-panel" style="padding: 16px; margin-bottom: 12px; border-radius: 16px;">
+          <div class="setting-item" style="border-bottom: none; padding: 0;"
+            [style.opacity]="parent.isCollectionEmpty('all') ? '0.5' : '1'">
+            <div class="setting-info">
+              <h4>Tutti i preferiti</h4>
+              <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 4px;">{{
+                parent.isCollectionEmpty('all') ? 'Vuota' : (parent.getCollectionHeroMode('all') === 'fixed' ? 'Immagine Fissa' : 'Dinamica') }}</p>
             </div>
-            <div class="hero-selector-wrapper" [class.open]="parent.getCollectionHeroMode('all') === 'fixed'">
-              <div class="hero-selector mt-4" (mouseenter)="parent.checkScrollButtons($event)">
-                <button class="section-arrow-btn left" style="opacity: 0; pointer-events: none;"
-                  (click)="parent.scrollSelector($event, 'left')">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                  </svg>
-                </button>
-                <div class="history-hero-selector" (scroll)="parent.checkScrollButtons($event)">
-                  <div class="hero-option" *ngFor="let item of parent.itemsPerCollection().get('all') || []"
-                    [class.selected]="parent.getCollectionFixedMediaId('all') === item.media_id"
-                    (click)="parent.setCollectionFixedMediaId('all', item.media_id)">
-                    <div class="poster-placeholder" *ngIf="!item.poster_url"><span>{{ item.title }}</span></div>
-                    <img *ngIf="item.poster_url" [src]="item.poster_url" [alt]="item.title">
-                  </div>
+            <label class="switch">
+              <input type="checkbox" [checked]="parent.getCollectionHeroMode('all') === 'fixed'" 
+                (change)="parent.toggleCollectionHeroMode('all')" 
+                [disabled]="parent.isCollectionEmpty('all')">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="hero-selector-wrapper" [class.open]="parent.getCollectionHeroMode('all') === 'fixed'">
+            <div class="hero-selector mt-4">
+              <div class="history-hero-selector">
+                <div class="hero-option" *ngFor="let item of parent.itemsPerCollection().get('all') || []"
+                  [class.selected]="parent.getCollectionFixedMediaId('all') === item.media_id"
+                  (click)="parent.setCollectionFixedMediaId('all', item.media_id)">
+                  <div class="poster-placeholder" *ngIf="!item.poster_url"><span>{{ item.title }}</span></div>
+                  <img *ngIf="item.poster_url" [src]="item.poster_url" [alt]="item.title">
                 </div>
-                <button class="section-arrow-btn right" style="opacity: 0; pointer-events: none;"
-                  (click)="parent.scrollSelector($event, 'right')">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-                </button>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Custom collections -->
-          <div class="collection-hero-block glass-panel" style="padding: 16px; margin-bottom: 12px;"
-            *ngFor="let c of parent.collections()">
-            <div class="setting-item" style="border-bottom: none; padding: 0;"
-              [style.cursor]="parent.isCollectionEmpty(c.id) ? 'default' : 'pointer'"
-              [style.opacity]="parent.isCollectionEmpty(c.id) ? '0.5' : '1'"
-              (click)="!parent.isCollectionEmpty(c.id) && parent.toggleCollectionHeroMode(c.id)">
-              <div class="setting-info">
-                <h4>{{ c.name }}</h4>
-                <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 4px;">{{
-                  parent.isCollectionEmpty(c.id) ? 'Vuota' : (parent.getCollectionHeroMode(c.id) === 'fixed' ? 'Immagine Fissa' : 'Dinamica') }}</p>
-              </div>
-              <label class="switch" style="pointer-events: none;">
-                <input type="checkbox" [checked]="parent.getCollectionHeroMode(c.id) === 'fixed'" [disabled]="parent.isCollectionEmpty(c.id)">
-                <span class="slider"></span>
-              </label>
+        <!-- Custom collections -->
+        <div class="collection-hero-block glass-panel" style="padding: 16px; margin-bottom: 12px; border-radius: 16px;" *ngFor="let c of parent.collections()">
+          <div class="setting-item" style="border-bottom: none; padding: 0;"
+            [style.opacity]="parent.isCollectionEmpty(c.id) ? '0.5' : '1'">
+            <div class="setting-info">
+              <h4>{{ c.name }}</h4>
+              <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 4px;">{{
+                parent.isCollectionEmpty(c.id) ? 'Vuota' : (parent.getCollectionHeroMode(c.id) === 'fixed' ? 'Immagine Fissa' : 'Dinamica') }}</p>
             </div>
-            <div class="hero-selector-wrapper" [class.open]="parent.getCollectionHeroMode(c.id) === 'fixed'">
-              <div class="hero-selector mt-4" (mouseenter)="parent.checkScrollButtons($event)">
-                <button class="section-arrow-btn left" style="opacity: 0; pointer-events: none;"
-                  (click)="parent.scrollSelector($event, 'left')">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                  </svg>
-                </button>
-                <div class="history-hero-selector" (scroll)="parent.checkScrollButtons($event)">
-                  <div class="hero-option" *ngFor="let item of parent.itemsPerCollection().get(c.id) || []"
-                    [class.selected]="parent.getCollectionFixedMediaId(c.id) === item.media_id"
-                    (click)="parent.setCollectionFixedMediaId(c.id, item.media_id)">
-                    <div class="poster-placeholder" *ngIf="!item.poster_url"><span>{{ item.title }}</span></div>
-                    <img *ngIf="item.poster_url" [src]="item.poster_url" [alt]="item.title">
-                  </div>
+            <label class="switch">
+              <input type="checkbox" [checked]="parent.getCollectionHeroMode(c.id) === 'fixed'" 
+                (change)="parent.toggleCollectionHeroMode(c.id)" 
+                [disabled]="parent.isCollectionEmpty(c.id)">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="hero-selector-wrapper" [class.open]="parent.getCollectionHeroMode(c.id) === 'fixed'">
+            <div class="hero-selector mt-4">
+              <div class="history-hero-selector">
+                <div class="hero-option" *ngFor="let item of parent.itemsPerCollection().get(c.id) || []"
+                  [class.selected]="parent.getCollectionFixedMediaId(c.id) === item.media_id"
+                  (click)="parent.setCollectionFixedMediaId(c.id, item.media_id)">
+                  <div class="poster-placeholder" *ngIf="!item.poster_url"><span>{{ item.title }}</span></div>
+                  <img *ngIf="item.poster_url" [src]="item.poster_url" [alt]="item.title">
                 </div>
-                <button class="section-arrow-btn right" style="opacity: 0; pointer-events: none;"
-                  (click)="parent.scrollSelector($event, 'right')">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-                </button>
               </div>
             </div>
           </div>
@@ -167,9 +145,14 @@
     <!-- 2. NOTIFICATIONS TAB -->
     <div class="tab-pane" [class.active]="parent.activeTab() === 'notifications'">
       <div class="settings-group">
+        <div class="settings-group-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 class="section-title" style="margin: 0 0 4px 0; font-size: 20px;">Notifiche</h2>
+          <p class="section-desc" style="margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 14px;">Gestisci le comunicazioni (Campanella ed Email).</p>
+        </div>
         <div class="setting-item">
           <div class="setting-info">
             <h3>Notifiche Generali (Campanella)</h3>
+            <p>Attiva o disattiva il sistema di notifiche integrato nell'app.</p>
           </div>
           <label class="switch">
             <input type="checkbox" [ngModel]="parent.notifyBell" (ngModelChange)="parent.notifyBell = $event">
@@ -179,6 +162,7 @@
         <div class="setting-item" [class.disabled]="!parent.notifyBell">
           <div class="setting-info">
             <h3>Novità Preferiti</h3>
+            <p>Notifiche ed Email quando escono nuovi episodi o stagioni dei tuoi preferiti.</p>
           </div>
           <label class="switch">
             <input type="checkbox" [ngModel]="parent.notifyFavorites" (ngModelChange)="parent.notifyFavorites = $event"
@@ -189,6 +173,7 @@
         <div class="setting-item" [class.disabled]="!parent.notifyBell">
           <div class="setting-info">
             <h3>Promemoria Cronologia</h3>
+            <p>Notifiche ed Email per ricordarti di continuare a guardare i tuoi film a metà.</p>
           </div>
           <label class="switch">
             <input type="checkbox" [ngModel]="parent.notifyHistory" (ngModelChange)="parent.notifyHistory = $event"
@@ -199,6 +184,7 @@
         <div class="setting-item" [class.disabled]="!parent.notifyBell">
           <div class="setting-info">
             <h3>Raccomandazioni</h3>
+            <p>Notifiche ed Email con consigli personalizzati basati sui tuoi gusti.</p>
           </div>
           <label class="switch">
             <input type="checkbox" [ngModel]="parent.notifyRecommendations"
@@ -209,6 +195,7 @@
         <div class="setting-item" [class.disabled]="!parent.notifyBell">
           <div class="setting-info">
             <h3>Film in uscita (Campanella Home)</h3>
+            <p>Ricevi una notifica per i film e le serie in uscita di cui hai attivato il promemoria nella Home.</p>
           </div>
           <label class="switch">
             <input type="checkbox" [ngModel]="parent.notifyUpcoming"
@@ -218,11 +205,15 @@
         </div>
       </div>
 
-      <h2 class="section-title" style="margin-top: 3rem;">Mantieni nello Storico</h2>
-      <div class="settings-group">
+      <div class="settings-group" style="margin-top: 1rem;">
+        <div class="settings-group-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 class="section-title" style="margin: 0 0 4px 0; font-size: 20px;">Mantieni nello Storico</h2>
+          <p class="section-desc" style="margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 14px;">Scegli quali notifiche mostrare nel pannello (anche se disabiliti l'invio e la ricezione di nuove email).</p>
+        </div>
         <div class="setting-item">
           <div class="setting-info">
             <h3>Mostra Storico (Generale)</h3>
+            <p>Permetti di visualizzare le notifiche passate salvate nel database.</p>
           </div>
           <label class="switch">
             <input type="checkbox" [ngModel]="parent.showOldBell" (ngModelChange)="parent.showOldBell = $event">
@@ -330,32 +321,131 @@
 
     <!-- 4. PROFILE TAB -->
     <div class="tab-pane" [class.active]="parent.activeTab() === 'profiles'">
-      <div class="profile-edit-container-mobile">
+      <!-- File input nascosto -->
+      <input type="file" #profileFileInput (change)="parent.onProfileFileSelected($event)" accept="image/*"
+        style="display:none">
+
+      <div class="profile-edit-container settings-group">
+        <div class="settings-group-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 class="section-title" style="margin: 0; font-size: 20px;">Profilo</h2>
+        </div>
+
+        <!-- Current avatar preview + name + auto-save status -->
+        <div class="profile-hero" style="margin-bottom: 1rem;">
+          <div class="profile-hero-avatar" (click)="triggerProfileFileUpload()" title="Cambia immagine">
+            <img [src]="parent.profileAvatarInput() || 'assets/avatar/avatar1.jpg'" alt="Avatar corrente">
+            <div class="profile-hero-avatar-overlay">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </div>
+          </div>
+          <div class="profile-hero-info">
+            <div class="profile-hero-name" style="text-shadow: 0 2px 8px rgba(0,0,0,0.4);">{{ parent.profileNameInput() || 'Nome profilo' }}</div>
+            <div class="profile-hero-sub" style="color: rgba(255,255,255,0.7);">Profilo attivo</div>
+          </div>
+          <!-- Auto-save status in alto a destra -->
+          <div class="autosave-status">
+            <span class="autosave-saving" *ngIf="parent.isSavingProfile()">
+              <span class="btn-loader-dark"></span> Salvataggio...
+            </span>
+            <span class="autosave-saved" [class.visible]="parent.saveSuccess()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Salvato
+            </span>
+          </div>
+        </div>
+
+        <!-- Avatar Picker -->
         <div class="avatar-selector">
-          <h3 class="subsection-title">Avatar</h3>
+          <h3 class="subsection-title">Scegli avatar</h3>
           <div class="avatars-row">
-            <div class="avatar-option" 
-                 *ngFor="let av of parent.availableAvatars" 
-                 [class.selected]="parent.profileAvatarInput() === av"
-                 (click)="parent.selectAvatar(av)">
+            <!-- Slot immagine custom dal dispositivo (primo) -->
+            <div class="avatar-option avatar-upload-slot" (click)="triggerProfileFileUpload()">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </div>
+
+            <div class="avatar-option" *ngFor="let av of parent.availableAvatars"
+              [class.selected]="parent.profileAvatarInput() === av" (click)="parent.selectAvatar(av)">
               <img [src]="av" alt="Avatar">
+              <div class="avatar-check" *ngIf="parent.profileAvatarInput() === av">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="info-editor" style="margin-top: 2rem;">
-          <h3 class="subsection-title">Nome del profilo</h3>
-          <input type="text" class="glass-input modern-input" [(ngModel)]="parent.profileNameInput" placeholder="Inserisci il tuo nome">
+        <!-- Name input (auto-save) -->
+        <div class="info-editor" style="margin-top: 1rem;">
+          <h3 class="subsection-title" style="margin-bottom: 0.75rem;">Nome del profilo</h3>
+          <input type="text" class="glass-input modern-input" [ngModel]="parent.profileNameInput()"
+            (ngModelChange)="parent.onNameChange($event)" placeholder="Inserisci il tuo nome">
         </div>
 
-        <div class="action-row" style="margin-top: 2.5rem;">
-          <button class="btn btn-primary btn-large" style="width: 100%"
-                  [disabled]="parent.profileNameInput().trim() === '' || parent.isSavingProfile()" 
-                  (click)="parent.saveCurrentProfile()">
-            <span *ngIf="!parent.isSavingProfile()">Salva Modifiche</span>
-            <span *ngIf="parent.isSavingProfile()">Salvataggio...</span>
-          </button>
+      </div>
+
+      <!-- Profile Stats Grid -->
+      <div class="settings-group" style="margin-top: 1rem;">
+        <div class="settings-group-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 class="section-title" style="margin: 0; font-size: 20px;">Statistiche Profilo</h2>
         </div>
+        <div class="profile-stats-grid">
+        <div class="profile-stat-card glass-card">
+          <div class="pstat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div class="pstat-value">{{ parent.profileStats().timeLabel }}</div>
+          <div class="pstat-label">Tempo visto</div>
+        </div>
+        <div class="profile-stat-card glass-card">
+          <div class="pstat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+              <line x1="7" y1="2" x2="7" y2="22"></line>
+              <line x1="17" y1="2" x2="17" y2="22"></line>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <line x1="2" y1="7" x2="7" y2="7"></line>
+              <line x1="2" y1="17" x2="7" y2="17"></line>
+              <line x1="17" y1="17" x2="22" y2="17"></line>
+              <line x1="17" y1="7" x2="22" y2="7"></line>
+            </svg>
+          </div>
+          <div class="pstat-value">{{ parent.profileStats().movies }}</div>
+          <div class="pstat-label">Film</div>
+        </div>
+        <div class="profile-stat-card glass-card">
+          <div class="pstat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+              <polyline points="17 2 12 7 7 2"></polyline>
+            </svg>
+          </div>
+          <div class="pstat-value">{{ parent.profileStats().series }}</div>
+          <div class="pstat-label">Serie</div>
+        </div>
+        <div class="profile-stat-card glass-card">
+          <div class="pstat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path
+                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+              </path>
+            </svg>
+          </div>
+          <div class="pstat-value">{{ parent.profileStats().favorites }}</div>
+          <div class="pstat-label">Preferiti</div>
+        </div>
+      </div>
       </div>
     </div>
 
@@ -363,8 +453,10 @@
     <div class="tab-pane" [class.active]="parent.activeTab() === 'account'">
       
       <!-- SECTION 1: Informazioni Account -->
-      <h2 class="section-title" style="margin-bottom: 1rem;">Informazioni account</h2>
       <div class="settings-group">
+        <div class="settings-group-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 class="section-title" style="margin: 0; font-size: 20px;">Informazioni account</h2>
+        </div>
         <div class="setting-item">
           <div class="setting-info">
             <h3>Email</h3>
@@ -389,9 +481,11 @@
       </div>
 
       <!-- SECTION 2: Statistiche -->
-      <h2 class="section-title" style="margin-top: 2rem; margin-bottom: 1rem;">Statistiche</h2>
-      
-      <div class="stats-row">
+      <div class="settings-group" style="margin-top: 1rem;">
+        <div class="settings-group-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 class="section-title" style="margin: 0; font-size: 20px;">Statistiche</h2>
+        </div>
+        <div class="stats-row">
         <div class="stat-card glass-card">
           <div class="stat-value">{{parent.accountStats().totalWatched}}</div>
           <div class="stat-label">Titoli Visti</div>
@@ -461,13 +555,88 @@
         </div>
 
       </div>
-
+      </div>
     </div>
 
     <!-- 6. PLAYBACK TAB -->
     <div class="tab-pane" [class.active]="parent.activeTab() === 'playback'">
-      <h2 class="section-title" style="margin-top: 1rem; margin-bottom: 1rem; font-size: 1.2rem;">Trailer</h2>
       <div class="settings-group">
+        <div class="settings-group-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 class="section-title" style="margin: 0 0 4px 0; font-size: 20px;">Riproduzione</h2>
+          <p class="section-desc" style="margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 14px;">Gestisci le impostazioni audio e video.</p>
+        </div>
+        <div class="setting-item flex-col-start">
+          <div class="setting-info mb-2">
+            <h3>Lingua Predefinita Generale</h3>
+            <p>Scegli la lingua per interfaccia e default.</p>
+          </div>
+          <div class="custom-select-wrapper" style="width: 100%;">
+            <button class="custom-select-btn" [class.open]="openDropdown() === 'generalLang'" style="width: 100%"
+              (click)="toggleDropdown('generalLang'); $event.stopPropagation()">
+              {{ parent.languageLabel }}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                class="chevron">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div class="custom-select-dropdown popup-glass" [class.show]="openDropdown() === 'generalLang'">
+              <div class="select-option" *ngFor="let o of parent.languageOptions" (click)="parent.setLanguage(o.value); closeDropdowns()">
+                {{ o.label }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-item flex-col-start">
+          <div class="setting-info mb-2">
+            <h3>Lingua Predefinita (Serie)</h3>
+            <p>Scegli la lingua audio predefinita per le serie.</p>
+          </div>
+          <div class="custom-select-wrapper" style="width: 100%;">
+            <button class="custom-select-btn" [class.open]="openDropdown() === 'seriesLang'" style="width: 100%"
+              (click)="toggleDropdown('seriesLang'); $event.stopPropagation()">
+              {{ parent.defaultSeriesLanguageLabel }}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                class="chevron">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div class="custom-select-dropdown popup-glass" [class.show]="openDropdown() === 'seriesLang'">
+              <div class="select-option" *ngFor="let o of parent.languageOptions" (click)="parent.setDefaultSeriesLanguage(o.value); closeDropdowns()">
+                {{ o.label }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-item flex-col-start">
+          <div class="setting-info mb-2">
+            <h3>Lingua Predefinita (Film)</h3>
+            <p>Scegli la lingua audio predefinita per i film.</p>
+          </div>
+          <div class="custom-select-wrapper" style="width: 100%;">
+            <button class="custom-select-btn" [class.open]="openDropdown() === 'filmLang'" style="width: 100%"
+              (click)="toggleDropdown('filmLang'); $event.stopPropagation()">
+              {{ parent.defaultFilmLanguageLabel }}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                class="chevron">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div class="custom-select-dropdown popup-glass" [class.show]="openDropdown() === 'filmLang'">
+              <div class="select-option" *ngFor="let o of parent.languageOptions" (click)="parent.setDefaultFilmLanguage(o.value); closeDropdowns()">
+                {{ o.label }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group" style="margin-top: 1rem;">
+        <div class="settings-group-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 class="section-title" style="margin: 0 0 4px 0; font-size: 20px;">Trailer</h2>
+          <p class="section-desc" style="margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 14px;">Impostazioni specifiche per la riproduzione dei trailer (YouTube).</p>
+        </div>
         <div class="setting-item">
           <div class="setting-info">
             <h3>Autoplay Trailer</h3>

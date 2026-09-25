@@ -164,6 +164,90 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     return `${s}s`;
   }
 
+  // Keep track of which items are already extracting colors so we don't spam
+  private extractingColorMap = new Set<string>();
+
+  extractDominantColors(imageUrl: string): Promise<{ primary: string, secondary: string }> {
+    return new Promise((resolve) => {
+      const defaultColors = { primary: '#0075ff', secondary: '#ff5e00' };
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const size = 50;
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d')!;
+          ctx.drawImage(img, 0, 0, size, size);
+          const data = ctx.getImageData(0, 0, size, size).data;
+
+          let rSum = 0, gSum = 0, bSum = 0, count = 0;
+          const validPixels = [];
+          for (let i = 0; i < data.length; i += 16) {
+            const r = data[i], g = data[i + 1], b = data[i + 2];
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const saturation = max === 0 ? 0 : (max - min) / max;
+
+            if (max > 20 && max < 250 && saturation > 0.1) {
+              validPixels.push({ r, g, b });
+              rSum += r; gSum += g; bSum += b; count++;
+            }
+          }
+
+          if (count > 0) {
+            const pR = Math.round(rSum / count);
+            const pG = Math.round(gSum / count);
+            const pB = Math.round(bSum / count);
+
+            let rSum2 = 0, gSum2 = 0, bSum2 = 0, count2 = 0;
+            for (const p of validPixels) {
+              const diff = Math.abs(p.r - pR) + Math.abs(p.g - pG) + Math.abs(p.b - pB);
+              if (diff > 100) {
+                rSum2 += p.r; gSum2 += p.g; bSum2 += p.b; count2++;
+              }
+            }
+
+            const primary = `hsl(${rgbToHsl(pR, pG, pB)[0]}, 85%, 55%)`;
+            let secondary = defaultColors.secondary;
+            if (count2 > 0) {
+              const sR = Math.round(rSum2 / count2);
+              const sG = Math.round(gSum2 / count2);
+              const sB = Math.round(bSum2 / count2);
+              secondary = `hsl(${rgbToHsl(sR, sG, sB)[0]}, 85%, 55%)`;
+            }
+
+            resolve({ primary, secondary });
+          } else {
+            resolve(defaultColors);
+          }
+        } catch (e) {
+          resolve(defaultColors);
+        }
+      };
+      img.onerror = () => resolve(defaultColors);
+      img.src = imageUrl;
+    });
+
+    function rgbToHsl(r: number, g: number, b: number) {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h = 0, s = 0, l = (max + min) / 2;
+      if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+    }
+  }
+
   continueWatchingList = computed(() => {
     return this.historyService.items()
       .filter(item => item.progress_seconds && item.progress_seconds > 0)
@@ -186,7 +270,24 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         }
 
         let accentColor = item.accent_color || '#3a86ef';
-        // if accentColor is HSL, we can use it directly in CSS. If it's hex, also fine.
+        
+        // Healing for bad fallback colors in older items
+        if (accentColor === '#3a86ef' || accentColor === '#E50914' || !item.accent_color) {
+           const mapKey = `${item.media_type}_${item.media_id}`;
+           if (isPlatformBrowser(this.platformId) && !this.extractingColorMap.has(mapKey)) {
+             this.extractingColorMap.add(mapKey);
+             
+             // Run asynchronously to extract and update DB
+             const imageUrl = item.backdrop_url || item.poster_url;
+             if (imageUrl) {
+               this.extractDominantColors(imageUrl).then(colors => {
+                 if (colors.primary.startsWith('hsl')) {
+                   this.historyService.updateItemColor(item.media_id, item.media_type, colors.primary);
+                 }
+               });
+             }
+           }
+        }
 
         return {
           id: item.media_id,

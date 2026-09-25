@@ -140,6 +140,40 @@ export class HistoryService {
     }
   }
 
+  async updateItemColor(mediaId: number, mediaType: string, accentColor: string) {
+    const profile = this.authService.selectedProfile();
+    if (!profile) return;
+    
+    this.items.update(curr => curr.map(i => {
+      if (i.media_id === mediaId && i.media_type === mediaType) {
+        return { ...i, accent_color: accentColor };
+      }
+      return i;
+    }));
+    
+    // Just trigger a save to backend with the existing progress but new color
+    const item = this.items().find(i => i.media_id === mediaId && i.media_type === mediaType);
+    if (item) {
+      try {
+        await firstValueFrom(this.http.post(`${this.apiUrl}/history`, {
+          profileId: profile.id,
+          mediaId: item.media_id,
+          mediaType: item.media_type,
+          title: item.title,
+          posterUrl: item.poster_url,
+          backdropUrl: item.backdrop_url,
+          progressSeconds: item.progress_seconds,
+          season: item.season,
+          episode: item.episode,
+          totalSeconds: item.total_seconds,
+          accentColor: accentColor
+        }));
+      } catch (err) {
+        // ignore
+      }
+    }
+  }
+
   // --- EPISODE-SPECIFIC PROGRESS METHODS ---
 
   async loadEpisodeProgress(mediaId: number): Promise<EpisodeProgress[]> {

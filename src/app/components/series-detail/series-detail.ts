@@ -118,6 +118,15 @@ export class SeriesDetailComponent implements OnInit {
   suggestedPage = 1;
   isLoadingSuggested = false;
 
+  private formatTime(seconds: number): string {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  }
+
   resumeProgress = signal<number>(0);
   resumeText = signal<string>('');
   resumeSeason = signal<number>(1);
@@ -203,7 +212,34 @@ export class SeriesDetailComponent implements OnInit {
   onPlayerClosed() {
     this.playerVisible.set(false);
 
-    // Progress is now saved by VideoPlayerComponent internally via HistoryService
+    // Refresh progress from history service
+    const s = this.series();
+    if (s && isPlatformBrowser(this.platformId)) {
+      const historyItem = this.historyService.getResumeProgress(s.id, true);
+      
+      // Load per-episode progress to refresh the episodes list progress bars
+      this.historyService.loadEpisodeProgress(s.id).then(progress => {
+        this.allEpisodesProgress.set(progress);
+        const season = this.activeSeason();
+        const cached = this.episodesBySeason().get(season);
+        if (cached) {
+          this.showEpisodesWithAnimation(cached, true);
+        }
+      });
+
+      if (historyItem && historyItem.progress_seconds !== undefined && historyItem.progress_seconds > 0) {
+        this.resumeProgress.set(historyItem.progress_seconds);
+        if (historyItem.season !== undefined && historyItem.episode !== undefined) {
+          this.resumeText.set(`Riprendi S${historyItem.season}E${historyItem.episode} da ${this.formatTime(historyItem.progress_seconds)}`);
+          // We don't automatically change the active season here on close to avoid jarring UI jumps
+        } else {
+          this.resumeText.set(`Riprendi da ${this.formatTime(historyItem.progress_seconds)}`);
+        }
+      } else {
+        this.resumeProgress.set(0);
+        this.resumeText.set('');
+      }
+    }
   }
 
   async openTrailer() {

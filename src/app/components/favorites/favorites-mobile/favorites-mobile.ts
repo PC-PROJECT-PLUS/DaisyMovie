@@ -122,7 +122,29 @@ export class FavoritesMobile implements OnInit {
     const items = this.filteredItems();
     if (items.length === 0) return this.heroImage;
 
-    const heroMovie = items[0];
+    const activeColId = this.activeCollectionId();
+    const modes = this.preferencesService.collectionHeroModes();
+    
+    let mode = 'dynamic';
+    let fixedMediaId = null;
+    
+    if (activeColId === null) {
+      mode = modes['all']?.mode || 'dynamic';
+      fixedMediaId = modes['all']?.mediaId || null;
+    } else {
+      mode = modes[activeColId]?.mode || 'dynamic';
+      fixedMediaId = modes[activeColId]?.mediaId || null;
+    }
+
+    let heroMovie = items[0];
+    
+    if (mode === 'fixed' && fixedMediaId !== null) {
+      const fixedMovie = items.find(m => m.id === fixedMediaId);
+      if (fixedMovie) {
+        heroMovie = fixedMovie;
+      }
+    }
+
     const url = heroMovie.backdropUrl || heroMovie.posterUrl;
     return url ? url.replace('w=500', 'w=1920') : this.heroImage;
   });
@@ -175,6 +197,10 @@ export class FavoritesMobile implements OnInit {
   });
 
   ngOnInit() {
+    const defaultCol = this.preferencesService.defaultCollectionId();
+    if (defaultCol !== null) {
+      this.activeCollectionId.set(defaultCol);
+    }
     setTimeout(() => {
       this.pageLoaded.set(true);
     }, 50);
