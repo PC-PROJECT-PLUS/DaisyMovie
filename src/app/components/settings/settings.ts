@@ -1,5 +1,7 @@
-import { Component, signal, inject, computed, effect, HostListener, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, signal, inject, computed, effect, HostListener, ElementRef, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ConnectedPosition, Overlay, OverlayModule, ScrollStrategy } from '@angular/cdk/overlay';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { Title } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { ResponsiveService } from '../../services/responsive';
@@ -10,14 +12,19 @@ import { HistoryService } from '../../services/history.service';
 import { AuthService } from '../../services/auth.service';
 import { LoaderService } from '../../services/loader.service';
 
+interface SettingsDropdownOption {
+  label: string;
+  value: string | number | null;
+}
+
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, SettingsMobile],
+  imports: [CommonModule, FormsModule, SettingsMobile, OverlayModule, ScrollingModule],
   templateUrl: './settings.html',
   styleUrl: './settings.scss'
 })
-export class Settings implements OnInit {
+export class Settings implements OnInit, OnDestroy {
   responsiveService = inject(ResponsiveService);
   titleService = inject(Title);
   preferencesService = inject(PreferencesService);
@@ -25,6 +32,7 @@ export class Settings implements OnInit {
   historyService = inject(HistoryService);
   authService = inject(AuthService);
   loaderService = inject(LoaderService);
+  private overlay = inject(Overlay);
 
   activeTab = signal<'favorites' | 'notifications' | 'appearance' | 'profiles' | 'account' | 'playback'>('account');
 
@@ -48,6 +56,24 @@ export class Settings implements OnInit {
   isLanguageDropdownOpen = signal(false);
   isSeriesLanguageDropdownOpen = signal(false);
   isFilmLanguageDropdownOpen = signal(false);
+  activeSettingsDropdown = signal<string | null>(null);
+  settingsDropdownAttached = signal(false);
+  settingsDropdownExpanded = signal(false);
+  settingsDropdownLabel = signal('');
+  settingsDropdownOptions = signal<SettingsDropdownOption[]>([]);
+  settingsDropdownWidth = signal(220);
+  settingsDropdownOrigin = signal<ElementRef<HTMLElement> | null>(null);
+  fallbackOverlayOrigin: ElementRef<HTMLElement>;
+  settingsDropdownPositions: ConnectedPosition[] = [
+    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'top' },
+    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'bottom' },
+    { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'top' },
+    { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'bottom' }
+  ];
+  settingsDropdownScrollStrategy: ScrollStrategy = this.overlay.scrollStrategies.reposition();
+  private dropdownCloseTimer: ReturnType<typeof setTimeout> | null = null;
+  private dropdownDetachTimer: ReturnType<typeof setTimeout> | null = null;
+  private dropdownOpenFrame = 0;
   languageOptions = [
     { value: 'it', label: 'Italiano' },
     { value: 'en', label: 'Inglese' },
@@ -55,6 +81,7 @@ export class Settings implements OnInit {
   ];
 
   constructor(private elementRef: ElementRef) {
+    this.fallbackOverlayOrigin = new ElementRef(elementRef.nativeElement);
     this.titleService.setTitle('Impostazioni');
   }
 
@@ -64,6 +91,12 @@ export class Settings implements OnInit {
 
   @HostListener('document:click', ['$event'])
   onClickOutside(event: Event) {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.settings-select-anchor, .settings-global-dropdown-panel, .custom-select-wrapper')) return;
+
+    this.closeSettingsDropdown();
+    if (this.elementRef.nativeElement.contains(event.target)) return;
+
     this.isHistoryDropdownOpen.set(false);
     this.isFavoritesDropdownOpen.set(false);
     this.isDefaultCollectionDropdownOpen.set(false);
@@ -71,6 +104,88 @@ export class Settings implements OnInit {
     this.isSeriesLanguageDropdownOpen.set(false);
     this.isFilmLanguageDropdownOpen.set(false);
     this.isGlobalBgCollectionDropdownOpen.set(false);
+  }
+
+  openSettingsDropdown(
+    event: MouseEvent,
+    key: string,
+    label: string,
+    options: SettingsDropdownOption[],
+    width = 220
+  ) {
+    const trigger = event.currentTarget as HTMLElement;
+    this.cancelSettingsDropdownClose();
+    if (this.dropdownDetachTimer) {
+      clearTimeout(this.dropdownDetachTimer);
+      this.dropdownDetachTimer = null;
+    }
+
+    const triggerWidth = trigger.getBoundingClientRect().width;
+    this.settingsDropdownOrigin.set(new ElementRef(trigger));
+    this.settingsDropdownWidth.set(Math.max(width, triggerWidth));
+    this.settingsDropdownLabel.set(label);
+    this.settingsDropdownOptions.set(options);
+
+    if (this.activeSettingsDropdown() === key && this.settingsDropdownAttached()) {
+      this.settingsDropdownExpanded.set(true);
+      return;
+    }
+
+    this.activeSettingsDropdown.set(key);
+    this.settingsDropdownExpanded.set(false);
+    this.settingsDropdownAttached.set(true);
+    if (this.dropdownOpenFrame) cancelAnimationFrame(this.dropdownOpenFrame);
+    this.dropdownOpenFrame = requestAnimationFrame(() => {
+      this.dropdownOpenFrame = 0;
+      if (this.settingsDropdownAttached()) this.settingsDropdownExpanded.set(true);
+    });
+  }
+
+  scheduleSettingsDropdownClose() {
+    this.cancelSettingsDropdownClose();
+    this.dropdownCloseTimer = setTimeout(() => this.closeSettingsDropdown(), 80);
+  }
+
+  cancelSettingsDropdownClose() {
+    if (this.dropdownCloseTimer) {
+      clearTimeout(this.dropdownCloseTimer);
+      this.dropdownCloseTimer = null;
+    }
+  }
+
+  closeSettingsDropdown() {
+    this.cancelSettingsDropdownClose();
+    if (!this.settingsDropdownAttached()) return;
+    if (this.dropdownOpenFrame) {
+      cancelAnimationFrame(this.dropdownOpenFrame);
+      this.dropdownOpenFrame = 0;
+    }
+    this.settingsDropdownExpanded.set(false);
+    if (this.dropdownDetachTimer) clearTimeout(this.dropdownDetachTimer);
+    this.dropdownDetachTimer = setTimeout(() => {
+      this.settingsDropdownAttached.set(false);
+      this.activeSettingsDropdown.set(null);
+      this.settingsDropdownOrigin.set(null);
+      this.dropdownDetachTimer = null;
+    }, 300);
+  }
+
+  selectSettingsDropdownOption(option: SettingsDropdownOption) {
+    switch (this.activeSettingsDropdown()) {
+      case 'defaultCollection': this.setDefaultCollection(option.value as number | null); break;
+      case 'globalBackgroundCollection': this.setGlobalBgCollection(option.value as number | null); break;
+      case 'language': this.setLanguage(option.value as string); break;
+      case 'seriesLanguage': this.setDefaultSeriesLanguage(option.value as string); break;
+      case 'filmLanguage': this.setDefaultFilmLanguage(option.value as string); break;
+      case 'trailerLanguage': this.setTrailerCaptionLang(option.value as string); break;
+    }
+    this.closeSettingsDropdown();
+  }
+
+  ngOnDestroy() {
+    this.cancelSettingsDropdownClose();
+    if (this.dropdownDetachTimer) clearTimeout(this.dropdownDetachTimer);
+    if (this.dropdownOpenFrame) cancelAnimationFrame(this.dropdownOpenFrame);
   }
 
   // --- APPEARANCE ---
@@ -102,11 +217,27 @@ export class Settings implements OnInit {
 
   isGlobalBgCollectionDropdownOpen = signal(false);
   globalBgCollectionId = signal<number | null>(null);
+  trackGlobalBackdropItem = (index: number, item: any) =>
+    `${this.globalBgCollectionId() ?? 'all'}:${item.media_id ?? index}`;
 
   get globalBgCollectionLabel() {
     if (!this.globalBgCollectionId()) return 'Tutti i preferiti (default)';
     const c = this.collections().find((x: any) => x.id === this.globalBgCollectionId());
     return c ? c.name : 'Tutti i preferiti (default)';
+  }
+
+  get defaultCollectionOptions(): SettingsDropdownOption[] {
+    return [
+      { label: 'Tutti i preferiti (default)', value: null },
+      ...this.collections().map(collection => ({ label: collection.name, value: collection.id }))
+    ];
+  }
+
+  get globalBgCollectionOptions(): SettingsDropdownOption[] {
+    return [
+      { label: 'Tutti i preferiti (default)', value: null },
+      ...this.collections().map(collection => ({ label: collection.name, value: collection.id }))
+    ];
   }
 
   setGlobalBgCollection(id: number | null) {

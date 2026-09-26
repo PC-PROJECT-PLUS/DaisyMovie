@@ -360,7 +360,7 @@
             <div class="hero-selector-wrapper open" style="width: 100%;">
               <div class="hero-selector mt-4">
                 <div class="history-hero-selector">
-                  <div class="hero-option backdrop-option" *ngFor="let item of (parent.globalBgCollectionId() ? (parent.itemsPerCollection().get(parent.globalBgCollectionId() || 'all') || []) : (parent.itemsPerCollection().get('all') || []))"
+                  <div class="hero-option backdrop-option" *ngFor="let item of (parent.globalBgCollectionId() ? (parent.itemsPerCollection().get(parent.globalBgCollectionId() || 'all') || []) : (parent.itemsPerCollection().get('all') || [])); trackBy: parent.trackGlobalBackdropItem"
                     [class.selected]="parent.globalBackgroundUrl === item.backdrop_url"
                     (click)="parent.setGlobalBackgroundUrl(item.backdrop_url)">
                     <div class="poster-placeholder" *ngIf="!item.backdrop_url"><span>{{ item.title }}</span></div>

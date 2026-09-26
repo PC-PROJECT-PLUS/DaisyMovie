@@ -33,10 +33,12 @@ export class SettingsMobile {
   closeDropdowns() {
     this.openDropdown.set(null);
   }
-  constructor(private elementRef: ElementRef) {}
-
   @HostListener('document:click', ['$event'])
   onClickOutside(event: Event) {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.custom-select-wrapper')) return;
+
     this.closeDropdowns();
+    this.parent.isGlobalBgCollectionDropdownOpen.set(false);
   }
 }

@@ -14,6 +14,13 @@
   --accent-blue: #0075ff;
   --accent-blue-hover: #268aff;
 
+  --settings-select-trigger-bg: rgba(42, 44, 50, 0.72);
+  --settings-select-trigger-active-bg: rgba(54, 56, 63, 0.78);
+  --settings-select-panel-bg: rgba(46, 48, 54, 0.84);
+  --settings-select-option-bg: rgba(24, 26, 32, 0.46);
+  --settings-select-option-hover-bg: rgba(56, 59, 67, 0.68);
+  --settings-select-option-active-bg: rgba(64, 67, 75, 0.76);
+
   --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 
@@ -22,6 +29,28 @@
   --radius-lg: 18px;
   --radius-xl: 24px;
   --radius-full: 9999px;
+}
+
+@keyframes settingsBackdropCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-option.backdrop-option {
+    animation: none !important;
+  }
+}
+
+.cdk-overlay-pane.settings-dropdown-overlay-pane {
+  z-index: 1001 !important;
 }
 
 *,
