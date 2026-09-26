@@ -8,8 +8,8 @@ import { environment } from '../../environments/environment';
 })
 export class TmdbService {
   private http = inject(HttpClient);
-  // URL del nostro backend locale (aggiornalo se cambi porta o dominio)
-  private BFF_URL = 'http://localhost:3000/api/movies';
+  // URL del backend: dinamico dall'environment
+  private BFF_URL = `${environment.apiUrl}/movies`;
   private homeCache = new Map<string, any>();
 
   /**
