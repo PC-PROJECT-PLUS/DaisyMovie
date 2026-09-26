@@ -31,6 +31,11 @@ app.use('/api/preferences', preferencesRouter);
 
 // Configurazione Database PostgreSQL
 const pool = require('./src/db');
+// Endpoint ultraleggero per UptimeRobot / Ping di monitoraggio (Consumo DB: 0)
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
+});
+
 // Endpoint di test per verificare che il server funzioni
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Il server backend di DaisyMovie è in esecuzione!' });
