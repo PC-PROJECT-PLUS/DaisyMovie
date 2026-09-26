@@ -62,46 +62,44 @@ export class AuthComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private googleClient: any;
 
+  private initGoogleClient() {
+    if (typeof google !== 'undefined' && google?.accounts?.oauth2) {
+      this.googleClient = google.accounts.oauth2.initCodeClient({
+        client_id: environment.googleClientId,
+        scope: 'email profile openid',
+        ux_mode: 'popup',
+        callback: async (response: any) => {
+          if (response.error) {
+            console.error('Google OAuth error response:', response);
+            this.errorMsg.set(`Errore Google: ${response.error_description || response.error}`);
+            return;
+          }
+          if (response.code) {
+            this.isLoading.set(true);
+            try {
+              await this.authService.loginWithGoogleCode(response.code);
+            } catch (err: any) {
+              console.error('Login backend error:', err);
+              this.errorMsg.set(err.error?.error || 'Errore durante il login con Google');
+            } finally {
+              this.isLoading.set(false);
+            }
+          }
+        },
+        error_callback: (nonOAuthErr: any) => {
+          console.error('Google Client non-OAuth error:', nonOAuthErr);
+          this.errorMsg.set(`Errore popup Google: ${nonOAuthErr.message || nonOAuthErr.type || 'finestra chiusa o bloccata'}`);
+        }
+      });
+    }
+  }
+
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
-      // Check if google is available (script loaded)
-      const initGoogle = () => {
-        if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-          this.googleClient = google.accounts.oauth2.initCodeClient({
-            client_id: environment.googleClientId,
-            scope: 'email profile openid',
-            ux_mode: 'popup',
-            callback: async (response: any) => {
-              if (response.error) {
-                console.error('Google OAuth error response:', response);
-                this.errorMsg.set(`Errore Google: ${response.error_description || response.error}`);
-                return;
-              }
-              if (response.code) {
-                this.isLoading.set(true);
-                try {
-                  await this.authService.loginWithGoogleCode(response.code);
-                } catch (err: any) {
-                  console.error('Login backend error:', err);
-                  this.errorMsg.set(err.error?.error || 'Errore durante il login con Google');
-                } finally {
-                  this.isLoading.set(false);
-                }
-              }
-            },
-            error_callback: (nonOAuthErr: any) => {
-              console.error('Google Client non-OAuth error:', nonOAuthErr);
-              this.errorMsg.set(`Errore popup Google: ${nonOAuthErr.message || nonOAuthErr.type || 'finestra chiusa o bloccata'}`);
-            }
-          });
-        }
-      };
-
       if (typeof google !== 'undefined') {
-        initGoogle();
+        this.initGoogleClient();
       } else {
-        // Fallback if the script takes slightly longer to load
-        window.addEventListener('load', initGoogle);
+        window.addEventListener('load', () => this.initGoogleClient());
       }
     }
   }
@@ -322,9 +320,19 @@ export class AuthComponent implements OnInit, AfterViewInit, OnDestroy {
   async loginWithProvider(provider: 'google' | 'apple') {
     if (provider === 'google') {
       if (this.googleClient) {
+        this.errorMsg.set('');
         this.googleClient.requestCode();
       } else {
-        this.errorMsg.set('Servizio di login Google non pronto.');
+        // Tentativo di inizializzazione on-demand se lo script era in ritardo
+        if (typeof google !== 'undefined' && google?.accounts?.oauth2) {
+          this.initGoogleClient();
+          if (this.googleClient) {
+            this.errorMsg.set('');
+            this.googleClient.requestCode();
+            return;
+          }
+        }
+        this.errorMsg.set('Servizio di login Google non pronto. Ricarica la pagina.');
       }
     } else {
       this.errorMsg.set('Provider non supportato.');
