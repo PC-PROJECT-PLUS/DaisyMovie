@@ -72,16 +72,26 @@ export class AuthComponent implements OnInit, AfterViewInit, OnDestroy {
             scope: 'email profile openid',
             ux_mode: 'popup',
             callback: async (response: any) => {
+              if (response.error) {
+                console.error('Google OAuth error response:', response);
+                this.errorMsg.set(`Errore Google: ${response.error_description || response.error}`);
+                return;
+              }
               if (response.code) {
                 this.isLoading.set(true);
                 try {
                   await this.authService.loginWithGoogleCode(response.code);
                 } catch (err: any) {
-                  this.errorMsg.set('Errore durante il login con Google');
+                  console.error('Login backend error:', err);
+                  this.errorMsg.set(err.error?.error || 'Errore durante il login con Google');
                 } finally {
                   this.isLoading.set(false);
                 }
               }
+            },
+            error_callback: (nonOAuthErr: any) => {
+              console.error('Google Client non-OAuth error:', nonOAuthErr);
+              this.errorMsg.set(`Errore popup Google: ${nonOAuthErr.message || nonOAuthErr.type || 'finestra chiusa o bloccata'}`);
             }
           });
         }
@@ -217,7 +227,8 @@ export class AuthComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       }
     } catch (err: any) {
-      this.errorMsg.set(err.error?.error || 'Si è verificato un errore.');
+      console.error('submitEmail error:', err);
+      this.errorMsg.set(err.error?.error || (err.message ? `Errore di rete: ${err.status || ''} ${err.message}` : 'Si è verificato un errore di connessione.'));
     } finally {
       this.isLoading.set(false);
     }
