@@ -284,13 +284,19 @@ export class NotificationService {
           profileId: profile.id,
           mediaId: idNum,
           mediaType,
-          title,
-          posterUrl,
-          backdropUrl
+          title: title || 'Titolo Sconosciuto',
+          posterUrl: posterUrl || '',
+          backdropUrl: backdropUrl || ''
         }));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling following state:', error);
+      // Se il backend risponde con 409 Conflict (già seguito), la nostra UI ha fatto la cosa giusta 
+      // aggiungendolo ottimisticamente. Non dobbiamo fare il revert!
+      if (!isFollowing && error.status === 409) {
+        return;
+      }
+      
       // Revert optimistic update on failure
       this.upcomingNotifiedIds.update(set => {
         const newSet = new Set(set);

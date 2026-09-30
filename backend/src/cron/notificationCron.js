@@ -42,7 +42,7 @@ const processDailyReleases = async () => {
     console.log(`[CRON] Trovati ${releases.length} media in uscita oggi.`);
 
     for (const release of releases) {
-      const { profile_id, media_id, title, profile_name, user_email, notify_bell, notify_upcoming } = release;
+      const { profile_id, media_id, media_type, title, profile_name, user_email, notify_bell, notify_upcoming } = release;
       
       if (!notify_bell || !notify_upcoming) {
         console.log(`[CRON] Notifiche disabilitate per il profilo ${profile_name}. Salto l'invio.`);
