@@ -528,6 +528,11 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
       document.exitFullscreen().catch(() => { });
       this.isFullscreen.set(false);
     }
+    // Save progress immediately before the parent component processes the close event
+    if (this.config && !this.config.isTrailer) {
+      this.saveProgress(this.lastSavedTime);
+      this.lastSavedTime = -1; // Prevent double saving in ngOnDestroy
+    }
     this.closed.emit();
   }
 

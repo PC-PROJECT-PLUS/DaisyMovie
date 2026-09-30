@@ -920,6 +920,13 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         // Assegna immediatamente i film per non bloccare l'interfaccia
         this.topWatchedMovies = [...slicedMovies];
         this.isLoadingTrending = false;
+
+        // Estrai asincronamente i colori per non bloccare la UI, usando l'ottimizzazione dell'immagine a bassa risoluzione
+        this.topWatchedMovies.forEach((movie: any) => {
+          this.extractDominantColor(movie.posterUrl).then(color => {
+            movie.accentColor = color;
+          });
+        });
       }
     });
   }
@@ -939,6 +946,11 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     return new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
+      let lowResUrl = imageUrl;
+      if (imageUrl && imageUrl.includes('/t/p/')) {
+        lowResUrl = imageUrl.replace(/\/t\/p\/(w500|w780|original)\//, '/t/p/w92/');
+      }
+      img.src = lowResUrl;
       img.onload = () => {
         try {
           const canvas = document.createElement('canvas');
