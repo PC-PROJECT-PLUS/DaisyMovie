@@ -311,7 +311,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     this.releaseWakeLock();
 
     // Final save on destroy
-    if (this.config && !this.config.isTrailer) {
+    if (this.config && !this.config.isTrailer && this.lastSavedTime >= 0) {
       this.saveProgress(this.lastSavedTime);
     }
   }
@@ -442,20 +442,32 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     this.safeUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
   }
 
+  private handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible' && this.visible) {
+      this.requestWakeLock();
+    }
+  };
+
   private async requestWakeLock() {
     if (!this.isBrowser || !('wakeLock' in navigator)) return;
     try {
+      if (this.wakeLock) {
+        await this.wakeLock.release();
+      }
       this.wakeLock = await (navigator as any).wakeLock.request('screen');
+      document.addEventListener('visibilitychange', this.handleVisibilityChange);
     } catch (err) {
       console.warn('Wake Lock request failed:', err);
     }
   }
 
   private releaseWakeLock() {
+    if (!this.isBrowser) return;
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
     if (this.wakeLock !== null) {
       this.wakeLock.release().then(() => {
         this.wakeLock = null;
-      });
+      }).catch(() => {});
     }
   }
 
