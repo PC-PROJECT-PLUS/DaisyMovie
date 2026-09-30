@@ -290,12 +290,13 @@ export class NotificationService {
         }));
       }
     } catch (error: any) {
-      console.error('Error toggling following state:', error);
       // Se il backend risponde con 409 Conflict (già seguito), la nostra UI ha fatto la cosa giusta 
       // aggiungendolo ottimisticamente. Non dobbiamo fare il revert!
       if (!isFollowing && error.status === 409) {
         return;
       }
+      
+      console.error('Error toggling following state:', error);
       
       // Revert optimistic update on failure
       this.upcomingNotifiedIds.update(set => {
