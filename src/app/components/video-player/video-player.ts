@@ -324,7 +324,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     if (this.config.isTrailer && this.config.trailerKey) {
       const prefs = this.preferencesService;
       let url = `https://www.youtube.com/embed/${this.config.trailerKey}?rel=0&modestbranding=1`;
-      
+
       if (prefs) {
         if (prefs.trailerAutoplay()) url += '&autoplay=1';
         if (prefs.trailerMute()) url += '&mute=1';
@@ -467,7 +467,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     if (this.wakeLock !== null) {
       this.wakeLock.release().then(() => {
         this.wakeLock = null;
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }
 

@@ -270,23 +270,23 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         }
 
         let accentColor = item.accent_color || '#3a86ef';
-        
+
         // Healing for bad fallback colors in older items
         if (accentColor === '#3a86ef' || accentColor === '#E50914' || !item.accent_color) {
-           const mapKey = `${item.media_type}_${item.media_id}`;
-           if (isPlatformBrowser(this.platformId) && !this.extractingColorMap.has(mapKey)) {
-             this.extractingColorMap.add(mapKey);
-             
-             // Run asynchronously to extract and update DB
-             const imageUrl = item.backdrop_url || item.poster_url;
-             if (imageUrl) {
-               this.extractDominantColors(imageUrl).then(colors => {
-                 if (colors.primary.startsWith('hsl')) {
-                   this.historyService.updateItemColor(item.media_id, item.media_type, colors.primary);
-                 }
-               });
-             }
-           }
+          const mapKey = `${item.media_type}_${item.media_id}`;
+          if (isPlatformBrowser(this.platformId) && !this.extractingColorMap.has(mapKey)) {
+            this.extractingColorMap.add(mapKey);
+
+            // Run asynchronously to extract and update DB
+            const imageUrl = item.backdrop_url || item.poster_url;
+            if (imageUrl) {
+              this.extractDominantColors(imageUrl).then(colors => {
+                if (colors.primary.startsWith('hsl')) {
+                  this.historyService.updateItemColor(item.media_id, item.media_type, colors.primary);
+                }
+              });
+            }
+          }
         }
 
         return {
@@ -547,88 +547,90 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       // We intentionally do not clear arrays here so the old content remains visible while fading out.
 
 
-      this.tmdbService.getGenreList(cat).subscribe({ next: genres => {
-        let filtered = genres.filter(g => g.id !== 28 && g.id !== 9648 && g.id !== 14);
+      this.tmdbService.getGenreList(cat).subscribe({
+        next: genres => {
+          let filtered = genres.filter(g => g.id !== 28 && g.id !== 9648 && g.id !== 14);
 
-        if (cat === 'Animazione' || cat === 'Anime') {
-          filtered = filtered.filter(g => g.id !== 16); // Rimuove slider 'Animazione' ridondante
-        }
+          if (cat === 'Animazione' || cat === 'Anime') {
+            filtered = filtered.filter(g => g.id !== 16); // Rimuove slider 'Animazione' ridondante
+          }
 
-        if (cat === 'Anime') {
-          // Generi più ricchi di anime (Azione, Commedia, Dramma, Sci-Fi/Fantasy, Kids, Family)
-          const animeAllowed = [10759, 35, 18, 10765, 10762, 10751];
-          filtered = filtered.filter(g => animeAllowed.includes(g.id));
-        }
+          if (cat === 'Anime') {
+            // Generi più ricchi di anime (Azione, Commedia, Dramma, Sci-Fi/Fantasy, Kids, Family)
+            const animeAllowed = [10759, 35, 18, 10765, 10762, 10751];
+            filtered = filtered.filter(g => animeAllowed.includes(g.id));
+          }
 
-        const standardSliders = filtered.map(g => ({
-          id: `genre-${g.id}`,
-          title: g.name,
-          genreId: g.id,
-          movies: [],
-          canScrollLeft: signal(false),
-          canScrollRight: signal(true),
-          page: 1,
-          isLoaded: false,
-          isLoading: false
-        }));
+          const standardSliders = filtered.map(g => ({
+            id: `genre-${g.id}`,
+            title: g.name,
+            genreId: g.id,
+            movies: [],
+            canScrollLeft: signal(false),
+            canScrollRight: signal(true),
+            page: 1,
+            isLoaded: false,
+            isLoading: false
+          }));
 
-        // Aggiunta dei temi personalizzati basati su keywords
-        let customThemes: any[] = [];
-        if (cat === 'Anime') {
-          customThemes = [
-            { id: 'theme-mecha', title: 'Mecha & Robot', listName: 'keyword_6965' },
-            { id: 'theme-isekai', title: 'Mondi Paralleli (Isekai)', listName: 'keyword_280016' },
-            { id: 'theme-magic', title: 'Magia', listName: 'keyword_2343' },
-            { id: 'theme-martialarts', title: 'Arti Marziali', listName: 'keyword_779' },
-            { id: 'theme-cyberpunk', title: 'Cyberpunk', listName: 'keyword_10526' }
-          ];
-        } else if (cat === 'Animazione' || cat === 'Kids') {
-          customThemes = [
-            { id: 'theme-magic', title: 'Magia', listName: 'keyword_2343' },
-            { id: 'theme-talkinganimals', title: 'Animali Parlanti', listName: 'keyword_10016' },
-            { id: 'theme-superheroes', title: 'Supereroi', listName: 'keyword_9715' },
-            { id: 'theme-space', title: 'Spazio Profondo', listName: 'keyword_9882' }
-          ];
-        } else {
-          customThemes = [
-            { id: 'theme-superheroes', title: 'Supereroi', listName: 'keyword_9715' },
-            { id: 'theme-cyberpunk', title: 'Cyberpunk', listName: 'keyword_10526' },
-            { id: 'theme-space', title: 'Spazio Profondo', listName: 'keyword_9882' },
-            { id: 'theme-vampires', title: 'Vampiri', listName: 'keyword_3133' },
-            { id: 'theme-zombies', title: 'Zombie', listName: 'keyword_12377' },
-            { id: 'theme-postapocalyptic', title: 'Post-Apocalittico', listName: 'keyword_4565' }
-          ];
-        }
+          // Aggiunta dei temi personalizzati basati su keywords
+          let customThemes: any[] = [];
+          if (cat === 'Anime') {
+            customThemes = [
+              { id: 'theme-mecha', title: 'Mecha & Robot', listName: 'keyword_6965' },
+              { id: 'theme-isekai', title: 'Mondi Paralleli (Isekai)', listName: 'keyword_280016' },
+              { id: 'theme-magic', title: 'Magia', listName: 'keyword_2343' },
+              { id: 'theme-martialarts', title: 'Arti Marziali', listName: 'keyword_779' },
+              { id: 'theme-cyberpunk', title: 'Cyberpunk', listName: 'keyword_10526' }
+            ];
+          } else if (cat === 'Animazione' || cat === 'Kids') {
+            customThemes = [
+              { id: 'theme-magic', title: 'Magia', listName: 'keyword_2343' },
+              { id: 'theme-talkinganimals', title: 'Animali Parlanti', listName: 'keyword_10016' },
+              { id: 'theme-superheroes', title: 'Supereroi', listName: 'keyword_9715' },
+              { id: 'theme-space', title: 'Spazio Profondo', listName: 'keyword_9882' }
+            ];
+          } else {
+            customThemes = [
+              { id: 'theme-superheroes', title: 'Supereroi', listName: 'keyword_9715' },
+              { id: 'theme-cyberpunk', title: 'Cyberpunk', listName: 'keyword_10526' },
+              { id: 'theme-space', title: 'Spazio Profondo', listName: 'keyword_9882' },
+              { id: 'theme-vampires', title: 'Vampiri', listName: 'keyword_3133' },
+              { id: 'theme-zombies', title: 'Zombie', listName: 'keyword_12377' },
+              { id: 'theme-postapocalyptic', title: 'Post-Apocalittico', listName: 'keyword_4565' }
+            ];
+          }
 
-        const thematicSliders = customThemes.map(t => ({
-          id: t.id,
-          title: t.title,
-          genreId: t.listName,
-          movies: [],
-          canScrollLeft: signal(false),
-          canScrollRight: signal(true),
-          page: 1,
-          isLoaded: false,
-          isLoading: false
-        }));
+          const thematicSliders = customThemes.map(t => ({
+            id: t.id,
+            title: t.title,
+            genreId: t.listName,
+            movies: [],
+            canScrollLeft: signal(false),
+            canScrollRight: signal(true),
+            page: 1,
+            isLoaded: false,
+            isLoading: false
+          }));
 
-        const topPicksSlider = {
-          id: `top-picks-slider-${cat.replace(/\s+/g, '-').toLowerCase()}`,
-          title: 'Scelti per te',
-          genreId: 'top-picks',
-          movies: [],
-          canScrollLeft: signal(false),
-          canScrollRight: signal(true),
-          page: 1,
-          isLoaded: false,
-          isLoading: false
-        };
+          const topPicksSlider = {
+            id: `top-picks-slider-${cat.replace(/\s+/g, '-').toLowerCase()}`,
+            title: 'Scelti per te',
+            genreId: 'top-picks',
+            movies: [],
+            canScrollLeft: signal(false),
+            canScrollRight: signal(true),
+            page: 1,
+            isLoaded: false,
+            isLoading: false
+          };
 
-        // Ordina i generi alfabeticamente invece che a caso, così desktop e mobile coincidono sempre.
-        const shuffledOthers = [...standardSliders, ...thematicSliders].sort((a, b) => a.title.localeCompare(b.title));
-        this.dynamicSliders = [topPicksSlider, ...shuffledOthers];
-        setTimeout(() => this.checkVerticalSliders(), 500);
-      }, error: err => console.error('Error fetching genre list:', err) });
+          // Ordina i generi alfabeticamente invece che a caso, così desktop e mobile coincidono sempre.
+          const shuffledOthers = [...standardSliders, ...thematicSliders].sort((a, b) => a.title.localeCompare(b.title));
+          this.dynamicSliders = [topPicksSlider, ...shuffledOthers];
+          setTimeout(() => this.checkVerticalSliders(), 500);
+        }, error: err => console.error('Error fetching genre list:', err)
+      });
 
       let phase1Ready = false;
       let phase2Ready = false;
@@ -649,74 +651,78 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         }
       };
 
-      this.tmdbService.getHomeData(cat, '1').subscribe({ next: data1 => {
+      this.tmdbService.getHomeData(cat, '1').subscribe({
+        next: data1 => {
 
-        const finishPhase1 = () => {
-          if (data1.heroMovies) this.heroMovies = data1.heroMovies;
-          if (data1.trendingMovies) this.trendingMovies = data1.trendingMovies;
-          if (data1.latestEpisodes) {
-            this.latestEpisodes = data1.latestEpisodes;
+          const finishPhase1 = () => {
+            if (data1.heroMovies) this.heroMovies = data1.heroMovies;
+            if (data1.trendingMovies) this.trendingMovies = data1.trendingMovies;
+            if (data1.latestEpisodes) {
+              this.latestEpisodes = data1.latestEpisodes;
+            }
+
+            if (this.isBrowser && this.heroMovies.length > 0) {
+              this.setHeroSlide(0);
+              this.startHeroAutoplay();
+            }
+
+            phase1Ready = true;
+            checkAllReady();
+          };
+
+          const executePhase1 = () => {
+            const elapsed = Date.now() - fetchStartTime;
+            const remaining = Math.max(0, 400 - elapsed);
+            setTimeout(finishPhase1, remaining);
+          };
+
+          if (this.isBrowser && data1.heroMovies && data1.heroMovies.length > 0) {
+            const img = new Image();
+            img.onload = executePhase1;
+            img.onerror = executePhase1;
+            img.src = data1.heroMovies[0].backdropUrl;
+          } else {
+            executePhase1();
           }
-
-          if (this.isBrowser && this.heroMovies.length > 0) {
-            this.setHeroSlide(0);
-            this.startHeroAutoplay();
-          }
-
+        }, error: err => {
+          console.error('Error fetching home data phase 1:', err);
           phase1Ready = true;
           checkAllReady();
-        };
-
-        const executePhase1 = () => {
-          const elapsed = Date.now() - fetchStartTime;
-          const remaining = Math.max(0, 400 - elapsed);
-          setTimeout(finishPhase1, remaining);
-        };
-
-        if (this.isBrowser && data1.heroMovies && data1.heroMovies.length > 0) {
-          const img = new Image();
-          img.onload = executePhase1;
-          img.onerror = executePhase1;
-          img.src = data1.heroMovies[0].backdropUrl;
-        } else {
-          executePhase1();
         }
-      }, error: err => {
-        console.error('Error fetching home data phase 1:', err);
-        phase1Ready = true;
-        checkAllReady();
-      }});
+      });
 
       // Fase 2: il resto della pagina (avviato in parallelo alla Fase 1)
-      this.tmdbService.getHomeData(cat, '2').subscribe({ next: data2 => {
-        if (data2.newReleasesMovies) this.newReleasesMovies = data2.newReleasesMovies;
+      this.tmdbService.getHomeData(cat, '2').subscribe({
+        next: data2 => {
+          if (data2.newReleasesMovies) this.newReleasesMovies = data2.newReleasesMovies;
 
-        // Initial load for Top 10
-        this.loadTrendingTop10(cat);
+          // Initial load for Top 10
+          this.loadTrendingTop10(cat);
 
-        if (data2.spotlightMovies) {
-          this.spotlightMovies = data2.spotlightMovies;
-          // Extract real dominant colors from spotlight poster images sequentially or on demand if needed, 
-          // but for now we just assign them to avoid massive concurrent network requests.
-          this.spotlightMovies.forEach((movie: any) => {
-            this.extractDominantColor(movie.posterUrl).then(color => {
-              movie.accentColor = color;
+          if (data2.spotlightMovies) {
+            this.spotlightMovies = data2.spotlightMovies;
+            // Extract real dominant colors from spotlight poster images sequentially or on demand if needed, 
+            // but for now we just assign them to avoid massive concurrent network requests.
+            this.spotlightMovies.forEach((movie: any) => {
+              this.extractDominantColor(movie.posterUrl).then(color => {
+                movie.accentColor = color;
+              });
             });
-          });
-        }
+          }
 
-        if (data2.classicsMovies) this.classicsMovies = data2.classicsMovies;
-        if (data2.hiddenGemsMovies) this.hiddenGemsMovies = data2.hiddenGemsMovies;
-        if (data2.acclaimedMovies) this.acclaimedMovies = data2.acclaimedMovies;
-        
-        phase2Ready = true;
-        checkAllReady();
-        setTimeout(() => this.checkAllStaticSlidersScroll(), 300);
-      }, error: err => {
-        console.error('Error fetching home data phase 2:', err);
-        phase2Ready = true;
-        checkAllReady();
-      }});
+          if (data2.classicsMovies) this.classicsMovies = data2.classicsMovies;
+          if (data2.hiddenGemsMovies) this.hiddenGemsMovies = data2.hiddenGemsMovies;
+          if (data2.acclaimedMovies) this.acclaimedMovies = data2.acclaimedMovies;
+
+          phase2Ready = true;
+          checkAllReady();
+          setTimeout(() => this.checkAllStaticSlidersScroll(), 300);
+        }, error: err => {
+          console.error('Error fetching home data phase 2:', err);
+          phase2Ready = true;
+          checkAllReady();
+        }
+      });
     }, { injector: this.injector });
   }
 
@@ -737,7 +743,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
             break;
           }
         }
-        
+
         if (el) {
           const rect = el.getBoundingClientRect();
           if (rect.top < viewportBottom + 3000) {
@@ -751,7 +757,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   loadDynamicSlider(slider: any) {
     slider.isLoading = true;
     const cat = this.categoryService.activeCategory();
-    
+
     if (slider.genreId === 'top-picks') {
       const profile = this.authService.selectedProfile();
       if (!profile) {
@@ -773,7 +779,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
             this.dynamicSliders = this.dynamicSliders.filter(s => s.id !== slider.id);
           }
         },
-        error: () => { 
+        error: () => {
           this.dynamicSliders = this.dynamicSliders.filter(s => s.id !== slider.id);
         }
       });
@@ -1194,7 +1200,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         if (sliderObj && !this.loadingPages[sliderObj.genreId]) {
           this.loadingPages[sliderObj.genreId] = true;
           sliderObj.page = (sliderObj.page || 1) + 1;
-          
+
           if (sliderObj.genreId === 'top-picks') {
             const profile = this.authService.selectedProfile();
             if (profile) {
@@ -1209,7 +1215,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
                 this.loadingPages[sliderObj.genreId!] = false;
               });
             } else {
-               this.loadingPages[sliderObj.genreId!] = false;
+              this.loadingPages[sliderObj.genreId!] = false;
             }
           } else {
             this.tmdbService.getCategoryPage(sliderObj.genreId.toString(), this.categoryService.activeCategory(), sliderObj.page).subscribe(data => {
@@ -1253,7 +1259,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       if (sliderObj && !this.loadingPages[sliderObj.genreId]) {
         this.loadingPages[sliderObj.genreId] = true;
         sliderObj.page = (sliderObj.page || 1) + 1;
-        
+
         if (sliderObj.genreId === 'top-picks') {
           const profile = this.authService.selectedProfile();
           if (profile) {
@@ -1268,7 +1274,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
               this.loadingPages[sliderObj.genreId!] = false;
             });
           } else {
-             this.loadingPages[sliderObj.genreId!] = false;
+            this.loadingPages[sliderObj.genreId!] = false;
           }
         } else {
           this.tmdbService.getCategoryPage(sliderObj.genreId.toString(), this.categoryService.activeCategory(), sliderObj.page).subscribe(data => {

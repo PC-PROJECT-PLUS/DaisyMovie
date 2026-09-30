@@ -1,5 +1,5 @@
 @if (isMobile()) {
-  <app-search-mobile [searchResults]="filteredItems()" [query]="searchQuery()" [heroImage]="heroImage()" [pageLoaded]="pageLoaded()"></app-search-mobile>
+  <app-search-mobile [searchResults]="filteredItems()" [query]="searchQuery()" [heroImage]="heroImage()" [pageLoaded]="pageLoaded()" (movieClick)="goToDetail($event)"></app-search-mobile>
 } @else {
   <div class="search-page" [attr.data-theme]="themeService.currentTheme()">
 

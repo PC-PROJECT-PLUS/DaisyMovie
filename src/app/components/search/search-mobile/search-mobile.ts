@@ -17,6 +17,8 @@ export class SearchMobileComponent {
   heroImage = input<string>('');
   pageLoaded = input<boolean>(false);
   
+  movieClick = output<any>();
+  
   favoritesService = inject(FavoritesService);
   collectionsModalService = inject(CollectionsModalService);
 

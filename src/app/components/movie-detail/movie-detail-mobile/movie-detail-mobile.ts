@@ -7,6 +7,8 @@ import { HistoryService } from '../../../services/history.service';
 import { TmdbService } from '../../../services/tmdb.service';
 import { CastMember, Review, MovieDetail } from '../movie-detail';
 
+import { CollectionsModalService } from '../../../services/collections-modal.service';
+
 @Component({
   selector: 'app-movie-detail-mobile',
   standalone: true,
@@ -17,6 +19,7 @@ import { CastMember, Review, MovieDetail } from '../movie-detail';
 export class MovieDetailMobile implements OnInit {
   private location = inject(Location);
   favoritesService = inject(FavoritesService);
+  collectionsModalService = inject(CollectionsModalService);
   private historyService = inject(HistoryService);
   private tmdbService = inject(TmdbService);
   private platformId = inject(PLATFORM_ID);
@@ -85,13 +88,29 @@ export class MovieDetailMobile implements OnInit {
   toggleBookmark() {
     const current = this.movie();
     if (current) {
-      this.favoritesService.toggleFavorite(current);
+      this.collectionsModalService.openModal({
+        id: current.id,
+        title: current.title,
+        posterUrl: current.posterUrl,
+        backdropUrl: current.backdropUrl || current.posterUrl,
+        year: (current.year || '').toString(),
+        isSeries: false
+      });
     }
   }
 
   toggleBookmarkSuggested(item: any, event: Event) {
     event.stopPropagation();
-    this.favoritesService.toggleFavorite(item, item.isSeries);
+    const posterUrl = item.posterUrl || item.backdropUrl || '';
+    const year = item.year || (item.releaseDate ? item.releaseDate.substring(0, 4) : '');
+    this.collectionsModalService.openModal({
+      id: item.id,
+      title: item.title || item.name,
+      posterUrl: posterUrl,
+      backdropUrl: item.backdropUrl || posterUrl,
+      year: year.toString(),
+      isSeries: !!item.isSeries
+    });
   }
 
   onSliderScroll(event: Event) {
