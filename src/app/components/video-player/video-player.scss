@@ -544,7 +544,7 @@
   width: 90vw;
   max-width: 400px;
   max-height: 85vh;
-  background: rgba(20, 20, 20, 0.95);
+  background: rgba(20, 20, 20, 0.4);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -663,8 +663,16 @@
   &.active {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.2);
-    
     .ep-num { color: white; }
   }
+}
+
+.mobile-tap-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
 }
 

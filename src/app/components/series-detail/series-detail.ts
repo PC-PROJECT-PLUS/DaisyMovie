@@ -236,17 +236,21 @@ export class SeriesDetailComponent implements OnInit {
         }
       });
 
-      if (historyItem && historyItem.progress_seconds !== undefined && historyItem.progress_seconds > 0) {
+      if (historyItem && historyItem.progress_seconds !== undefined && historyItem.progress_seconds >= 0) {
         this.resumeProgress.set(historyItem.progress_seconds);
         if (historyItem.season !== undefined && historyItem.episode !== undefined) {
-          this.resumeText.set(`Riprendi S${historyItem.season}E${historyItem.episode} da ${this.formatTime(historyItem.progress_seconds)}`);
+          this.resumeSeason.set(historyItem.season);
+          this.resumeEpisode.set(historyItem.episode);
+          this.resumeText.set(`Riprendi S${historyItem.season} E${historyItem.episode}`);
           // We don't automatically change the active season here on close to avoid jarring UI jumps
         } else {
-          this.resumeText.set(`Riprendi da ${this.formatTime(historyItem.progress_seconds)}`);
+          this.resumeText.set('');
         }
       } else {
         this.resumeProgress.set(0);
         this.resumeText.set('');
+        this.resumeSeason.set(1);
+        this.resumeEpisode.set(1);
       }
     }
   }

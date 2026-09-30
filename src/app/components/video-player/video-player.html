@@ -27,8 +27,8 @@
     @if (!isMobile()) {
       <div class="wake-up-zone" (mousemove)="onMouseMove()" (touchstart)="onTouchStart()"></div>
     } @else {
-      <!-- Su mobile, area trasparente solo in alto per non bloccare i player nativi -->
-      <div class="mobile-tap-header" (touchstart)="onTouchStart()"></div>
+      <!-- Su mobile, area trasparente in alto. Se i controlli sono aperti, disabilito i pointer-events per poter interagire con il player -->
+      <div class="mobile-tap-header" (touchstart)="onTouchStart()" [style.pointer-events]="controlsVisible() ? 'none' : 'auto'"></div>
     }
 
     <!-- Iframe Area -->

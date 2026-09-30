@@ -311,7 +311,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     this.releaseWakeLock();
 
     // Final save on destroy
-    if (this.lastSavedTime > 0) {
+    if (this.config && !this.config.isTrailer) {
       this.saveProgress(this.lastSavedTime);
     }
   }
@@ -430,6 +430,9 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
       params.set('t', String(startAt));
       params.set('startAt', String(startAt));
     }
+
+    // Initialize lastSavedTime so it doesn't wipe progress if closed immediately
+    this.lastSavedTime = startAt || 0;
 
     // Costruisci l'url finale (se params è vuoto non aggiungere il ?)
     const queryString = params.toString();

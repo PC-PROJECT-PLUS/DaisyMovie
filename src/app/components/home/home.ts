@@ -250,12 +250,12 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
   continueWatchingList = computed(() => {
     return this.historyService.items()
-      .filter(item => item.progress_seconds && item.progress_seconds > 0)
+      .filter(item => item.progress_seconds !== undefined && item.progress_seconds >= 0)
       .map(item => {
         const isSeries = item.media_type === 'tv';
         let episodeTitle = '';
         let currentTime = this.formatTime(item.progress_seconds || 0);
-        let airDate = `Riprendi da ${currentTime}`;
+        let airDate = (!item.progress_seconds || item.progress_seconds === 0) ? 'Inizia a guardare' : `Riprendi da ${currentTime}`;
 
         if (isSeries) {
           episodeTitle = `Stagione ${item.season || 1}, Episodio ${item.episode || 1}`;
