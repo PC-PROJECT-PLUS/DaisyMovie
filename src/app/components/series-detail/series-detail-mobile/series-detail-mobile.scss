@@ -679,6 +679,21 @@
   .episodes-slider {
     gap: 12px;
     margin-top: 10px;
+    // Smooth season-switch animation (identical to desktop)
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform;
+
+    &.ep-fade-out {
+      opacity: 0;
+      transform: translateX(-24px);
+      pointer-events: none;
+    }
+
+    &.ep-fade-in {
+      opacity: 0;
+      transform: translateX(24px);
+      pointer-events: none;
+    }
   }
 
   .episode-list-item {
@@ -692,6 +707,13 @@
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+
+    &:active {
+      transform: scale(0.97);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
   }
 
   .episode-thumbnail-container {

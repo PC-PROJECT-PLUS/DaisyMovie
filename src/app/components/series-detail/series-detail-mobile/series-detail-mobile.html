@@ -170,15 +170,17 @@
         </div>
         <div class="dropdown-menu" [class.open]="isDropdownOpen()">
           @for (s of seasons(); track s) {
-          <div class="dropdown-item" [class.active]="activeSeason() === s" (click)="onSeasonClick(s)">Stagione {{ s }}
+          <div class="dropdown-item" [class.active]="activeSeason() === s" (click)="onSeasonClick(s); $event.stopPropagation()">Stagione {{ s }}
           </div>
           }
         </div>
       </div>
     </div>
-    <div class="episodes-slider horizontal-slider">
+    <div class="episodes-slider horizontal-slider" id="episodes-slider-mobile"
+         [class.ep-fade-out]="episodesAnimState() === 'out'"
+         [class.ep-fade-in]="episodesAnimState() === 'in'">
       @for (episode of activeEpisodes(); track episode.id) {
-      <div class="episode-list-item">
+      <div class="episode-list-item" (click)="episodeClick.emit(episode.episodeNumber)">
         <div class="episode-thumbnail-container">
           <img [src]="episode.thumbnailUrl" [alt]="episode.title" class="episode-thumbnail" loading="lazy">
           <div class="play-overlay">

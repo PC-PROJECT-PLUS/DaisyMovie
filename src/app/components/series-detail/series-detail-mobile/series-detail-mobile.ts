@@ -33,6 +33,7 @@ export class SeriesDetailMobile implements OnInit {
   @Output() playTrailer = new EventEmitter<void>();
   @Output() goToMovie = new EventEmitter<any>();
   @Output() seasonChange = new EventEmitter<number>();
+  @Output() episodeClick = new EventEmitter<number>();
 
   activeEpisodes = input<any[]>([]);
   seasons = input<number[]>([]);
@@ -52,6 +53,8 @@ export class SeriesDetailMobile implements OnInit {
   suggestedPage = signal<number>(1);
   isLoadingMore = signal<boolean>(false);
   hasMoreSuggested = signal<boolean>(true);
+
+  episodesAnimState = signal<'out' | 'in' | 'idle'>('idle');
 
   constructor() {
     effect(() => {
@@ -81,6 +84,21 @@ export class SeriesDetailMobile implements OnInit {
         }
       }
     });
+
+    // Animate in when activeEpisodes changes (after parent swaps data at t=260ms)
+    effect(() => {
+      const eps = this.activeEpisodes();
+      if (eps && eps.length >= 0 && isPlatformBrowser(this.platformId)) {
+        untracked(() => {
+          this.episodesAnimState.set('in');
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              this.episodesAnimState.set('idle');
+            });
+          });
+        });
+      }
+    });
   }
 
   goBack() {
@@ -90,7 +108,16 @@ export class SeriesDetailMobile implements OnInit {
   onSeasonClick(s: number) {
     this.activeSeason.set(s);
     this.isDropdownOpen.set(false);
+    // Trigger fade-out immediately, parent will load new episodes
+    this.episodesAnimState.set('out');
     this.seasonChange.emit(s);
+    // Reset scroll position of episodes slider
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => {
+        const slider = document.getElementById('episodes-slider-mobile');
+        if (slider) slider.scrollLeft = 0;
+      }, 50);
+    }
   }
 
   @HostListener('document:click', ['$event'])
