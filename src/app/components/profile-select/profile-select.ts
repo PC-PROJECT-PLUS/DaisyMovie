@@ -1,5 +1,5 @@
 import {
-  Component, signal, computed, inject, HostListener, PLATFORM_ID, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef
+  Component, signal, computed, inject, HostListener, PLATFORM_ID, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef, effect
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { AuthService, UserProfile } from '../../services/auth.service';
 import { CategoryService } from '../../services/category.service';
+import { LoaderService } from '../../services/loader.service';
 
 // Arc curve parameters per distance from active index (desktop)
 const ARC_STEPS = [
@@ -33,12 +34,18 @@ export class ProfileSelectComponent implements OnDestroy {
   private categoryService = inject(CategoryService);
   private platformId = inject(PLATFORM_ID);
   private cdr = inject(ChangeDetectorRef);
+  private loaderService = inject(LoaderService);
 
   profiles = computed(() => this.authService.getProfiles());
   activeIndex = signal(0);
   isEntering = signal(false);
   isMobile = signal(false);
   pinValue = signal('');
+
+  // True while profiles are still being fetched: keeps both the global page
+  // loader and the in-page overlay visible so no placeholder flashes first.
+  loadingProfiles = signal(true);
+  private readyTimeout: any = null;
 
   showNewProfilePopup = signal(false);
   newProfileName = signal('');
@@ -124,6 +131,18 @@ export class ProfileSelectComponent implements OnDestroy {
     const title = userName ? `${userName} - Profili` : 'Profili';
     this.titleService.setTitle(title);
 
+    // Hold the global page loader (and the in-page overlay) until the profiles
+    // request has finished, so the page never flashes placeholder content first.
+    // Logged-out visits are released immediately.
+    effect(() => {
+      if (this.authService.profilesLoaded() || !this.authService.isLoggedIn()) {
+        this.markReady();
+      }
+    });
+
+    // Failsafe: never leave the loader hanging if the profiles request stalls.
+    this.readyTimeout = setTimeout(() => this.markReady(), 4000);
+
     if (isPlatformBrowser(this.platformId)) {
       this.checkMobile();
       window.addEventListener('resize', this.onResize);
@@ -131,9 +150,17 @@ export class ProfileSelectComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
+    clearTimeout(this.readyTimeout);
     if (isPlatformBrowser(this.platformId)) {
       window.removeEventListener('resize', this.onResize);
     }
+  }
+
+  /** Releases the global page loader and hides the in-page loading overlay. */
+  private markReady() {
+    clearTimeout(this.readyTimeout);
+    this.loadingProfiles.set(false);
+    this.loaderService.setRouteReady();
   }
 
   private onResize = () => this.checkMobile();

@@ -528,7 +528,20 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy, OnChanges {
         }
       };
       img.onerror = () => resolve('#6366f1');
-      img.src = imageUrl;
+      // Sample colors from a small TMDB variant instead of the full-size image:
+      // downloading the full backdrop/poster again just for color extraction
+      // doubles the bandwidth and delays the accent color update.
+      let smallImageUrl = imageUrl;
+      if (smallImageUrl.includes('/original/')) {
+        smallImageUrl = smallImageUrl.replace('/original/', '/w300/');
+      }
+      if (smallImageUrl.includes('/w1280/')) {
+        smallImageUrl = smallImageUrl.replace('/w1280/', '/w300/');
+      }
+      if (smallImageUrl.includes('/w500/')) {
+        smallImageUrl = smallImageUrl.replace('/w500/', '/w300/');
+      }
+      img.src = smallImageUrl;
     });
   }
 

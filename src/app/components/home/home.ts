@@ -630,32 +630,41 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         setTimeout(() => this.checkVerticalSliders(), 500);
       }, error: err => console.error('Error fetching genre list:', err) });
 
+      let phase1Ready = false;
+      let phase2Ready = false;
+
+      const checkAllReady = () => {
+        if (phase1Ready && phase2Ready) {
+          const waitHistory = () => {
+            if (this.historyService.historyLoaded()) {
+              setTimeout(() => {
+                this.loaderService.setRouteReady();
+                this.checkAllStaticSlidersScroll();
+              }, 50);
+            } else {
+              setTimeout(waitHistory, 20);
+            }
+          };
+          waitHistory();
+        }
+      };
+
       this.tmdbService.getHomeData(cat, '1').subscribe({ next: data1 => {
 
-        
         const finishPhase1 = () => {
           if (data1.heroMovies) this.heroMovies = data1.heroMovies;
           if (data1.trendingMovies) this.trendingMovies = data1.trendingMovies;
           if (data1.latestEpisodes) {
-            Promise.all(data1.latestEpisodes.map((ep: any) =>
-              this.extractDominantColor(ep.bannerUrl).then(color => ({ ...ep, accentColor: color }))
-            )).then(updatedEps => {
-              this.latestEpisodes = updatedEps;
-            });
+            this.latestEpisodes = data1.latestEpisodes;
           }
 
           if (this.isBrowser && this.heroMovies.length > 0) {
-            this.heroMovies.forEach(movie => {
-              this.extractDominantColor(movie.backdropUrl);
-            });
             this.setHeroSlide(0);
             this.startHeroAutoplay();
           }
 
-          setTimeout(() => {
-            this.loaderService.setRouteReady();
-            this.checkAllStaticSlidersScroll();
-          }, 50); // slight delay to allow angular to render imgs
+          phase1Ready = true;
+          checkAllReady();
         };
 
         const executePhase1 = () => {
@@ -672,7 +681,11 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         } else {
           executePhase1();
         }
-      }, error: err => console.error('Error fetching home data phase 1:', err) });
+      }, error: err => {
+        console.error('Error fetching home data phase 1:', err);
+        phase1Ready = true;
+        checkAllReady();
+      }});
 
       // Fase 2: il resto della pagina (avviato in parallelo alla Fase 1)
       this.tmdbService.getHomeData(cat, '2').subscribe({ next: data2 => {
@@ -682,10 +695,13 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         this.loadTrendingTop10(cat);
 
         if (data2.spotlightMovies) {
-          Promise.all(data2.spotlightMovies.map((movie: any) =>
-            this.extractDominantColor(movie.posterUrl).then(color => ({ ...movie, accentColor: color }))
-          )).then(updatedMovies => {
-            this.spotlightMovies = updatedMovies;
+          this.spotlightMovies = data2.spotlightMovies;
+          // Extract real dominant colors from spotlight poster images sequentially or on demand if needed, 
+          // but for now we just assign them to avoid massive concurrent network requests.
+          this.spotlightMovies.forEach((movie: any) => {
+            this.extractDominantColor(movie.posterUrl).then(color => {
+              movie.accentColor = color;
+            });
           });
         }
 
@@ -693,8 +709,14 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         if (data2.hiddenGemsMovies) this.hiddenGemsMovies = data2.hiddenGemsMovies;
         if (data2.acclaimedMovies) this.acclaimedMovies = data2.acclaimedMovies;
         
+        phase2Ready = true;
+        checkAllReady();
         setTimeout(() => this.checkAllStaticSlidersScroll(), 300);
-      }, error: err => console.error('Error fetching home data phase 2:', err) });
+      }, error: err => {
+        console.error('Error fetching home data phase 2:', err);
+        phase2Ready = true;
+        checkAllReady();
+      }});
     }, { injector: this.injector });
   }
 
@@ -895,16 +917,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.tmdbService.getTrendingTop10(category, this.trendingPeriod).subscribe(movies => {
       if (movies) {
         const slicedMovies = movies.slice(0, 10);
-        // Assegna immediatamente i film per non bloccare l'interfaccia (mostra il fallback scuro)
+        // Assegna immediatamente i film per non bloccare l'interfaccia
         this.topWatchedMovies = [...slicedMovies];
         this.isLoadingTrending = false;
-
-        // Estrai i colori in background e aggiorna l'array
-        Promise.all(slicedMovies.map((movie: any) =>
-          this.extractDominantColor(movie.posterUrl).then(color => ({ ...movie, accentColor: color }))
-        )).then(updatedMovies => {
-          this.topWatchedMovies = updatedMovies;
-        });
       }
     });
   }
@@ -982,11 +997,17 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       img.onerror = () => resolve('#6366f1'); // Fallback
 
       // Ottimizzazione estrema: invece di scaricare l'immagine originale da 2MB
-      // per estrarre il colore, usiamo una miniatura da pochi KB ('w300' invece di 'original').
+      // per estrarre il colore, usiamo una miniatura da pochi KB ('w300').
       // Questo rende l'estrazione istantanea ed elimina l'effetto "switch di colore" ritardato.
       let smallImageUrl = imageUrl;
       if (smallImageUrl.includes('/original/')) {
         smallImageUrl = smallImageUrl.replace('/original/', '/w300/');
+      }
+      if (smallImageUrl.includes('/w1280/')) {
+        smallImageUrl = smallImageUrl.replace('/w1280/', '/w300/');
+      }
+      if (smallImageUrl.includes('/w500/')) {
+        smallImageUrl = smallImageUrl.replace('/w500/', '/w300/');
       }
 
       // Append a query param to bypass the browser's disk cache.

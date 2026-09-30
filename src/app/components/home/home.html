@@ -15,7 +15,8 @@
 
         <!-- Backdrop Image & Bottom Gradient Overlay -->
         <div class="hero-backdrop-wrapper">
-          <img [src]="movie.backdropUrl" [alt]="movie.title" class="hero-backdrop-img" />
+          <img [src]="movie.backdropUrl" [alt]="movie.title" class="hero-backdrop-img" decoding="async"
+            [attr.fetchpriority]="idx === 0 ? 'high' : null" [attr.loading]="idx === 0 ? null : 'lazy'" />
           <div class="hero-gradient-overlay"></div>
         </div>
 
@@ -113,7 +114,7 @@
             <a [routerLink]="item.isSeries ? ['/series', item.id] : ['/movie', item.id]"
               class="continue-card glass-card fluid-hover-card">
               <div class="card-thumbnail-container">
-                <img [src]="item.thumbnailUrl" [alt]="item.showTitle" class="thumbnail-img" />
+                <img [src]="item.thumbnailUrl" [alt]="item.showTitle" class="thumbnail-img" loading="lazy" decoding="async" />
                 <div class="thumbnail-overlay-gradient"></div>
 
                 <div class="play-icon-overlay">
@@ -172,7 +173,7 @@
             @for (movie of trendingMovies; track movie.id) {
             <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
               (mouseleave)="onPosterMouseLeave()">
-              <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
+              <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" loading="lazy" decoding="async" />
             </div>
             }
           </div>
@@ -210,7 +211,7 @@
             @for (ep of latestEpisodes; track ep.id) {
             <div class="episode-card glass-card" [style.--card-accent]="ep.accentColor" (click)="goToMovie(ep)">
               <div class="episode-banner">
-                <img [src]="ep.bannerUrl" [alt]="ep.title" class="banner-img" />
+                <img [src]="ep.bannerUrl" [alt]="ep.title" class="banner-img" loading="lazy" decoding="async" />
                 <div class="banner-gradient"></div>
               </div>
 
@@ -279,7 +280,7 @@
             @for (movie of newReleasesMovies; track movie.id) {
             <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
               (mouseleave)="onPosterMouseLeave()">
-              <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
+              <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" loading="lazy" decoding="async" />
             </div>
             }
           </div>
@@ -302,7 +303,7 @@
           <div class="podium-card glass-card" [style.--card-accent]="film.accentColor" (click)="goToMovie(film)"
             style="cursor: pointer;">
             <div class="podium-poster-wrap">
-              <img [src]="film.backdropUrl" [alt]="film.title" class="podium-img" />
+              <img [src]="film.backdropUrl" [alt]="film.title" class="podium-img" loading="lazy" decoding="async" />
               <div class="podium-img-overlay"></div>
             </div>
             <div class="podium-body">
@@ -322,7 +323,7 @@
           <div class="chart-item glass-card" [style.--card-accent]="film.accentColor" (click)="goToMovie(film)"
             style="cursor: pointer;">
             <div class="chart-item-rank">{{ (i + 4).toString().padStart(2, '0') }}</div>
-            <img [src]="film.posterUrl" [alt]="film.title" class="chart-item-thumb" />
+            <img [src]="film.posterUrl" [alt]="film.title" class="chart-item-thumb" loading="lazy" decoding="async" />
             <div class="chart-item-info">
               <p class="chart-item-title">{{ film.title }}</p>
               <p class="chart-item-meta">{{ film.genres[0] }} · {{ film.year }}</p>
@@ -363,7 +364,7 @@
             @for (movie of acclaimedMovies; track movie.id) {
             <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
               (mouseleave)="onPosterMouseLeave()">
-              <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
+              <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" loading="lazy" decoding="async" />
             </div>
             }
           </div>
@@ -402,7 +403,7 @@
             <div class="detailed-card glass-card" [style.--card-accent]="movie.accentColor">
               <!-- Left Side: Poster -->
               <div class="detailed-poster-wrap">
-                <img [src]="movie.posterUrl" [alt]="movie.title" class="detailed-poster" />
+                <img [src]="movie.posterUrl" [alt]="movie.title" class="detailed-poster" loading="lazy" decoding="async" />
               </div>
 
               <!-- Right Side: Info -->
@@ -474,7 +475,7 @@
             @for (movie of classicsMovies; track movie.id) {
             <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
               (mouseleave)="onPosterMouseLeave()">
-              <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
+              <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" loading="lazy" decoding="async" />
             </div>
             }
           </div>
@@ -512,7 +513,7 @@
             @for (movie of hiddenGemsMovies; track movie.id) {
             <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
               (mouseleave)="onPosterMouseLeave()">
-              <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
+              <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" loading="lazy" decoding="async" />
             </div>
             }
           </div>
@@ -561,7 +562,7 @@
             @for (movie of slider.movies; track movie.id) {
             <div class="poster-card glass-card" (mouseenter)="onPosterMouseEnter(movie, $event)"
               (mouseleave)="onPosterMouseLeave()">
-              <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" />
+              <img [src]="movie.posterUrl" [alt]="movie.title" class="poster-img" loading="lazy" decoding="async" />
             </div>
             }
           </div>
@@ -584,7 +585,7 @@
       @if (panelMovie()) {
       <!-- LEFT: poster — pointer-events:none (from panel), scroll passes through -->
       <div class="ghp-poster">
-        <img [src]="panelMovie()!.posterUrl" [alt]="panelMovie()!.title" />
+        <img [src]="panelMovie()!.posterUrl" [alt]="panelMovie()!.title" loading="lazy" decoding="async" />
       </div>
 
       <!-- RIGHT: details — pointer-events:auto, keeps panel alive + buttons clickable -->

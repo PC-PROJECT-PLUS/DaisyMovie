@@ -48,22 +48,58 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
   totalSeasons = signal<number>(1);
   currentSeason = signal<number>(1);
   isFullscreen = signal(false);
+  isMobile = signal(false);
 
   private leaveTimeout: any;
   private enterTimeout: any;
   private idleTimeout: any;
+  private wakeLock: any = null;
+
+  constructor() {
+    if (this.isBrowser) {
+      this.isMobile.set(window.innerWidth <= 768);
+    }
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    if (this.isBrowser) {
+      this.isMobile.set(window.innerWidth <= 768);
+    }
+  }
 
   @HostListener('window:mousemove')
   onMouseMove() {
-    this.controlsVisible.set(true);
-    this.resetIdleTimeout();
+    if (!this.isMobile()) {
+      this.controlsVisible.set(true);
+      this.resetIdleTimeout();
+    }
+  }
+
+  @HostListener('touchstart')
+  onTouchStart() {
+    if (this.isMobile()) {
+      this.controlsVisible.set(true);
+      if (!this.showEpisodesDropdown()) {
+        this.resetIdleTimeout();
+      } else {
+        // Keep controls visible if dropdown is open on mobile
+        clearTimeout(this.idleTimeout);
+      }
+    }
   }
 
   private resetIdleTimeout() {
     if (!this.isBrowser) return;
     clearTimeout(this.idleTimeout);
+    if (this.isMobile() && this.showEpisodesDropdown()) {
+      return; // Keep controls visible if dropdown is open on mobile
+    }
     this.idleTimeout = setTimeout(() => {
       this.controlsVisible.set(false);
+      if (!this.isMobile()) {
+        this.showEpisodesDropdown.set(false); // also hide dropdown on idle if not mobile
+      }
     }, 3000);
   }
 
@@ -75,9 +111,11 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
         }
         this.controlsVisible.set(true);
         this.resetIdleTimeout();
+        this.requestWakeLock();
         this.open();
       } else if (!this.visible) {
         this.close();
+        this.releaseWakeLock();
         clearTimeout(this.idleTimeout);
       }
     }
@@ -127,6 +165,9 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     this.config = { ...this.config, episode: epNumber, season: sNum, startAt: undefined };
     this.currentSeason.set(sNum);
     this.showEpisodesDropdown.set(false);
+    if (this.isMobile()) {
+      this.resetIdleTimeout(); // hide controls after selection
+    }
     this.iframeReady.set(false);
 
     // Fetch the specific episode progress from DB
@@ -267,6 +308,7 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     clearTimeout(this.enterTimeout);
     clearTimeout(this.idleTimeout);
     this.unlockBodyScroll();
+    this.releaseWakeLock();
 
     // Final save on destroy
     if (this.lastSavedTime > 0) {
@@ -397,6 +439,23 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
     this.safeUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
   }
 
+  private async requestWakeLock() {
+    if (!this.isBrowser || !('wakeLock' in navigator)) return;
+    try {
+      this.wakeLock = await (navigator as any).wakeLock.request('screen');
+    } catch (err) {
+      console.warn('Wake Lock request failed:', err);
+    }
+  }
+
+  private releaseWakeLock() {
+    if (this.wakeLock !== null) {
+      this.wakeLock.release().then(() => {
+        this.wakeLock = null;
+      });
+    }
+  }
+
   private open() {
     this.buildUrl();
     this.iframeReady.set(false);
@@ -525,6 +584,14 @@ export class VideoPlayerComponent implements OnChanges, OnDestroy {
               }
             } else if (vixData.event === 'pause') {
               this.saveProgress(Math.floor(vixData.currentTime || 0));
+              if (this.isMobile()) {
+                this.controlsVisible.set(true);
+                this.resetIdleTimeout();
+              }
+            } else if (vixData.event === 'play') {
+              if (this.isMobile() && !this.showEpisodesDropdown()) {
+                this.controlsVisible.set(false);
+              }
             } else if (vixData.event === 'ended') {
               this.saveProgress(Math.floor(vixData.currentTime || 0));
             }

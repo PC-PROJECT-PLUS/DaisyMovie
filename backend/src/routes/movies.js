@@ -36,6 +36,7 @@ function mapMovieItem(res, isSeries) {
   return {
     id: res.id,
     title: isSeries ? (res.name || res.title) : (res.title || res.name),
+    // Using 'original' as requested by the user to maintain highest possible quality for hero images
     backdropUrl: res.backdrop_path ? `https://image.tmdb.org/t/p/original${res.backdrop_path}` : 'https://via.placeholder.com/1280x720?text=No+Image',
     primaryColor: accentColor,
     secondaryColor: accentColor,
@@ -553,7 +554,7 @@ router.get('/detail/:type/:id', async (req, res) => {
     const productionCompanies = data.production_companies ? data.production_companies.map(c => c.name).join(', ') || 'N/A' : 'N/A';
     const releaseDate = isSeries ? data.first_air_date : data.release_date;
 
-    let screenshots = data.images && data.images.backdrops ? data.images.backdrops.map(img => `https://image.tmdb.org/t/p/w1280${img.file_path}`) : [];
+    let screenshots = data.images && data.images.backdrops ? data.images.backdrops.map(img => `https://image.tmdb.org/t/p/original${img.file_path}`) : [];
     if (screenshots.length > 0) {
       while (screenshots.length < 7) {
         screenshots.push(screenshots[screenshots.length % screenshots.length]); // Pad with existing ones

@@ -24,7 +24,12 @@
     </div>
 
     <!-- Wake Up Zone per catturare il mouse senza bloccare il player -->
-    <div class="wake-up-zone" (mousemove)="onMouseMove()" (touchstart)="onMouseMove()"></div>
+    @if (!isMobile()) {
+      <div class="wake-up-zone" (mousemove)="onMouseMove()" (touchstart)="onTouchStart()"></div>
+    } @else {
+      <!-- Su mobile, area trasparente solo in alto per non bloccare i player nativi -->
+      <div class="mobile-tap-header" (touchstart)="onTouchStart()"></div>
+    }
 
     <!-- Iframe Area -->
     <div class="player-iframe-wrapper">
@@ -44,61 +49,112 @@
 
       <!-- TV Series Episodes Overlay -->
       @if (config?.type === 'tv' && !config?.isTrailer && tvEpisodes().length > 0) {
-      <div class="episodes-overlay" (click)="$event.stopPropagation()"
-           (mouseenter)="showEpisodesDropdown.set(true)" 
-           (mouseleave)="showEpisodesDropdown.set(false)">
-           
-        <div class="episodes-expandable-panel" [class.open]="showEpisodesDropdown()">
-          <!-- The Pill Header -->
-          <div class="episodes-pill-header">
-            <button class="ep-control-btn" (click)="prevEpisode()" [disabled]="(currentEpisodeNumber || 1) <= 1" title="Episodio Precedente">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="15 18 9 12 15 6"></polyline>
-              </svg>
-            </button>
-            
-            <div class="ep-label-container">
-              <span class="ep-label">Episodio {{ currentEpisodeNumber }}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.rotated]="showEpisodesDropdown()">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </div>
+        @if (!isMobile()) {
+          <div class="episodes-overlay" (click)="$event.stopPropagation()"
+               (mouseenter)="showEpisodesDropdown.set(true)" 
+               (mouseleave)="showEpisodesDropdown.set(false)">
+               
+            <div class="episodes-expandable-panel" [class.open]="showEpisodesDropdown()">
+              <!-- The Pill Header -->
+              <div class="episodes-pill-header">
+                <button class="ep-control-btn" (click)="prevEpisode()" [disabled]="(currentEpisodeNumber || 1) <= 1" title="Episodio Precedente">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                </button>
+                
+                <div class="ep-label-container">
+                  <span class="ep-label">Episodio {{ currentEpisodeNumber }}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.rotated]="showEpisodesDropdown()">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
 
-            <button class="ep-control-btn" (click)="nextEpisode()" [disabled]="!tvEpisodes().find(e => e.episodeNumber === (currentEpisodeNumber || 1) + 1) && currentSeason() >= totalSeasons()" title="Prossimo Episodio">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </button>
-          </div>
+                <button class="ep-control-btn" (click)="nextEpisode()" [disabled]="!tvEpisodes().find(e => e.episodeNumber === (currentEpisodeNumber || 1) + 1) && currentSeason() >= totalSeasons()" title="Prossimo Episodio">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
+              </div>
 
-          <!-- The Expanded Content -->
-          <div class="episodes-expanded-content">
-            <div class="ep-dropdown-header">
-              <div class="season-selector">
-                <span class="season-label">Stagione</span>
-                <div class="season-pills">
-                  @for (s of [].constructor(totalSeasons()); track $index) {
-                    <button class="season-pill" [class.active]="currentSeason() === $index + 1" (click)="changeSeason($index + 1)">
-                      {{ $index + 1 }}
-                    </button>
+              <!-- The Expanded Content -->
+              <div class="episodes-expanded-content">
+                <div class="ep-dropdown-header">
+                  <div class="season-selector">
+                    <span class="season-label">Stagione</span>
+                    <div class="season-pills">
+                      @for (s of [].constructor(totalSeasons()); track $index) {
+                        <button class="season-pill" [class.active]="currentSeason() === $index + 1" (click)="changeSeason($index + 1)">
+                          {{ $index + 1 }}
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div class="ep-list">
+                  @if (tvEpisodes().length === 0) {
+                    <div class="ep-empty">Nessun episodio disponibile.</div>
+                  }
+                  @for (ep of tvEpisodes(); track ep.id) {
+                  <button class="ep-list-item" [class.active]="ep.episodeNumber === currentEpisodeNumber && currentSeason() === config?.season" (click)="goToEpisode(ep.episodeNumber)">
+                    <span class="ep-num">{{ ep.episodeNumber }}</span>
+                    <span class="ep-title">{{ ep.title }}</span>
+                  </button>
                   }
                 </div>
               </div>
             </div>
-            <div class="ep-list">
-              @if (tvEpisodes().length === 0) {
-                <div class="ep-empty">Nessun episodio disponibile.</div>
-              }
-              @for (ep of tvEpisodes(); track ep.id) {
-              <button class="ep-list-item" [class.active]="ep.episodeNumber === currentEpisodeNumber && currentSeason() === config?.season" (click)="goToEpisode(ep.episodeNumber)">
-                <span class="ep-num">{{ ep.episodeNumber }}</span>
-                <span class="ep-title">{{ ep.title }}</span>
-              </button>
-              }
-            </div>
           </div>
-        </div>
-      </div>
+        } @else {
+          <!-- MOBILE EXCLUSIVE PILL -->
+          <div class="mobile-episodes-overlay" (click)="$event.stopPropagation()">
+            <button class="mobile-episodes-pill" (click)="showEpisodesDropdown.set(true)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="9" y1="21" x2="9" y2="9"></line>
+              </svg>
+              <span>Episodio {{ currentEpisodeNumber }}</span>
+            </button>
+
+            @if (showEpisodesDropdown()) {
+              <div class="mobile-episodes-modal-backdrop" (click)="showEpisodesDropdown.set(false)"></div>
+              <div class="mobile-episodes-modal">
+                <div class="mobile-modal-header">
+                  <h3>Stagione {{ currentSeason() }}</h3>
+                  <button class="close-modal-btn" (click)="showEpisodesDropdown.set(false)">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
+                
+                <div class="mobile-season-selector-wrapper">
+                  <div class="mobile-season-pills">
+                    @for (s of [].constructor(totalSeasons()); track $index) {
+                      <button class="mobile-season-pill" [class.active]="currentSeason() === $index + 1" (click)="changeSeason($index + 1)">
+                        Stagione {{ $index + 1 }}
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <div class="mobile-ep-list">
+                  @if (tvEpisodes().length === 0) {
+                    <div class="ep-empty">Nessun episodio disponibile.</div>
+                  }
+                  @for (ep of tvEpisodes(); track ep.id) {
+                    <button class="mobile-ep-item" [class.active]="ep.episodeNumber === currentEpisodeNumber && currentSeason() === config?.season" (click)="goToEpisode(ep.episodeNumber)">
+                      <span class="ep-num">{{ ep.episodeNumber }}</span>
+                      <span class="ep-title">{{ ep.title }}</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
       }
     </div>
 

@@ -5,6 +5,12 @@
   <div class="bg-orb orb-b"></div>
   <div class="bg-grid"></div>
 
+  <!-- Loading overlay: stays visible until the profiles request finishes,
+       so the page never flashes placeholder profiles before the real ones. -->
+  <div class="profiles-loading" [class.ready]="!loadingProfiles()" role="status" aria-live="polite">
+    <div class="profiles-loading-spinner" aria-hidden="true"></div>
+  </div>
+
   <!-- ════════════════════════════════════════════════════════
        DESKTOP LAYOUT  (> 700px)
        ════════════════════════════════════════════════════════ -->

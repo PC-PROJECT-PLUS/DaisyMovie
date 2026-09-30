@@ -164,10 +164,19 @@ export class SeriesDetailComponent implements OnInit {
     } catch (e) { }
 
     let startAt = 0;
+    let resumeSeason = this.activeSeason();
+    let resumeEpisode = 1;
+
     if (isPlatformBrowser(this.platformId)) {
       const historyItem = this.historyService.getResumeProgress(s.id, true);
-      if (historyItem && historyItem.progress_seconds && historyItem.progress_seconds > 0) {
-        startAt = historyItem.progress_seconds;
+      if (historyItem) {
+        if (historyItem.progress_seconds && historyItem.progress_seconds > 0) {
+          startAt = historyItem.progress_seconds;
+        }
+        if (historyItem.season && historyItem.episode) {
+          resumeSeason = historyItem.season;
+          resumeEpisode = historyItem.episode;
+        }
       }
     }
 
@@ -198,8 +207,8 @@ export class SeriesDetailComponent implements OnInit {
       id: s.id,
       type: 'tv',
       accentColor,
-      season: this.activeSeason(),
-      episode: 1,
+      season: resumeSeason,
+      episode: resumeEpisode,
       startAt: startAt > 0 ? startAt : undefined,
       isAnime,
       title: s.title,

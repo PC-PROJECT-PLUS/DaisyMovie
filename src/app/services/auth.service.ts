@@ -32,6 +32,9 @@ export class AuthService {
   selectedProfile = signal<UserProfile | null>(null);
   currentUser = signal<User | null>(null);
   showLogoutModal = signal<boolean>(false);
+  /** True once the profiles request has finished (success or error).
+   *  Lets pages like profile-select hold their loader until profiles are real. */
+  profilesLoaded = signal<boolean>(false);
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
@@ -123,6 +126,7 @@ export class AuthService {
       localStorage.setItem('daisy_token', token);
     }
     this.isLoggedIn.set(true);
+    this.profilesLoaded.set(false);
     this.currentUser.set({
       email: email,
       name: email.split('@')[0],
@@ -143,6 +147,7 @@ export class AuthService {
     this.isLoggedIn.set(false);
     this.currentUser.set(null);
     this.selectedProfile.set(null);
+    this.profilesLoaded.set(false);
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem('daisy_token');
       sessionStorage.removeItem('daisy_profile');
@@ -179,6 +184,8 @@ export class AuthService {
       this.currentUser.update(u => u ? { ...u, profiles } : null);
     } catch (e) {
       console.error('Failed to fetch profiles', e);
+    } finally {
+      this.profilesLoaded.set(true);
     }
   }
   

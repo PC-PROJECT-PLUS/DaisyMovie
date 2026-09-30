@@ -44,6 +44,7 @@ export class HistoryService {
   private apiUrl = environment.apiUrl;
 
   items = signal<HistoryItem[]>([]);
+  historyLoaded = signal<boolean>(false);
 
   constructor() {
     effect(() => {
@@ -52,17 +53,21 @@ export class HistoryService {
         this.loadHistory(profile.id);
       } else {
         this.items.set([]);
+        this.historyLoaded.set(true);
       }
     });
   }
 
   async loadHistory(profileId: string) {
     try {
+      this.historyLoaded.set(false);
       const items = await firstValueFrom(this.http.get<HistoryItem[]>(`${this.apiUrl}/history?profileId=${profileId}`));
       this.items.set(items);
+      this.historyLoaded.set(true);
     } catch (err) {
       console.error('Failed to load history', err);
       this.items.set([]);
+      this.historyLoaded.set(true);
     }
   }
 
