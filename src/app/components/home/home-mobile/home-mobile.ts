@@ -692,11 +692,13 @@ export class HomeMobile implements OnInit, AfterViewInit, OnDestroy, OnChanges {
 
   toggleNotification(ep: any, event: Event) {
     event.stopPropagation();
+    const isSeries = !!ep.isSeries;
     this.notificationService.toggleUpcomingNotification(
       ep.id,
-      ep.title,
-      ep.seasonEpisode,
-      ep.bannerUrl
+      isSeries ? 'tv' : 'movie',
+      ep.title || ep.name || '',
+      ep.posterUrl || ep.bannerUrl || '',
+      ep.backdropUrl || ep.bannerUrl || ep.posterUrl || ''
     );
   }
 

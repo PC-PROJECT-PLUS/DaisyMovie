@@ -18,7 +18,7 @@
               </svg>
               Riproduci
             </button>
-            <button class="btn-bookmark" [class.active]="favoritesService.isBookmarked(movie.id, false)" (click)="toggleBookmark(movie, $event)">
+            <button class="btn-bookmark" [class.active]="favoritesService.isBookmarked(movie.id, !!movie.isSeries)" (click)="toggleBookmark(movie, $event)">
               <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
               </svg>
@@ -85,7 +85,7 @@
       @for (movie of trendingMovies; track movie.id) {
       <div class="poster-card" (click)="goToMovie(movie)">
         <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
-        <button class="btn-bookmark-mini" [class.active]="favoritesService.isBookmarked(movie.id, false)" (click)="toggleBookmark(movie, $event)"
+        <button class="btn-bookmark-mini" [class.active]="favoritesService.isBookmarked(movie.id, !!movie.isSeries)" (click)="toggleBookmark(movie, $event)"
           aria-label="Aggiungi ai preferiti">
           <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
@@ -117,20 +117,20 @@
 
           <div class="ep-actions">
             <button class="action-circle-btn"
-              [class.active]="notificationService.upcomingNotifiedIds().has(ep.id)"
+              [class.active]="notificationService.isUpcomingNotified(ep.id)"
               (click)="toggleNotification(ep, $event)" aria-label="Notificami">
               <svg width="16" height="16" viewBox="0 0 24 24"
-                [attr.fill]="notificationService.upcomingNotifiedIds().has(ep.id) ? '#ffffff' : 'none'"
+                [attr.fill]="notificationService.isUpcomingNotified(ep.id) ? '#ffffff' : 'none'"
                 stroke="currentColor" stroke-width="2">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
               </svg>
             </button>
 
-            <button class="action-circle-btn" [class.active]="favoritesService.isBookmarked(ep.id, true)"
-              (click)="toggleFavorite(ep, $event)" aria-label="Bookmark Episode">
+            <button class="action-circle-btn" [class.active]="favoritesService.isBookmarked(ep.id, !!ep.isSeries)"
+              (click)="toggleBookmark(ep, $event)" aria-label="Bookmark Episode">
               <svg width="16" height="16" viewBox="0 0 24 24"
-                [style.fill]="favoritesService.isBookmarked(ep.id, true) ? '#ffffff' : 'none'"
+                [style.fill]="favoritesService.isBookmarked(ep.id, !!ep.isSeries) ? '#ffffff' : 'none'"
                 stroke="currentColor" stroke-width="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
               </svg>
@@ -151,7 +151,7 @@
       @for (movie of newReleasesMovies; track movie.id) {
       <div class="poster-card" (click)="goToMovie(movie)">
         <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
-        <button class="btn-bookmark-mini" [class.active]="favoritesService.isBookmarked(movie.id, false)" (click)="toggleBookmark(movie, $event)"
+        <button class="btn-bookmark-mini" [class.active]="favoritesService.isBookmarked(movie.id, !!movie.isSeries)" (click)="toggleBookmark(movie, $event)"
           aria-label="Aggiungi ai preferiti">
           <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
@@ -227,7 +227,7 @@
       @for (movie of acclaimedMovies; track movie.id) {
       <div class="poster-card" (click)="goToMovie(movie)">
         <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
-        <button class="btn-bookmark-mini" [class.active]="favoritesService.isBookmarked(movie.id, false)" (click)="toggleBookmark(movie, $event)"
+        <button class="btn-bookmark-mini" [class.active]="favoritesService.isBookmarked(movie.id, !!movie.isSeries)" (click)="toggleBookmark(movie, $event)"
           aria-label="Aggiungi ai preferiti">
           <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
@@ -254,7 +254,7 @@
           </div>
           <div class="actions">
             <button class="btn-play" [style.background]="movie.accentColor" (click)="goToMovie(movie)">Guarda</button>
-            <button class="btn-bookmark" [class.active]="favoritesService.isBookmarked(movie.id, false)" (click)="toggleBookmark(movie, $event)">
+            <button class="btn-bookmark" [class.active]="favoritesService.isBookmarked(movie.id, !!movie.isSeries)" (click)="toggleBookmark(movie, $event)">
               <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
               </svg>
@@ -275,7 +275,7 @@
       @for (movie of classicsMovies; track movie.id) {
       <div class="poster-card" (click)="goToMovie(movie)">
         <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
-        <button class="btn-bookmark-mini" [class.active]="favoritesService.isBookmarked(movie.id, false)" (click)="toggleBookmark(movie, $event)"
+        <button class="btn-bookmark-mini" [class.active]="favoritesService.isBookmarked(movie.id, !!movie.isSeries)" (click)="toggleBookmark(movie, $event)"
           aria-label="Aggiungi ai preferiti">
           <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
@@ -314,7 +314,7 @@
       @for (movie of slider.movies; track movie.id) {
       <div class="poster-card" (click)="goToMovie(movie)">
         <img [src]="movie.posterUrl" [alt]="movie.title" loading="lazy" />
-        <button class="btn-bookmark-mini" [class.active]="favoritesService.isBookmarked(movie.id, false)" (click)="toggleBookmark(movie, $event)"
+        <button class="btn-bookmark-mini" [class.active]="favoritesService.isBookmarked(movie.id, !!movie.isSeries)" (click)="toggleBookmark(movie, $event)"
           aria-label="Aggiungi ai preferiti">
           <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>

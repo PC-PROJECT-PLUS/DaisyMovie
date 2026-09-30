@@ -252,39 +252,55 @@ export class NotificationService {
     }
   }
 
-  async toggleUpcomingNotification(mediaId: number, mediaType: 'movie' | 'tv' = 'movie', title: string = '', posterUrl: string = '', backdropUrl: string = '') {
+  isUpcomingNotified(mediaId: any): boolean {
+    return this.upcomingNotifiedIds().has(Number(mediaId));
+  }
+
+  async toggleUpcomingNotification(mediaId: any, mediaType: 'movie' | 'tv' = 'movie', title: string = '', posterUrl: string = '', backdropUrl: string = '') {
     const profile = this.authService.selectedProfile();
     if (!profile) return;
 
-    const isFollowing = this.upcomingNotifiedIds().has(mediaId);
+    const idNum = Number(mediaId);
+    const isFollowing = this.upcomingNotifiedIds().has(idNum);
+
+    // Optimistic UI Update
+    this.upcomingNotifiedIds.update(set => {
+      const newSet = new Set(set);
+      if (isFollowing) {
+        newSet.delete(idNum);
+      } else {
+        newSet.add(idNum);
+      }
+      return newSet;
+    });
 
     try {
       if (isFollowing) {
         // Rimuovi dal backend
-        await firstValueFrom(this.http.delete(`${this.apiUrl}/following/${mediaId}?profileId=${profile.id}&mediaType=${mediaType}`));
-        this.upcomingNotifiedIds.update(set => {
-          const newSet = new Set(set);
-          newSet.delete(mediaId);
-          return newSet;
-        });
+        await firstValueFrom(this.http.delete(`${this.apiUrl}/following/${idNum}?profileId=${profile.id}&mediaType=${mediaType}`));
       } else {
         // Aggiungi al backend
         await firstValueFrom(this.http.post(`${this.apiUrl}/following`, {
           profileId: profile.id,
-          mediaId,
+          mediaId: idNum,
           mediaType,
           title,
           posterUrl,
           backdropUrl
         }));
-        this.upcomingNotifiedIds.update(set => {
-          const newSet = new Set(set);
-          newSet.add(mediaId);
-          return newSet;
-        });
       }
     } catch (error) {
       console.error('Error toggling following state:', error);
+      // Revert optimistic update on failure
+      this.upcomingNotifiedIds.update(set => {
+        const newSet = new Set(set);
+        if (isFollowing) {
+          newSet.add(idNum);
+        } else {
+          newSet.delete(idNum);
+        }
+        return newSet;
+      });
     }
   }
 }

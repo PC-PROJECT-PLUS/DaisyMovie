@@ -65,6 +65,7 @@ export interface LatestEpisodeItem {
   accentColor: string;
   isBookmarked?: boolean;
   isNotified?: boolean;
+  isSeries?: boolean;
 }
 
 export interface TopWatchedItem {
@@ -92,6 +93,7 @@ export interface DetailedMovieItem {
   stars: string[];
   likes: string;
   isBookmarked?: boolean;
+  isSeries?: boolean;
 }
 
 @Component({
