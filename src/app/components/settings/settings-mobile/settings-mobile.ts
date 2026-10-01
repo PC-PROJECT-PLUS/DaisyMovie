@@ -1,12 +1,14 @@
 import { Component, signal, inject, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { OverlayModule } from '@angular/cdk/overlay';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { Settings } from '../settings';
 
 @Component({
   selector: 'app-settings-mobile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, OverlayModule, ScrollingModule],
   templateUrl: './settings-mobile.html',
   styleUrl: './settings-mobile.scss'
 })

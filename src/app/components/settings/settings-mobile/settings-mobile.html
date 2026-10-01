@@ -40,7 +40,7 @@
     </div>
   </div>
 
-  <div class="mobile-content">
+  <div class="mobile-content" cdkScrollable>
 
     <!-- 1. FAVORITES TAB -->
     <!-- 1. FAVORITES TAB -->
@@ -56,21 +56,13 @@
             <p>Scegli quale collezione si apre di default.</p>
           </div>
           <div class="custom-select-wrapper" style="width: 100%;">
-            <button class="custom-select-btn" [class.open]="openDropdown() === 'defaultCol'" style="width: 100%"
-              (click)="toggleDropdown('defaultCol'); $event.stopPropagation()">
+            <button class="custom-select-btn" [class.open]="parent.activeSettingsDropdown() === 'defaultCollection' && parent.settingsDropdownExpanded()" style="width: 100%"
+              (click)="parent.openSettingsDropdown($event, 'defaultCollection', parent.defaultCollectionLabel, parent.defaultCollectionOptions, 250); $event.stopPropagation()">
               {{ parent.defaultCollectionLabel }}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                class="chevron">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </button>
-            <div class="custom-select-dropdown popup-glass" [class.show]="openDropdown() === 'defaultCol'">
-              <div class="select-option" (click)="parent.setDefaultCollection(null); closeDropdowns()">Tutti i preferiti (default)</div>
-              <div class="select-option" *ngFor="let c of parent.collections()"
-                (click)="parent.setDefaultCollection(c.id); closeDropdowns()">
-                {{ c.name }}
-              </div>
-            </div>
           </div>
         </div>
         <div class="setting-item flex-col-start" style="border-bottom: none;">
@@ -344,22 +336,13 @@
             </div>
             
             <div class="custom-select-wrapper" style="width: 100%;">
-              <button class="custom-select-btn" [class.open]="parent.isGlobalBgCollectionDropdownOpen()" style="width: 100%"
-                (click)="parent.isGlobalBgCollectionDropdownOpen.set(!parent.isGlobalBgCollectionDropdownOpen()); $event.stopPropagation()">
+              <button class="custom-select-btn" [class.open]="parent.activeSettingsDropdown() === 'globalBackgroundCollection' && parent.settingsDropdownExpanded()" style="width: 100%"
+                (click)="parent.openSettingsDropdown($event, 'globalBackgroundCollection', parent.globalBgCollectionLabel, parent.globalBgCollectionOptions, 250); $event.stopPropagation()">
                 {{ parent.globalBgCollectionLabel }}
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron">
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
               </button>
-              <div class="custom-select-dropdown popup-glass" [class.show]="parent.isGlobalBgCollectionDropdownOpen()">
-                <div class="select-option" (click)="parent.setGlobalBgCollection(null); parent.isGlobalBgCollectionDropdownOpen.set(false)">
-                  Tutti i preferiti (default)
-                </div>
-                <div class="select-option" *ngFor="let c of parent.collections()"
-                  (click)="parent.setGlobalBgCollection(c.id); parent.isGlobalBgCollectionDropdownOpen.set(false)">
-                  {{ c.name }}
-                </div>
-              </div>
             </div>
             
             <div class="hero-selector-wrapper open" style="width: 100%;">
@@ -653,19 +636,13 @@
             <p>Scegli la lingua per interfaccia e default.</p>
           </div>
           <div class="custom-select-wrapper" style="width: 100%;">
-            <button class="custom-select-btn" [class.open]="openDropdown() === 'generalLang'" style="width: 100%"
-              (click)="toggleDropdown('generalLang'); $event.stopPropagation()">
+            <button class="custom-select-btn" [class.open]="parent.activeSettingsDropdown() === 'language' && parent.settingsDropdownExpanded()" style="width: 100%"
+              (click)="parent.openSettingsDropdown($event, 'language', parent.languageLabel, parent.languageOptions, 250); $event.stopPropagation()">
               {{ parent.languageLabel }}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                class="chevron">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </button>
-            <div class="custom-select-dropdown popup-glass" [class.show]="openDropdown() === 'generalLang'">
-              <div class="select-option" *ngFor="let o of parent.languageOptions" (click)="parent.setLanguage(o.value); closeDropdowns()">
-                {{ o.label }}
-              </div>
-            </div>
           </div>
         </div>
 
@@ -675,19 +652,13 @@
             <p>Scegli la lingua audio predefinita per le serie.</p>
           </div>
           <div class="custom-select-wrapper" style="width: 100%;">
-            <button class="custom-select-btn" [class.open]="openDropdown() === 'seriesLang'" style="width: 100%"
-              (click)="toggleDropdown('seriesLang'); $event.stopPropagation()">
+            <button class="custom-select-btn" [class.open]="parent.activeSettingsDropdown() === 'seriesLanguage' && parent.settingsDropdownExpanded()" style="width: 100%"
+              (click)="parent.openSettingsDropdown($event, 'seriesLanguage', parent.defaultSeriesLanguageLabel, parent.languageOptions, 250); $event.stopPropagation()">
               {{ parent.defaultSeriesLanguageLabel }}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                class="chevron">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </button>
-            <div class="custom-select-dropdown popup-glass" [class.show]="openDropdown() === 'seriesLang'">
-              <div class="select-option" *ngFor="let o of parent.languageOptions" (click)="parent.setDefaultSeriesLanguage(o.value); closeDropdowns()">
-                {{ o.label }}
-              </div>
-            </div>
           </div>
         </div>
 
@@ -697,19 +668,13 @@
             <p>Scegli la lingua audio predefinita per i film.</p>
           </div>
           <div class="custom-select-wrapper" style="width: 100%;">
-            <button class="custom-select-btn" [class.open]="openDropdown() === 'filmLang'" style="width: 100%"
-              (click)="toggleDropdown('filmLang'); $event.stopPropagation()">
+            <button class="custom-select-btn" [class.open]="parent.activeSettingsDropdown() === 'filmLanguage' && parent.settingsDropdownExpanded()" style="width: 100%"
+              (click)="parent.openSettingsDropdown($event, 'filmLanguage', parent.defaultFilmLanguageLabel, parent.languageOptions, 250); $event.stopPropagation()">
               {{ parent.defaultFilmLanguageLabel }}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                class="chevron">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </button>
-            <div class="custom-select-dropdown popup-glass" [class.show]="openDropdown() === 'filmLang'">
-              <div class="select-option" *ngFor="let o of parent.languageOptions" (click)="parent.setDefaultFilmLanguage(o.value); closeDropdowns()">
-                {{ o.label }}
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -754,21 +719,14 @@
             <h3>Lingua Sottotitoli (Trailer)</h3>
           </div>
           <div class="custom-select-wrapper" style="width: 100%;">
-            <button class="custom-select-btn" [class.open]="openDropdown() === 'trailerLang'" style="width: 100%"
-              (click)="toggleDropdown('trailerLang'); $event.stopPropagation()"
-              [disabled]="!parent.trailerCaptions">
+            <button class="custom-select-btn" [class.open]="parent.activeSettingsDropdown() === 'trailerLanguage' && parent.settingsDropdownExpanded()" style="width: 100%"
+              [disabled]="!parent.trailerCaptions"
+              (click)="parent.openSettingsDropdown($event, 'trailerLanguage', parent.trailerCaptionLangLabel, parent.languageOptions, 250); $event.stopPropagation()">
               {{ parent.trailerCaptionLangLabel }}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                class="chevron">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </button>
-            <div class="custom-select-dropdown popup-glass" [class.show]="openDropdown() === 'trailerLang'">
-              <div class="select-option" *ngFor="let o of parent.languageOptions"
-                (click)="parent.setTrailerCaptionLang(o.value); closeDropdowns()">
-                {{ o.label }}
-              </div>
-            </div>
           </div>
         </div>
 

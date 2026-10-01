@@ -1,6 +1,11 @@
 @keyframes heroFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .settings-page {
@@ -481,16 +486,16 @@
   width: 100%;
   height: 44px;
   padding: 0 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, var(--glass-bg-opacity, 0.1));
   color: #fff;
   font: inherit;
   font-size: 14px;
   text-align: left;
   cursor: pointer;
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(var(--glass-blur-amount, 28px)) saturate(200%) brightness(1.15);
+  backdrop-filter: blur(var(--glass-blur-amount, 28px)) saturate(200%) brightness(1.15);
   transition: background 0.2s ease, border-color 0.2s ease, opacity 0.15s ease, box-shadow 0.3s ease;
 
   >span {
@@ -510,13 +515,13 @@
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    background: rgba(255, 255, 255, calc(var(--glass-bg-opacity, 0.1) + 0.05));
+    border-color: rgba(255, 255, 255, 0.24);
   }
 
   &.open {
-    opacity: 0;
+    background: rgba(255, 255, 255, calc(var(--glass-bg-opacity, 0.1) + 0.05));
+    border-color: rgba(255, 255, 255, 0.24);
   }
 
   &:disabled {
@@ -528,61 +533,49 @@
 .settings-global-dropdown-panel {
   position: relative;
   width: 100%;
-  max-height: 44px;
+  max-height: 0;
   overflow: hidden;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: none;
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  backdrop-filter: blur(24px) saturate(200%);
+  background: rgba(255, 255, 255, var(--popup-glass-opacity, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(var(--popup-glass-blur, 24px)) saturate(140%) brightness(1.12);
+  backdrop-filter: blur(var(--popup-glass-blur, 24px)) saturate(140%) brightness(1.12);
   transition: max-height 0.35s cubic-bezier(0.25, 1, 0.5, 1),
     background 0.2s ease, box-shadow 0.3s ease;
+  pointer-events: none;
 
   &.open {
     max-height: min(260px, 45vh);
-    background: rgba(255, 255, 255, 0.16);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    pointer-events: auto;
   }
 
   .settings-global-dropdown-header {
-    position: absolute;
-    inset: 0 0 auto;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    height: 44px;
-    padding: 0 16px;
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 14px;
-    pointer-events: none;
-
-    .chevron {
-      flex: 0 0 auto;
-      color: rgba(255, 255, 255, 0.65);
-      transition: transform 0.2s ease;
-
-      &.open {
-        transform: rotate(180deg);
-      }
-    }
+    display: none;
   }
 
   .settings-global-dropdown-list {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    max-height: calc(min(260px, 45vh) - 50px);
+    max-height: min(260px, 45vh);
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: 50px 6px 6px;
+    padding: 6px;
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-8px) scale(0.98);
     pointer-events: none;
     transition: opacity 0.3s ease, transform 0.3s ease;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+
+    /* Hide scrollbar completely as requested */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
   }
 
   &.open .settings-global-dropdown-list {
@@ -599,9 +592,9 @@
     width: 100%;
     min-height: 34px;
     padding: 8px 12px;
-    border: 0;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-md, 14px);
-    background: transparent;
+    background: rgba(255, 255, 255, 0.05);
     color: rgba(255, 255, 255, 0.85);
     font: inherit;
     font-size: 0.85rem;

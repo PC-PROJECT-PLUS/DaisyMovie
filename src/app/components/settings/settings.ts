@@ -65,10 +65,8 @@ export class Settings implements OnInit, OnDestroy {
   settingsDropdownOrigin = signal<ElementRef<HTMLElement> | null>(null);
   fallbackOverlayOrigin: ElementRef<HTMLElement>;
   settingsDropdownPositions: ConnectedPosition[] = [
-    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'top' },
-    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'bottom' },
-    { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'top' },
-    { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'bottom' }
+    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 },
+    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -8 }
   ];
   settingsDropdownScrollStrategy: ScrollStrategy = this.overlay.scrollStrategies.reposition();
   private dropdownCloseTimer: ReturnType<typeof setTimeout> | null = null;
@@ -191,7 +189,7 @@ export class Settings implements OnInit, OnDestroy {
     this.settingsDropdownOptions.set(options);
 
     if (this.activeSettingsDropdown() === key && this.settingsDropdownAttached()) {
-      this.settingsDropdownExpanded.set(true);
+      this.closeSettingsDropdown();
       return;
     }
 
