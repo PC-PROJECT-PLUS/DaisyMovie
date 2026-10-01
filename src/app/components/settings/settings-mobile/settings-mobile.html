@@ -1,6 +1,11 @@
 <div class="settings-mobile-container"
-  [style.background-image]="parent.displayBgUrl ? 'url(' + parent.displayBgUrl + ')' : null"
-  [class.has-bg]="!!parent.displayBgUrl">
+  [class.has-bg]="!!parent.displayBgUrl()">
+
+  <!-- Background Image Handler -->
+  <div class="settings-hero-backdrop-wrapper" *ngIf="parent.heroImageA() || parent.heroImageB()">
+    <img *ngIf="parent.heroImageA()" [src]="parent.heroImageA()" class="settings-hero-backdrop-img" [class.active]="parent.activeHero() === 'a'" loading="lazy" alt="" />
+    <img *ngIf="parent.heroImageB()" [src]="parent.heroImageB()" class="settings-hero-backdrop-img" [class.active]="parent.activeHero() === 'b'" loading="lazy" alt="" />
+  </div>
 
   <div class="mobile-header">
     <h1 class="page-title">Impostazioni</h1>

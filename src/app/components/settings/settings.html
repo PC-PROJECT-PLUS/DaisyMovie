@@ -1,6 +1,11 @@
 <div class="settings-page"
-  [style.background-image]="displayBgUrl ? 'url(' + displayBgUrl + ')' : null"
-  [class.has-bg]="!!displayBgUrl">
+  [class.has-bg]="!!displayBgUrl()">
+
+  <!-- Background Image Handler -->
+  <div class="settings-hero-backdrop-wrapper" *ngIf="heroImageA() || heroImageB()">
+    <img *ngIf="heroImageA()" [src]="heroImageA()" class="settings-hero-backdrop-img" [class.active]="activeHero() === 'a'" loading="lazy" alt="" />
+    <img *ngIf="heroImageB()" [src]="heroImageB()" class="settings-hero-backdrop-img" [class.active]="activeHero() === 'b'" loading="lazy" alt="" />
+  </div>
 
   <!-- Desktop Version -->
   <div class="settings-desktop-container" *ngIf="!responsiveService.isMobile()">

@@ -1,28 +1,52 @@
+@keyframes heroFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .settings-page {
   min-height: 100vh;
   padding-top: 120px;
   padding-bottom: 40px;
   position: relative;
   background-color: var(--bg-primary, #08080f);
-  background-image: url('https://images.unsplash.com/photo-1618331835717-801e976710b2?w=1920&q=80');
-  background-size: cover;
-  background-position: center;
-  transition: background-image 0.5s ease;
+
+  .settings-hero-backdrop-wrapper {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 0;
+    animation: heroFadeIn 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+
+    .settings-hero-backdrop-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 0;
+
+      &.active {
+        opacity: 1;
+      }
+    }
+  }
 
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
-    z-index: 0;
+    z-index: 1;
     transition: background 0.5s ease;
   }
 
   &.has-bg::before {
     background: rgba(0, 0, 0, 0.6);
   }
-
-
 }
 
 .settings-desktop-container {

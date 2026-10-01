@@ -41,7 +41,9 @@ router.post('/', async (req, res) => {
     if (result.rows.length > 0) {
       res.status(201).json(result.rows[0]);
     } else {
-      res.status(409).json({ error: 'Già seguito' });
+      // Invece di restituire 409 (che causa un errore rosso nella console del browser),
+      // restituiamo 200 OK perché l'operazione è idempotente (l'obiettivo è già raggiunto).
+      res.status(200).json({ success: true, message: 'Già seguito' });
     }
   } catch (error) {
     console.error('Errore aggiunta followed media:', error);

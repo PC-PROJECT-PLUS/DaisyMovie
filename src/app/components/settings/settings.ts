@@ -1,5 +1,5 @@
-import { Component, signal, inject, computed, effect, HostListener, ElementRef, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, inject, computed, effect, HostListener, ElementRef, OnInit, OnDestroy, ViewChild, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ConnectedPosition, Overlay, OverlayModule, ScrollStrategy } from '@angular/cdk/overlay';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { Title } from '@angular/platform-browser';
@@ -74,6 +74,7 @@ export class Settings implements OnInit, OnDestroy {
   private dropdownCloseTimer: ReturnType<typeof setTimeout> | null = null;
   private dropdownDetachTimer: ReturnType<typeof setTimeout> | null = null;
   private dropdownOpenFrame = 0;
+  platformId = inject(PLATFORM_ID);
   languageOptions = [
     { value: 'it', label: 'Italiano' },
     { value: 'en', label: 'Inglese' },
@@ -83,10 +84,71 @@ export class Settings implements OnInit, OnDestroy {
   constructor(private elementRef: ElementRef) {
     this.fallbackOverlayOrigin = new ElementRef(elementRef.nativeElement);
     this.titleService.setTitle('Impostazioni');
+
+    effect(() => {
+      const url = this.displayBgUrl();
+      if (!url) {
+        this.loaderService.setRouteReady();
+        return;
+      }
+
+      if (!this.heroImageA()) {
+        this.heroImageA.set(url);
+        // We set route ready when the first image is physically loaded
+        const img = new Image();
+        img.onload = () => {
+          this.loaderService.setRouteReady();
+        };
+        img.onerror = () => {
+          this.loaderService.setRouteReady();
+        };
+        img.src = url;
+        return;
+      }
+
+      if (this.activeHero() === 'a' && this.heroImageA() === url) return;
+      if (this.activeHero() === 'b' && this.heroImageB() === url) return;
+
+      if (isPlatformBrowser(this.platformId)) {
+        if (this.heroImageA() === url) {
+          this.activeHero.set('a');
+          return;
+        }
+        if (this.heroImageB() === url) {
+          this.activeHero.set('b');
+          return;
+        }
+
+        const img = new Image();
+        img.onload = () => {
+          if (this.activeHero() === 'a') {
+            this.heroImageB.set(url);
+            this.activeHero.set('b');
+          } else {
+            this.heroImageA.set(url);
+            this.activeHero.set('a');
+          }
+        };
+        img.onerror = () => {
+          // Fallback if image fails to load gracefully
+          if (this.activeHero() === 'a') {
+            this.heroImageB.set(url);
+            this.activeHero.set('b');
+          } else {
+            this.heroImageA.set(url);
+            this.activeHero.set('a');
+          }
+        };
+        img.src = url;
+      } else {
+        this.heroImageA.set(url);
+      }
+    });
   }
 
   ngOnInit() {
-    this.loaderService.setRouteReady();
+    // La logica del loader è ora gestita nell'effect per aspettare l'immagine di sfondo
+    // Se non ci sono sfondi, viene chiamato subito setRouteReady nell'effect.
   }
 
   @HostListener('document:click', ['$event'])
@@ -105,6 +167,8 @@ export class Settings implements OnInit, OnDestroy {
     this.isFilmLanguageDropdownOpen.set(false);
     this.isGlobalBgCollectionDropdownOpen.set(false);
   }
+
+
 
   openSettingsDropdown(
     event: MouseEvent,
@@ -207,10 +271,10 @@ export class Settings implements OnInit, OnDestroy {
     // Quando si seleziona uno sfondo globale, puliamo lo sfondo specifico delle impostazioni 
     // così l'utente vede immediatamente il risultato della sua scelta.
     if (url !== null) {
-      this.tempSettingsBgUrl = null;
+      this.tempSettingsBgUrl.set(null);
       this.preferencesService.settingsBackgroundUrl.set(null);
     }
-    
+
     this.preferencesService.globalBackgroundUrl.set(url);
     this.preferencesService.savePreferences();
   }
@@ -246,20 +310,24 @@ export class Settings implements OnInit, OnDestroy {
 
   get settingsBackgroundUrl() { return this.preferencesService.settingsBackgroundUrl(); }
 
-  tempSettingsBgUrl: string | null = null;
+  tempSettingsBgUrl = signal<string | null>(null);
 
-  get displayBgUrl() {
-    return this.tempSettingsBgUrl || this.preferencesService.settingsBackgroundUrl() || this.preferencesService.globalBackgroundUrl();
-  }
+  displayBgUrl = computed(() => {
+    return this.tempSettingsBgUrl() || this.preferencesService.settingsBackgroundUrl() || this.preferencesService.globalBackgroundUrl();
+  });
+
+  heroImageA = signal<string>('');
+  heroImageB = signal<string>('');
+  activeHero = signal<'a' | 'b'>('a');
 
   onSettingsBackgroundSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       const file = input.files[0];
-      
+
       // Imposta subito un object URL per un'animazione CSS fluida
-      this.tempSettingsBgUrl = URL.createObjectURL(file);
-      
+      this.tempSettingsBgUrl.set(URL.createObjectURL(file));
+
       const reader = new FileReader();
       reader.onload = (e: any) => {
         const img = new Image();
@@ -286,17 +354,17 @@ export class Settings implements OnInit, OnDestroy {
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            
+
             let quality = 0.7;
             let compressed = canvas.toDataURL('image/jpeg', quality);
-            
+
             // Loop per abbassare la qualità finché la stringa base64 è < 90KB (~120000 char)
             // Questo previene l'errore 413 Payload Too Large dal backend Express (limite default 100KB)
             while (compressed.length > 90000 && quality > 0.1) {
               quality -= 0.1;
               compressed = canvas.toDataURL('image/jpeg', quality);
             }
-            
+
             this.preferencesService.settingsBackgroundUrl.set(compressed);
             this.preferencesService.savePreferences();
           }
@@ -308,7 +376,7 @@ export class Settings implements OnInit, OnDestroy {
   }
 
   removeSettingsBackground() {
-    this.tempSettingsBgUrl = null;
+    this.tempSettingsBgUrl.set(null);
     this.preferencesService.settingsBackgroundUrl.set(null);
     this.preferencesService.savePreferences();
   }
