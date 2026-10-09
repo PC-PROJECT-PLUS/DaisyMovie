@@ -20,10 +20,24 @@ class _DetailMobileState extends State<DetailMobile> {
 
   final ValueNotifier<double> _topScrollFade = ValueNotifier(0.0);
   final ValueNotifier<double> _bottomScrollFade = ValueNotifier(1.0);
+  late final ScrollController _mainScrollController;
 
   @override
   void initState() {
     super.initState();
+    _mainScrollController = ScrollController();
+    _mainScrollController.addListener(() {
+      final offset = _mainScrollController.offset;
+      // Le azioni originali (Play, Trailer) si trovano a circa 500-600 pixel di offset.
+      const double start = 480.0;
+      const double end = 560.0;
+      final double animVal = ((offset - start) / (end - start)).clamp(0.0, 1.0);
+
+      if (appDetailActionNavbarAnimation.value != animVal) {
+        appDetailActionNavbarAnimation.value = animVal;
+      }
+    });
+
     // Reintrodotto il ritardo per dare priorità assoluta all'animazione della pagina
     Future.delayed(const Duration(milliseconds: 350), () {
       if (mounted) {
@@ -34,6 +48,11 @@ class _DetailMobileState extends State<DetailMobile> {
 
   @override
   void dispose() {
+    Future.microtask(() {
+      appDetailActionNavbarAnimation.value = 0.0;
+      appDetailPrimaryColor.value = null;
+    });
+    _mainScrollController.dispose();
     _topScrollFade.dispose();
     _bottomScrollFade.dispose();
     super.dispose();
@@ -49,6 +68,7 @@ class _DetailMobileState extends State<DetailMobile> {
         setState(() {
           _primaryColor = scheme.primary;
         });
+        appDetailPrimaryColor.value = scheme.primary;
       }
     } catch (e) {
       // Ignora errori di caricamento immagine
@@ -64,12 +84,13 @@ class _DetailMobileState extends State<DetailMobile> {
     final imageHeight = screenHeight * 0.75;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1A),
+      backgroundColor: const Color(0xFF000000),
       body: Stack(
         children: [
           // Contenuto Scrollabile Principale (Immagine e Testi scorrono INSIEME)
           Positioned.fill(
             child: SingleChildScrollView(
+              controller: _mainScrollController,
               padding: EdgeInsets.zero,
               physics: const ClampingScrollPhysics(), // Niente bounce
               child: Stack(
@@ -128,9 +149,9 @@ class _DetailMobileState extends State<DetailMobile> {
                                 end: Alignment.bottomCenter,
                                 colors: [
                                   Colors.transparent,
-                                  Color(0xCC0F0F1A), // Sfondo semi-trasparente
-                                  Color(0xFF0F0F1A), // Nero solido
-                                  Color(0xFF0F0F1A), // Nero solido fino alla fine per coprire il bordo sgranato
+                                  Color(0xCC000000), // Sfondo semi-trasparente
+                                  Color(0xFF000000), // Nero solido
+                                  Color(0xFF000000), // Nero solido fino alla fine per coprire il bordo sgranato
                                 ],
                                 stops: [0.3, 0.65, 0.85, 1.0], // Diventa completamente nero al 85% dell'altezza
                               ),
@@ -413,28 +434,6 @@ class _DetailMobileState extends State<DetailMobile> {
                     Icons.arrow_back_ios_new_rounded,
                     color: Colors.white,
                     size: 16,
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // 4. Icona Notifiche FISSA (Fuori dallo ScrollView, in alto a destra)
-          Positioned(
-            top: topSafeArea + 16,
-            right: 24,
-            child: AnimatedScaleButton(
-              onTap: () {},
-              child: DaisyGlassContainer(
-                width: 40,
-                height: 40,
-                shape: BoxShape.circle,
-                padding: EdgeInsets.zero,
-                child: const Center(
-                  child: Icon(
-                    Icons.notifications_none_rounded,
-                    color: Colors.white,
-                    size: 22,
                   ),
                 ),
               ),
@@ -821,11 +820,8 @@ class _DetailMobileState extends State<DetailMobile> {
                     final double t = animation.value.clamp(0.0, 1.0);
                     // Calcoliamo un ritardo del 50%: opacità è 0 fino a t=0.5, poi sale a 1.0
                     final double opacity = ((t - 0.5) * 2.0).clamp(0.0, 1.0);
-                    
-                    return Opacity(
-                      opacity: opacity,
-                      child: child,
-                    );
+
+                    return Opacity(opacity: opacity, child: child);
                   },
                   child: SlideTransition(
                     position: Tween<Offset>(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:daisy_movie_app/screens/mobile/search_mobile.dart';
 import 'package:daisy_movie_app/screens/mobile/detail_mobile.dart';
+
 import 'dart:ui';
 
 class HomeMobile extends StatefulWidget {
@@ -14,7 +15,16 @@ class HomeMobile extends StatefulWidget {
 final ValueNotifier<int> appTabIndex = ValueNotifier<int>(0);
 
 // Stato globale per il film attualmente visualizzato nel dettaglio
-final ValueNotifier<Map<String, dynamic>?> appSelectedMovie = ValueNotifier(null);
+final ValueNotifier<Map<String, dynamic>?> appSelectedMovie = ValueNotifier(
+  null,
+);
+
+// Stato globale per l'animazione della action navbar di DetailMobile (0.0 = nascosta, 1.0 = mostrata)
+final ValueNotifier<double> appDetailActionNavbarAnimation =
+    ValueNotifier<double>(0.0);
+
+// Colore primario estratto dall'immagine del film
+final ValueNotifier<Color?> appDetailPrimaryColor = ValueNotifier(null);
 
 class _HomeMobileState extends State<HomeMobile> {
   @override
@@ -45,56 +55,61 @@ class _HomeMobileState extends State<HomeMobile> {
         appSelectedMovie.value = null;
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF0F0F1A),
+        backgroundColor: const Color(0xFF000000),
         body: Stack(
           children: [
-          // Gestore di pagine con animazioni fluide e perfette
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              // Creiamo un senso spaziale: la Search (a destra) e la Home (a sinistra)
-              // Se andiamo verso la Search, scivola da destra (+0.02).
-              // Se torniamo alla Home, scivola da sinistra (-0.02).
-              final isSearchPage = child is SearchMobile;
+            // Gestore di pagine con animazioni fluide e perfette
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                // Creiamo un senso spaziale: la Search (a destra) e la Home (a sinistra)
+                // Se andiamo verso la Search, scivola da destra (+0.02).
+                // Se torniamo alla Home, scivola da sinistra (-0.02).
+                final isSearchPage = child is SearchMobile;
 
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: Offset(isSearchPage ? 0.02 : -0.02, 0.0), 
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: child,
-                ),
-              );
-            },
-            child: appSelectedMovie.value != null
-                ? DetailMobile(
-                    item: appSelectedMovie.value!,
-                    heroTag: 'detail_hero',
-                  )
-                : currentIndex == 0 
-                    ? _buildHomeContent() 
-                    : currentIndex == 1 
-                        ? const SearchMobile() 
-                        : const Center(child: Text('Coming Soon', style: TextStyle(color: Colors.white))),
-          ),
-          // Navbar fluttuante in vetro (fissa sopra tutto)
-          GlassBottomNavbar(
-            currentIndex: currentIndex,
-            onTap: (index) {
-              appTabIndex.value = index;
-              // Se siamo nella pagina dettaglio, la chiudiamo per mostrare il tab richiesto
-              appSelectedMovie.value = null;
-            },
-          ),
-        ],
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: Offset(isSearchPage ? 0.02 : -0.02, 0.0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: appSelectedMovie.value != null
+                  ? DetailMobile(
+                      item: appSelectedMovie.value!,
+                      heroTag: 'detail_hero',
+                    )
+                  : currentIndex == 0
+                  ? _buildHomeContent()
+                  : currentIndex == 1
+                  ? const SearchMobile()
+                  : const Center(
+                      child: Text(
+                        'Coming Soon',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+            ),
+            // Navbar fluttuante in vetro (fissa sopra tutto)
+            GlassBottomNavbar(
+              currentIndex: currentIndex,
+              onTap: (index) {
+                appTabIndex.value = index;
+                // Se siamo nella pagina dettaglio, la chiudiamo per mostrare il tab richiesto
+                appSelectedMovie.value = null;
+              },
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // Il contenuto della Home originale
   Widget _buildHomeContent() {
@@ -102,7 +117,9 @@ class _HomeMobileState extends State<HomeMobile> {
       key: const ValueKey('home_content'), // Importante per l'AnimatedSwitcher
       physics: const ClampingScrollPhysics(),
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 110.0), // Spazio ridotto per la navbar (con un po' di respiro)
+        padding: const EdgeInsets.only(
+          bottom: 110.0,
+        ), // Spazio ridotto per la navbar (con un po' di respiro)
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -211,7 +228,7 @@ class _HeroSliderWidgetState extends State<HeroSliderWidget> {
       'image': 'https://images.unsplash.com/photo-1605808383803-b01ef0f3244e?auto=format&fit=crop&w=800&q=80',
       'badge': 'Series',
       'meta': '2023 • Drama, Sci-Fi • 9 Eps',
-    }
+    },
   ];
 
   @override
@@ -228,7 +245,8 @@ class _HeroSliderWidgetState extends State<HeroSliderWidget> {
               animation: _pageController,
               builder: (context, child) {
                 double page = _currentPage.toDouble();
-                if (_pageController.hasClients && _pageController.position.haveDimensions) {
+                if (_pageController.hasClients &&
+                    _pageController.position.haveDimensions) {
                   page = _pageController.page ?? _currentPage.toDouble();
                 }
                 return Stack(
@@ -236,7 +254,7 @@ class _HeroSliderWidgetState extends State<HeroSliderWidget> {
                   children: List.generate(_heroMovies.length, (index) {
                     double distance = (page - index).abs();
                     double opacity = (1 - distance).clamp(0.0, 1.0);
-                    
+
                     // Leggerissimo zoom in avanti per l'immagine che esce
                     double scale = 1.0 + (distance * 0.1);
 
@@ -250,10 +268,16 @@ class _HeroSliderWidgetState extends State<HeroSliderWidget> {
                           _heroMovies[index]['image']!,
                           fit: BoxFit.cover,
                           alignment: Alignment.topCenter,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: const Color(0xFF1E1E2C),
-                            child: const Center(child: Icon(Icons.broken_image, color: Colors.white54)),
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                color: const Color(0xFF1E1E2C),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    color: Colors.white54,
+                                  ),
+                                ),
+                              ),
                         ),
                       ),
                     );
@@ -271,9 +295,9 @@ class _HeroSliderWidgetState extends State<HeroSliderWidget> {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  Color(0x000F0F1A),
-                  Color(0xBB0F0F1A),
-                  Color(0xFF0F0F1A),
+                  Color(0x00000000),
+                  Color(0xBB000000),
+                  Color(0xFF000000),
                 ],
                 stops: [0.0, 0.4, 0.75, 1.0],
               ),
@@ -298,129 +322,124 @@ class _HeroSliderWidgetState extends State<HeroSliderWidget> {
                   final screenWidth = MediaQuery.of(context).size.width;
                   if (details.globalPosition.dx < screenWidth / 2) {
                     if (_currentPage > 0) {
-                      _pageController.previousPage(duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
+                      _pageController.previousPage(
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeInOut,
+                      );
                     }
                   } else {
                     if (_currentPage < _heroMovies.length - 1) {
-                      _pageController.nextPage(duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
+                      _pageController.nextPage(
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeInOut,
+                      );
                     }
                   }
                 },
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                  Positioned(
-                    left: 24,
-                    right: 24,
-                    bottom: 40,
-                    child: AnimatedBuilder(
-                      animation: _pageController,
-                      builder: (context, child) {
-                        double pageOffset = 0.0;
-                        if (_pageController.hasClients && _pageController.position.haveDimensions) {
-                          pageOffset = _pageController.page! - index;
-                        } else {
-                          pageOffset = (_currentPage - index).toDouble();
-                        }
-                        // Il testo scivola via lateralmente più velocemente del normale swipe
-                        return Transform.translate(
-                          offset: Offset(pageOffset * 50, 0),
-                          child: Opacity(
-                            opacity: (1 - (pageOffset.abs() * 1.5)).clamp(0.0, 1.0),
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          DaisyGlassContainer(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            borderRadius: 20,
-                            child: Text(
-                              movie['badge']!,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                    Positioned(
+                      left: 24,
+                      right: 24,
+                      bottom: 40,
+                      child: AnimatedBuilder(
+                        animation: _pageController,
+                        builder: (context, child) {
+                          double pageOffset = 0.0;
+                          if (_pageController.hasClients &&
+                              _pageController.position.haveDimensions) {
+                            pageOffset = _pageController.page! - index;
+                          } else {
+                            pageOffset = (_currentPage - index).toDouble();
+                          }
+                          // Il testo scivola via lateralmente più velocemente del normale swipe
+                          return Transform.translate(
+                            offset: Offset(pageOffset * 50, 0),
+                            child: Opacity(
+                              opacity: (1 - (pageOffset.abs() * 1.5)).clamp(
+                                0.0,
+                                1.0,
+                              ),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            DaisyGlassContainer(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              borderRadius: 20,
+                              child: Text(
+                                movie['badge']!,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      movie['title']!,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.bold,
-                                        height: 1.2,
+                            const SizedBox(height: 12),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        movie['title']!,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.bold,
+                                          height: 1.2,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      movie['meta']!,
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.7),
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w400,
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        movie['meta']!,
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.7,
+                                          ),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w400,
+                                        ),
                                       ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                // Glass Play Button
+                                GestureDetector(
+                                  onTap: () {}, // Ferma la propagazione del tap
+                                  child: DaisyGlassContainer(
+                                    width: 50,
+                                    height: 50,
+                                    shape: BoxShape.circle,
+                                    child: const Icon(
+                                      Icons.play_arrow_rounded,
+                                      color: Colors.white,
+                                      size: 28,
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              // Glass Play Button
-                              GestureDetector(
-                                onTap: () {}, // Ferma la propagazione del tap
-                                child: DaisyGlassContainer(
-                                  width: 50,
-                                  height: 50,
-                                  shape: BoxShape.circle,
-                                  child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 28),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
               );
             },
-          ),
-          // Top Header (Non fisso, scorre con la pagina)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            left: 24,
-            right: 24,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Hi, Jammie',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                DaisyGlassContainer(
-                  width: 40,
-                  height: 40,
-                  shape: BoxShape.circle,
-                  child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 22),
-                ),
-              ],
-            ),
           ),
 
           // Line Indicators
@@ -436,7 +455,9 @@ class _HeroSliderWidgetState extends State<HeroSliderWidget> {
                   height: 4,
                   width: _currentPage == index ? 24 : 12,
                   decoration: BoxDecoration(
-                    color: _currentPage == index ? Colors.white : Colors.white.withValues(alpha: 0.3),
+                    color: _currentPage == index
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -489,10 +510,16 @@ class ContinueWatchingSlider extends StatelessWidget {
                         Image.network(
                           'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=600&q=80',
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: const Color(0xFF2A2A3C),
-                            child: const Center(child: Icon(Icons.broken_image, color: Colors.white54)),
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                color: const Color(0xFF2A2A3C),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    color: Colors.white54,
+                                  ),
+                                ),
+                              ),
                         ),
                         Center(
                           child: ClipRRect(
@@ -544,7 +571,11 @@ class ContinueWatchingSlider extends StatelessWidget {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            Icon(Icons.videocam_outlined, color: Colors.white.withValues(alpha: 0.6), size: 14),
+                            Icon(
+                              Icons.videocam_outlined,
+                              color: Colors.white.withValues(alpha: 0.6),
+                              size: 14,
+                            ),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -575,12 +606,14 @@ class ContinueWatchingSlider extends StatelessWidget {
                               height: 4,
                               width: 60, // Mock progress
                               decoration: BoxDecoration(
-                                color: const Color(0xFF6C63FF), // Purple accent from image
+                                color: const Color(
+                                  0xFF6C63FF,
+                                ), // Purple accent from image
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
                           ],
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -639,7 +672,9 @@ class StandardMovieSlider extends StatelessWidget {
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: const Color(0xFF1E1E2C),
-                    child: const Center(child: Icon(Icons.broken_image, color: Colors.white54)),
+                    child: const Center(
+                      child: Icon(Icons.broken_image, color: Colors.white54),
+                    ),
                   ),
                 ),
               ),
@@ -661,17 +696,17 @@ class EpisodesSlider extends StatelessWidget {
     {
       'image': 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=600&q=80',
       'title': 'House of the Dragon',
-      'ep': 'S2 E4 - The Red Dragon and the Gold'
+      'ep': 'S2 E4 - The Red Dragon and the Gold',
     },
     {
       'image': 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=600&q=80',
       'title': 'The Boys',
-      'ep': 'S4 E8 - Season Finale'
+      'ep': 'S4 E8 - Season Finale',
     },
     {
       'image': 'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?auto=format&fit=crop&w=600&q=80',
       'title': 'The Bear',
-      'ep': 'S3 E10 - Tomorrow'
+      'ep': 'S3 E10 - Tomorrow',
     },
   ];
 
@@ -700,7 +735,7 @@ class EpisodesSlider extends StatelessWidget {
                   color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 10,
                   offset: const Offset(0, 5),
-                )
+                ),
               ],
             ),
             child: Stack(
@@ -711,7 +746,10 @@ class EpisodesSlider extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.8),
+                      ],
                     ),
                   ),
                 ),
@@ -724,27 +762,25 @@ class EpisodesSlider extends StatelessWidget {
                     children: [
                       Text(
                         ep['title']!,
-                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         ep['ep']!,
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 12,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                  ),
-                ),
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: DaisyGlassContainer(
-                    shape: BoxShape.circle,
-                    padding: const EdgeInsets.all(6),
-                    child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 20),
                   ),
                 ),
               ],
@@ -775,8 +811,12 @@ class ChartSlider extends StatelessWidget {
     return SizedBox(
       height: 220,
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10), // Padding per non tagliare i numeri
-        clipBehavior: Clip.none, // Permette ai numeri di sbordare senza essere tagliati
+        padding: const EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: 10,
+        ), // Padding per non tagliare i numeri
+        clipBehavior:
+            Clip.none, // Permette ai numeri di sbordare senza essere tagliati
         scrollDirection: Axis.horizontal,
         physics: const ClampingScrollPhysics(),
         itemCount: posters.length,
@@ -788,6 +828,7 @@ class ChartSlider extends StatelessWidget {
             if (rank == 3) return const Color(0xFFCD7F32); // Bronzo
             return Colors.white.withValues(alpha: 0.9);
           }
+
           final rankColor = getRankColor();
 
           return SizedBox(
@@ -812,7 +853,7 @@ class ChartSlider extends StatelessWidget {
                           color: Colors.black.withValues(alpha: 0.4),
                           blurRadius: 15,
                           offset: const Offset(0, 8),
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -842,7 +883,8 @@ class ChartSlider extends StatelessWidget {
                       fontSize: 130,
                       fontWeight: FontWeight.w900,
                       height: 1.0,
-                      color: const Color(0xFF0F0F1A).withValues(alpha: 0.7), // Blend background
+                      color: const Color(0xFF000000)
+                          .withValues(alpha: 0.7), // Blend background
                     ),
                   ),
                 ),
@@ -896,7 +938,10 @@ class SpotlightSlider extends StatelessWidget {
             child: Row(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), bottomLeft: Radius.circular(24)),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    bottomLeft: Radius.circular(24),
+                  ),
                   child: Image.network(
                     spot['image']!,
                     width: 130,
@@ -909,18 +954,26 @@ class SpotlightSlider extends StatelessWidget {
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center, // Centrato verticalmente
+                      mainAxisAlignment:
+                          MainAxisAlignment.center, // Centrato verticalmente
                       children: [
                         Text(
                           spot['title']!,
-                          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                           maxLines: 1, // Troncato a 1 riga
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           spot['synopsis']!,
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 12,
+                          ),
                           maxLines: 4,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -934,14 +987,26 @@ class SpotlightSlider extends StatelessWidget {
                               color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
-                            )
+                            ),
                           ],
                           child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center, // Centrato orizzontalmente
+                            mainAxisAlignment: MainAxisAlignment
+                                .center, // Centrato orizzontalmente
                             children: [
-                              Icon(Icons.play_arrow_rounded, color: Colors.white, size: 18),
+                              Icon(
+                                Icons.play_arrow_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
                               SizedBox(width: 4),
-                              Text('Guarda', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                              Text(
+                                'Guarda',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -975,8 +1040,8 @@ class GlassBottomNavbar extends StatefulWidget {
   State<GlassBottomNavbar> createState() => _GlassBottomNavbarState();
 }
 
-class _GlassBottomNavbarState extends State<GlassBottomNavbar> with SingleTickerProviderStateMixin {
-  
+class _GlassBottomNavbarState extends State<GlassBottomNavbar>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -987,9 +1052,10 @@ class _GlassBottomNavbarState extends State<GlassBottomNavbar> with SingleTicker
       vsync: this,
       duration: const Duration(milliseconds: 150),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   void _onItemTapped(int index) {
@@ -1008,81 +1074,146 @@ class _GlassBottomNavbarState extends State<GlassBottomNavbar> with SingleTicker
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    // Barra più compatta e proporzionata (al massimo 320px)
-    final double navWidth = (screenWidth * 0.75).clamp(260.0, 320.0);
+    // La larghezza combacia ESATTAMENTE con la sezione Screenshot (padding 24 ai lati)
+    final double navWidth = screenWidth - 48.0;
     const double navHeight = 65.0; // Più sottile e compatta
-    
+
     return Positioned(
       bottom: 24, // Più vicina al fondo
-      left: (screenWidth - navWidth) / 2,
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) => Transform.scale(
-          scale: _scaleAnimation.value,
-          child: child,
-        ),
-        child: DaisyGlassContainer(
-          width: navWidth,
-          height: navHeight,
-          borderRadius: 50,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 32,
-              offset: const Offset(0, 16),
-            )
-          ],
-          child: LayoutBuilder(
-                builder: (context, constraints) {
-                  // Calcoliamo la larghezza di ogni "spazio" sulla base dello spazio INTERNO REALE (al netto dei bordi)
-                  // Questo evita in assoluto il problema dell'overflow di 4 pixel!
-                  final double itemWidth = constraints.maxWidth / 4;
-                  
-                  return Stack(
-                    children: [
-                      // Il Pallino Bianco (Effetto Liquido ottimizzato tramite Transform su GPU)
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 400),
-                        curve: Curves.easeOutBack, // Curva liquida/elastica
-                        transform: Matrix4.translationValues(
-                          (widget.currentIndex * itemWidth) + (itemWidth / 2) - 24.5,
-                          (navHeight - 49) / 2, // Centrato verticalmente
-                          0,
-                        ),
-                        width: 49,
-                        height: 49,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 10,
-                              offset: Offset(0, 4),
-                            )
-                          ]
-                        ),
+      left: 24, // Esattamente 24px per allinearsi alla UI sovrastante
+      child: ValueListenableBuilder<double>(
+        valueListenable: appDetailActionNavbarAnimation,
+        builder: (context, actionAnimVal, child) {
+          final double baseRadius = navHeight / 2; // 32.5
+          final double topRadius = baseRadius * (1.0 - actionAnimVal);
+          final double gap = 2.0 * actionAnimVal;
+
+          return AnimatedBuilder(
+            animation: _scaleAnimation,
+            builder: (context, child) =>
+                Transform.scale(scale: _scaleAnimation.value, child: child),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top Action Navbar (Emerges)
+                ClipRect(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    heightFactor: actionAnimVal,
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: gap),
+                      child: _buildTopActionNavbar(
+                        actionAnimVal,
+                        navWidth,
+                        navHeight,
                       ),
-                      
-                      // Le 4 Icone
-                      Row(
+                    ),
+                  ),
+                ),
+
+                // Original Bottom Navbar
+                DaisyGlassContainer(
+                  width: navWidth,
+                  height: navHeight,
+                  customBorderRadius: BorderRadius.vertical(
+                    top: Radius.circular(topRadius),
+                    bottom: Radius.circular(baseRadius),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 32,
+                      offset: const Offset(0, 16),
+                    ),
+                  ],
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Calcoliamo la larghezza di ogni "spazio" sulla base dello spazio INTERNO REALE (al netto dei bordi)
+                      // Questo evita in assoluto il problema dell'overflow di 4 pixel!
+                      final double itemWidth = constraints.maxWidth / 5;
+
+                      return Stack(
                         children: [
-                          _buildNavItem(Icons.home_filled, 0, itemWidth, navHeight),
-                          _buildNavItem(Icons.explore_outlined, 1, itemWidth, navHeight),
-                          _buildNavItem(Icons.favorite_border_rounded, 2, itemWidth, navHeight),
-                          _buildNavItem(Icons.person_outline_rounded, 3, itemWidth, navHeight),
+                          // Il Pallino Bianco (Effetto Liquido ottimizzato tramite Transform su GPU)
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.easeOutBack, // Curva liquida/elastica
+                            transform: Matrix4.translationValues(
+                              (widget.currentIndex * itemWidth) +
+                                  (itemWidth / 2) -
+                                  24.5,
+                              (navHeight - 49) / 2, // Centrato verticalmente
+                              0,
+                            ),
+                            width: 49,
+                            height: 49,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 10,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Le 5 Icone
+                          Row(
+                            children: [
+                              _buildNavItem(
+                                Icons.home_filled,
+                                0,
+                                itemWidth,
+                                navHeight,
+                              ),
+                              _buildNavItem(
+                                Icons.explore_outlined,
+                                1,
+                                itemWidth,
+                                navHeight,
+                              ),
+                              _buildNavItem(
+                                Icons.notifications_none_rounded,
+                                2,
+                                itemWidth,
+                                navHeight,
+                              ),
+                              _buildNavItem(
+                                Icons.favorite_border_rounded,
+                                3,
+                                itemWidth,
+                                navHeight,
+                              ),
+                              _buildNavItem(
+                                Icons.person_outline_rounded,
+                                4,
+                                itemWidth,
+                                navHeight,
+                              ),
+                            ],
+                          ),
                         ],
-                      ),
-                    ],
-                  );
-                },
-              ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          ),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, int index, double itemWidth, double navHeight) {
+  Widget _buildNavItem(
+    IconData icon,
+    int index,
+    double itemWidth,
+    double navHeight,
+  ) {
     final isSelected = widget.currentIndex == index;
     return GestureDetector(
       onTap: () => _onItemTapped(index),
@@ -1096,9 +1227,139 @@ class _GlassBottomNavbarState extends State<GlassBottomNavbar> with SingleTicker
             child: Icon(
               icon,
               size: 24, // Icone più compatte
-              color: isSelected ? Colors.black : Colors.white.withValues(alpha: 0.8),
+              color: isSelected
+                  ? Colors.black
+                  : Colors.white.withValues(alpha: 0.8),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopActionNavbar(double animVal, double width, double height) {
+    final double baseRadius = height / 2;
+    return DaisyGlassContainer(
+      width: width,
+      height: height,
+      customBorderRadius: BorderRadius.vertical(
+        top: Radius.circular(baseRadius),
+        bottom: Radius.circular(baseRadius * (1.0 - animVal)),
+      ),
+      child: ValueListenableBuilder<Color?>(
+        valueListenable: appDetailPrimaryColor,
+        builder: (context, primaryColor, child) {
+          // Sinistra: Allinea la "M" al bordo sinistro dell'icona Home. L'icona Home è 26px e si trova centrata in uno slot di width/5 (quindi al centro a width/10).
+          // Il suo bordo sinistro dista 13px dal centro.
+          final double leftPadding = (width / 10) - 13.0;
+
+          // Destra: L'utente vuole lasciare l'icona Preferiti esattamente dov'è ora (centrata sull'icona Profilo)
+          // e avvicinare le altre icone con il gap originale di 8px.
+          // L'icona Preferiti ha larghezza 40px, il suo centro è a 20px dal suo bordo destro.
+          // Affinché il suo centro cada esattamente a width/10 (centro dell'icona Profilo),
+          // il suo bordo destro deve stare a (width / 10) - 20.0 dal bordo della navbar.
+          final double rightPadding = (width / 10) - 20.0;
+
+          return Padding(
+            padding: EdgeInsets.only(left: leftPadding, right: rightPadding),
+            child: Row(
+              children: [
+                // Titolo Film sulla sinistra (esce in fade e si espande)
+                Expanded(
+                  child: Opacity(
+                    opacity: animVal,
+                    child: Text(
+                      appSelectedMovie.value?['title'] ?? '',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+
+                // Bottoni sulla destra compattati
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildActionIcon(
+                      Icons.movie_outlined,
+                      animVal,
+                      primaryColor,
+                      isOutline: true,
+                    ),
+                    SizedBox(width: 8.0 * animVal),
+                    _buildPlayNowCircle(animVal, primaryColor),
+                    SizedBox(width: 8.0 * animVal),
+                    _buildActionIcon(
+                      Icons.favorite_border_rounded,
+                      animVal,
+                      primaryColor,
+                      isOutline: true,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildActionIcon(
+    IconData icon,
+    double animVal,
+    Color? primaryColor, {
+    required bool isOutline,
+  }) {
+    final Color color = primaryColor ?? Colors.white;
+    return Transform.scale(
+      scale: animVal,
+      child: DaisyGlassContainer(
+        width: 40,
+        height: 40,
+        shape: BoxShape.circle,
+        padding: EdgeInsets.zero,
+        border: isOutline
+            ? Border.all(
+                color: primaryColor ?? Colors.white.withValues(alpha: 0.2),
+                width: 1.5,
+              )
+            : null,
+        child: Center(
+          child: Icon(
+            icon,
+            color: isOutline
+                ? color
+                : (color.computeLuminance() > 0.5
+                      ? Colors.black
+                      : Colors.white),
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlayNowCircle(double animVal, Color? primaryColor) {
+    // La pillola del play now è colorata per risaltare, ma ora è solo un cerchio 40x40
+    final Color bgColor = primaryColor ?? const Color(0xFFF2C94C);
+    final Color fgColor = bgColor.computeLuminance() > 0.5
+        ? Colors.black
+        : Colors.white;
+
+    return Transform.scale(
+      scale: animVal,
+      child: Container(
+        width: 40.0,
+        height: 40.0,
+        decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
+        child: Center(
+          child: Icon(Icons.play_arrow_rounded, size: 22, color: fgColor),
         ),
       ),
     );
@@ -1117,6 +1378,7 @@ class DaisyGlassContainer extends StatelessWidget {
   final BoxShape shape;
   final BoxBorder? border;
   final List<BoxShadow>? boxShadow;
+  final BorderRadiusGeometry? customBorderRadius;
 
   const DaisyGlassContainer({
     super.key,
@@ -1128,25 +1390,46 @@ class DaisyGlassContainer extends StatelessWidget {
     this.shape = BoxShape.rectangle,
     this.border,
     this.boxShadow,
+    this.customBorderRadius,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveRadius =
+        customBorderRadius ??
+        (shape == BoxShape.circle ? null : BorderRadius.circular(borderRadius));
+
     return Container(
       decoration: BoxDecoration(
         boxShadow: boxShadow,
-        borderRadius: shape == BoxShape.circle ? null : BorderRadius.circular(borderRadius),
+        borderRadius: effectiveRadius,
         shape: shape,
       ),
       child: ClipRRect(
-        borderRadius: shape == BoxShape.circle ? BorderRadius.circular(1000) : BorderRadius.circular(borderRadius),
+        borderRadius: effectiveRadius ?? BorderRadius.circular(1000),
         child: BackdropFilter(
           filter: ImageFilter.compose(
             outer: const ColorFilter.matrix([
-              1.4 + (-0.085), -0.286, -0.028, 0, 0,
-              -0.085, 1.4 + (-0.286), -0.028, 0, 0,
-              -0.085, -0.286, 1.4 + (-0.028), 0, 0,
-              0, 0, 0, 1, 0,
+              1.4 + (-0.085),
+              -0.286,
+              -0.028,
+              0,
+              0,
+              -0.085,
+              1.4 + (-0.286),
+              -0.028,
+              0,
+              0,
+              -0.085,
+              -0.286,
+              1.4 + (-0.028),
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
             ]),
             inner: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
           ),
@@ -1156,7 +1439,7 @@ class DaisyGlassContainer extends StatelessWidget {
             padding: padding,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: shape == BoxShape.circle ? null : BorderRadius.circular(borderRadius),
+              borderRadius: effectiveRadius,
               shape: shape,
               border: border,
             ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'responsive_layout.dart';
 import 'screens/mobile/home_mobile.dart';
 
@@ -16,7 +18,8 @@ class DaisyMovieApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F0F1A), // Colore di base scuro per l'app
+        scaffoldBackgroundColor: const Color(0xFF000000), // Colore di base nero per l'app
+        fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
         colorScheme: const ColorScheme.dark(
           primary: Color(0xFFFF4081), // Accento rosa come sul sito web
           secondary: Color(0xFF00E5FF), // Accento ciano
@@ -27,8 +30,33 @@ class DaisyMovieApp extends StatelessWidget {
   }
 }
 
-class MainScaffold extends StatelessWidget {
+class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
+
+  @override
+  State<MainScaffold> createState() => _MainScaffoldState();
+}
+
+class _MainScaffoldState extends State<MainScaffold> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final double shortestSide = MediaQuery.of(context).size.shortestSide;
+    if (shortestSide < 600) {
+      // Telefono: blocca l'orientazione in verticale
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+      ]);
+    } else {
+      // Tablet/Desktop: permetti tutte le orientazioni
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +84,7 @@ class MainScaffold extends StatelessWidget {
             selectedIndex: 0,
             onDestinationSelected: (int index) {},
             labelType: NavigationRailLabelType.all,
-            backgroundColor: const Color(0xFF1A1A2E),
+            backgroundColor: const Color(0xFF111111),
             unselectedIconTheme: const IconThemeData(color: Colors.white54),
             selectedIconTheme: const IconThemeData(color: Color(0xFFFF4081)),
           ),
